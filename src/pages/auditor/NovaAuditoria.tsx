@@ -68,13 +68,13 @@ const NovaAuditoria: React.FC = () => {
     // Cria uma nova auditoria no Supabase
     const { data, error } = await supabase
       .from('auditorias')
-      .insert([{
-        loja_id: parseInt(lojaId),
-        usuario_id: parseInt(usuarioId),
+      .insert({
+        loja_id: lojaId,
+        usuario_id: usuarioId,
         data: new Date().toISOString(),
         status: 'em_andamento',
         pontuacao_total: 0
-      }])
+      })
       .select();
     
     if (error) {

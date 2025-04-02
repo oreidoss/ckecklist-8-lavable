@@ -10,7 +10,9 @@ import { Store, Calendar, User } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
 
 // Types for our Supabase data
-type Loja = Database['public']['Tables']['lojas']['Row'];
+type Loja = Database['public']['Tables']['lojas']['Row'] & {
+  gerente?: string;
+};
 type Auditoria = Database['public']['Tables']['auditorias']['Row'] & {
   loja?: Loja;
   usuario?: Database['public']['Tables']['usuarios']['Row'];

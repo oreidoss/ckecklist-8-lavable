@@ -33,7 +33,7 @@ const Checklist: React.FC = () => {
   const { toast } = useToast();
   
   const [activeSecao, setActiveSecao] = useState<number | null>(null);
-  const [respostas, setRespostas] = useState<Record<number, RespostaValor>>({});
+  const [respostas, setRespostas] = useState<Record<string, RespostaValor>>({});
   const [progresso, setProgresso] = useState<number>(0);
   
   // Fetch auditoria data
@@ -94,43 +94,37 @@ const Checklist: React.FC = () => {
       
       if (error) throw error;
       return data as Resposta[];
-    },
-    onSuccess: (data) => {
-      // Mapear respostas existentes para o estado
-      const respostasMap: Record<number, RespostaValor> = {};
-      data.forEach(resposta => {
-        respostasMap[resposta.pergunta_id] = resposta.resposta as RespostaValor;
+    }
+  });
+  
+  useEffect(() => {
+    // Quando as respostas existentes carregarem, preencher o estado
+    if (respostasExistentes?.length) {
+      const respostasMap: Record<string, RespostaValor> = {};
+      respostasExistentes.forEach(resposta => {
+        if (resposta.pergunta_id && resposta.resposta) {
+          respostasMap[resposta.pergunta_id] = resposta.resposta as RespostaValor;
+        }
       });
       
       setRespostas(respostasMap);
       
       // Atualizar progresso
       if (perguntas?.length) {
-        const progresso = (data.length / perguntas.length) * 100;
+        const progresso = (respostasExistentes.length / perguntas.length) * 100;
         setProgresso(progresso);
       }
-      
-      // Se temos seções, defina a primeira como ativa
-      if (secoes?.length && activeSecao === null) {
-        setActiveSecao(secoes[0].id);
-      }
     }
-  });
+  }, [respostasExistentes, perguntas]);
   
   useEffect(() => {
     // Quando as seções carregarem, defina a primeira como ativa
     if (secoes?.length && activeSecao === null) {
-      setActiveSecao(secoes[0].id);
+      setActiveSecao(Number(secoes[0].id));
     }
-    
-    // Calcular progresso quando as perguntas e respostas estiverem disponíveis
-    if (perguntas?.length && respostasExistentes?.length) {
-      const progresso = (respostasExistentes.length / perguntas.length) * 100;
-      setProgresso(progresso);
-    }
-  }, [secoes, perguntas, respostasExistentes, activeSecao]);
+  }, [secoes, activeSecao]);
   
-  const handleResposta = async (perguntaId: number, resposta: RespostaValor) => {
+  const handleResposta = async (perguntaId: string, resposta: RespostaValor) => {
     if (!auditoriaId) return;
     
     // Atualizar estado local primeiro para UI responsiva
@@ -165,12 +159,12 @@ const Checklist: React.FC = () => {
       // Inserir nova resposta
       const { error } = await supabase
         .from('respostas')
-        .insert([{
-          auditoria_id: parseInt(auditoriaId),
+        .insert({
+          auditoria_id: auditoriaId,
           pergunta_id: perguntaId,
           resposta: resposta,
           pontuacao_obtida: pontuacao
-        }]);
+        });
       
       if (error) {
         toast({
@@ -212,16 +206,16 @@ const Checklist: React.FC = () => {
   };
   
   const getPerguntasBySecao = (secaoId: number) => {
-    return perguntas?.filter(pergunta => pergunta.secao_id === secaoId) || [];
+    return perguntas?.filter(pergunta => Number(pergunta.secao_id) === secaoId) || [];
   };
   
   if (loadingAuditoria || loadingSecoes || loadingPerguntas || loadingRespostas) {
     return <div className="flex justify-center items-center h-96">Carregando...</div>;
   }
   
-  const activeSecaoObj = secoes?.find(s => s.id === activeSecao);
+  const activeSecaoObj = secoes?.find(s => Number(s.id) === activeSecao);
   const perguntasSecaoAtiva = getPerguntasBySecao(activeSecao || 0);
-  const secaoIndex = secoes?.findIndex(s => s.id === activeSecao) || 0;
+  const secaoIndex = secoes?.findIndex(s => Number(s.id) === activeSecao) || 0;
   
   return (
     <div className="pb-12">
@@ -266,7 +260,7 @@ const Checklist: React.FC = () => {
         </div>
         <div>
           <label className="text-sm text-muted-foreground">Gerente da Loja</label>
-          <div className="border rounded-md p-2.5">{auditoria?.loja?.gerente || 'Não definido'}</div>
+          <div className="border rounded-md p-2.5">{auditoria?.gerente || 'Não definido'}</div>
         </div>
       </div>
       
@@ -275,8 +269,8 @@ const Checklist: React.FC = () => {
         {secoes?.map((secao) => (
           <Button
             key={secao.id}
-            variant={activeSecao === secao.id ? "default" : "outline"}
-            onClick={() => setActiveSecao(secao.id)}
+            variant={activeSecao === Number(secao.id) ? "default" : "outline"}
+            onClick={() => setActiveSecao(Number(secao.id))}
             className="whitespace-nowrap"
           >
             {secao.nome}
