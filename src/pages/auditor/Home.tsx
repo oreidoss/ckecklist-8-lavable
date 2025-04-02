@@ -11,22 +11,13 @@ import {
   ClipboardCheck, 
   BarChart 
 } from 'lucide-react';
+import { Database } from '@/integrations/supabase/types';
 
 // Types for our Supabase data
-interface Loja {
-  id: string;
-  numero: string;
-  nome: string;
-}
-
-interface Auditoria {
-  id: string;
-  loja_id: string;
-  data: string;
-  status: string;
-  pontuacao_total: number;
+type Loja = Database['public']['Tables']['lojas']['Row'];
+type Auditoria = Database['public']['Tables']['auditorias']['Row'] & {
   loja?: Loja;
-}
+};
 
 const Home: React.FC = () => {
   // Fetch stores
@@ -38,7 +29,7 @@ const Home: React.FC = () => {
     queryFn: async () => {
       const { data, error } = await supabase.from('lojas').select('*');
       if (error) throw error;
-      return data || [];
+      return data as Loja[];
     }
   });
 
@@ -55,7 +46,7 @@ const Home: React.FC = () => {
         .order('data', { ascending: false })
         .limit(6);
       if (error) throw error;
-      return data || [];
+      return data as Auditoria[];
     }
   });
 
@@ -125,7 +116,7 @@ const Home: React.FC = () => {
                         {auditoria.loja?.nome} ({auditoria.loja?.numero})
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {new Date(auditoria.data).toLocaleDateString('pt-BR')}
+                        {new Date(auditoria.data || '').toLocaleDateString('pt-BR')}
                       </p>
                     </div>
                     <div className="flex items-center space-x-2">
