@@ -3,156 +3,119 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageTitle } from "@/components/PageTitle";
-import { 
-  Store, 
-  ClipboardCheck, 
-  BarChart 
-} from 'lucide-react';
+import { Store, Calendar, User } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
 
 // Types for our Supabase data
 type Loja = Database['public']['Tables']['lojas']['Row'];
 type Auditoria = Database['public']['Tables']['auditorias']['Row'] & {
   loja?: Loja;
+  usuario?: Database['public']['Tables']['usuarios']['Row'];
 };
 
 const Home: React.FC = () => {
-  // Fetch stores
+  // Fetch stores with their audits
   const { 
     data: lojas, 
     isLoading: loadingLojas 
   } = useQuery({
-    queryKey: ['lojas'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('lojas').select('*');
-      if (error) throw error;
-      return data as Loja[];
-    }
-  });
-
-  // Fetch recent audits with store details
-  const { 
-    data: auditorias, 
-    isLoading: loadingAuditorias 
-  } = useQuery({
-    queryKey: ['auditorias'],
+    queryKey: ['lojas-with-audits'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('auditorias')
-        .select('*, loja:lojas(numero, nome)')
-        .order('data', { ascending: false })
-        .limit(6);
+        .from('lojas')
+        .select('*, auditorias(*, usuario:usuarios(*))');
+      
       if (error) throw error;
-      return data as Auditoria[];
+      return data as (Loja & { auditorias: Auditoria[] })[];
     }
   });
 
-  if (loadingLojas || loadingAuditorias) {
-    return <div>Carregando...</div>;
+  if (loadingLojas) {
+    return <div className="flex justify-center items-center h-96">Carregando...</div>;
   }
 
   return (
     <div>
-      <PageTitle 
-        title="Audit Flow Compass" 
-        description="Gerencie suas auditorias de forma simples e eficiente"
-      />
+      <div className="flex justify-between items-center mb-6">
+        <PageTitle 
+          title="Lojas" 
+          description=""
+        />
+        <Button asChild>
+          <Link to="/nova-auditoria">
+            <span className="mr-2">+</span>
+            Nova Loja
+          </Link>
+        </Button>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Stores Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Store className="mr-2 h-6 w-6" />
-              Lojas Disponíveis
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              {lojas?.map((loja) => (
-                <Link 
-                  key={loja.id} 
-                  to={`/nova-auditoria?loja=${loja.id}`} 
-                  className="hover:bg-muted rounded-lg p-2 transition-colors"
-                >
-                  <div className="flex items-center space-x-2">
-                    <Store className="h-5 w-5 text-muted-foreground" />
-                    <span>{loja.nome} ({loja.numero})</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" asChild className="w-full">
-              <Link to="/admin/lojas">
-                Gerenciar Lojas
-              </Link>
-            </Button>
-          </CardFooter>
-        </Card>
+        {lojas?.map((loja) => {
+          // Get the most recent audit for this store, if any
+          const latestAudit = loja.auditorias?.sort((a, b) => 
+            new Date(b.data || '').getTime() - new Date(a.data || '').getTime()
+          )[0];
 
-        {/* Recent Audits Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <ClipboardCheck className="mr-2 h-6 w-6" />
-              Auditorias Recentes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {auditorias?.length ? (
-              <div className="space-y-4">
-                {auditorias.map((auditoria) => (
-                  <div 
-                    key={auditoria.id} 
-                    className="flex justify-between items-center border-b pb-2 last:border-b-0"
-                  >
-                    <div>
-                      <p className="font-medium">
-                        {auditoria.loja?.nome} ({auditoria.loja?.numero})
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(auditoria.data || '').toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span 
-                        className={`px-2 py-1 rounded-full text-xs ${
-                          auditoria.status === 'concluido' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}
-                      >
-                        {auditoria.status === 'concluido' ? 'Concluído' : 'Em Andamento'}
-                      </span>
-                      <Link to={`/relatorio/${auditoria.id}`}>
-                        <Button size="sm" variant="outline">
-                          Ver Relatório
-                        </Button>
-                      </Link>
+          return (
+            <Card key={loja.id} className="overflow-hidden">
+              <CardContent className="p-0">
+                <div className="p-5">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center">
+                      <Store className="h-5 w-5 text-primary mr-2" />
+                      <h3 className="text-lg font-semibold">{loja.nome} {loja.numero}</h3>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center text-muted-foreground py-6">
-                Nenhuma auditoria recente
-              </div>
-            )}
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" asChild className="w-full">
-              <Link to="/admin/relatorios">
-                <BarChart className="mr-2 h-4 w-4" />
-                Todos os Relatórios
-              </Link>
-            </Button>
-          </CardFooter>
-        </Card>
+
+                  {latestAudit && (
+                    <div className="space-y-2 text-sm text-muted-foreground mb-4">
+                      <div className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        {new Date(latestAudit.data || '').toLocaleDateString('pt-BR')}
+                      </div>
+                      <div className="flex items-center">
+                        <User className="h-4 w-4 mr-2" />
+                        Supervisor(a): {latestAudit.usuario?.nome || 'Não definido'}
+                      </div>
+                      <div className="flex items-center">
+                        <Store className="h-4 w-4 mr-2" />
+                        Gerente: {loja.gerente || 'Não definido'}
+                      </div>
+                      {latestAudit.pontuacao_total !== undefined && (
+                        <div className="text-success font-medium">
+                          {latestAudit.pontuacao_total} pts
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex flex-col sm:flex-row gap-2 mt-4">
+                    {latestAudit && latestAudit.status !== 'concluido' && (
+                      <Button variant="default" className="flex-1" asChild>
+                        <Link to={`/checklist/${latestAudit.id}`}>
+                          Continuar Checklist
+                        </Link>
+                      </Button>
+                    )}
+                    <Button variant="outline" className="flex-1" asChild>
+                      <Link to={`/nova-auditoria?loja=${loja.id}`}>
+                        Nova Avaliação
+                      </Link>
+                    </Button>
+                    <Button variant="outline" className="flex-1" asChild>
+                      <Link to={`/relatorio/loja/${loja.id}`}>
+                        Histórico
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

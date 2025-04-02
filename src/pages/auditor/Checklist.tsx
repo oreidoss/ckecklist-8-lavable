@@ -1,341 +1,336 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { 
-  Card, 
-  CardContent, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { 
-  RadioGroup, 
-  RadioGroupItem 
-} from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { PageTitle } from "@/components/PageTitle";
-import { db, Secao, Pergunta, Resposta, pontuacaoMap } from "@/lib/db";
 import { useToast } from '@/hooks/use-toast';
-import { AlertCircle, ClipboardCheck, Save } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { ArrowLeft, Store, List } from 'lucide-react';
+import { Database } from '@/integrations/supabase/types';
+
+type Loja = Database['public']['Tables']['lojas']['Row'];
+type Usuario = Database['public']['Tables']['usuarios']['Row'];
+type Secao = Database['public']['Tables']['secoes']['Row'];
+type Pergunta = Database['public']['Tables']['perguntas']['Row'];
+type Resposta = Database['public']['Tables']['respostas']['Row'];
+type Auditoria = Database['public']['Tables']['auditorias']['Row'] & {
+  loja?: Loja;
+  usuario?: Usuario;
+};
+
+type RespostaValor = 'Sim' | 'Não' | 'Regular' | 'N/A';
+
+const pontuacaoMap: Record<RespostaValor, number> = {
+  'Sim': 1,
+  'Não': -1,
+  'Regular': 0.5,
+  'N/A': 0
+};
 
 const Checklist: React.FC = () => {
   const { auditoriaId } = useParams<{ auditoriaId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [secoes, setSecoes] = useState<Secao[]>([]);
-  const [perguntas, setPerguntas] = useState<Pergunta[]>([]);
-  const [respostas, setRespostas] = useState<Record<number, Resposta>>({});
+  const [activeSecao, setActiveSecao] = useState<number | null>(null);
+  const [respostas, setRespostas] = useState<Record<number, RespostaValor>>({});
   const [progresso, setProgresso] = useState<number>(0);
-  const [pontuacaoTotal, setPontuacaoTotal] = useState<number>(0);
+  
+  // Fetch auditoria data
+  const { data: auditoria, isLoading: loadingAuditoria } = useQuery({
+    queryKey: ['auditoria', auditoriaId],
+    queryFn: async () => {
+      if (!auditoriaId) throw new Error('ID da auditoria não fornecido');
+      
+      const { data, error } = await supabase
+        .from('auditorias')
+        .select('*, loja:lojas(*), usuario:usuarios(*)')
+        .eq('id', auditoriaId)
+        .single();
+      
+      if (error) throw error;
+      return data as Auditoria;
+    }
+  });
+  
+  // Fetch secoes
+  const { data: secoes, isLoading: loadingSecoes } = useQuery({
+    queryKey: ['secoes'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('secoes')
+        .select('*')
+        .order('id');
+      
+      if (error) throw error;
+      return data as Secao[];
+    }
+  });
+  
+  // Fetch perguntas
+  const { data: perguntas, isLoading: loadingPerguntas } = useQuery({
+    queryKey: ['perguntas'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('perguntas')
+        .select('*')
+        .order('secao_id, id');
+      
+      if (error) throw error;
+      return data as Pergunta[];
+    }
+  });
+  
+  // Fetch respostas existentes
+  const { data: respostasExistentes, isLoading: loadingRespostas } = useQuery({
+    queryKey: ['respostas', auditoriaId],
+    queryFn: async () => {
+      if (!auditoriaId) throw new Error('ID da auditoria não fornecido');
+      
+      const { data, error } = await supabase
+        .from('respostas')
+        .select('*')
+        .eq('auditoria_id', auditoriaId);
+      
+      if (error) throw error;
+      return data as Resposta[];
+    },
+    onSuccess: (data) => {
+      // Mapear respostas existentes para o estado
+      const respostasMap: Record<number, RespostaValor> = {};
+      data.forEach(resposta => {
+        respostasMap[resposta.pergunta_id] = resposta.resposta as RespostaValor;
+      });
+      
+      setRespostas(respostasMap);
+      
+      // Atualizar progresso
+      if (perguntas?.length) {
+        const progresso = (data.length / perguntas.length) * 100;
+        setProgresso(progresso);
+      }
+      
+      // Se temos seções, defina a primeira como ativa
+      if (secoes?.length && activeSecao === null) {
+        setActiveSecao(secoes[0].id);
+      }
+    }
+  });
   
   useEffect(() => {
-    // Carregar dados
-    if (!auditoriaId) return;
-    
-    const auditoria = db.getAuditoria(parseInt(auditoriaId));
-    if (!auditoria) {
-      toast({
-        title: "Auditoria não encontrada",
-        description: "Não foi possível encontrar a auditoria solicitada.",
-        variant: "destructive"
-      });
-      navigate('/');
-      return;
+    // Quando as seções carregarem, defina a primeira como ativa
+    if (secoes?.length && activeSecao === null) {
+      setActiveSecao(secoes[0].id);
     }
     
-    const todasSecoes = db.getSecoes();
-    const todasPerguntas = db.getPerguntas();
-    
-    // Filtrar apenas seções que tenham perguntas
-    const secoesComPerguntas = todasSecoes.filter(secao => 
-      todasPerguntas.some(pergunta => pergunta.secao_id === secao.id)
-    );
-    
-    setSecoes(secoesComPerguntas);
-    setPerguntas(todasPerguntas);
-    
-    // Carregar respostas existentes, se houver
-    const respostasExistentes = db.getRespostasByAuditoria(parseInt(auditoriaId));
-    const respostasMap: Record<number, Resposta> = {};
-    
-    respostasExistentes.forEach(resposta => {
-      respostasMap[resposta.pergunta_id] = resposta;
-    });
-    
-    setRespostas(respostasMap);
-    
-    // Calcular progresso
-    const totalPerguntas = todasPerguntas.length;
-    const respondidas = respostasExistentes.length;
-    setProgresso(totalPerguntas > 0 ? (respondidas / totalPerguntas) * 100 : 0);
-    
-    // Atualizar pontuação total
-    setPontuacaoTotal(db.calcularPontuacaoTotal(parseInt(auditoriaId)));
-  }, [auditoriaId, navigate, toast]);
+    // Calcular progresso quando as perguntas e respostas estiverem disponíveis
+    if (perguntas?.length && respostasExistentes?.length) {
+      const progresso = (respostasExistentes.length / perguntas.length) * 100;
+      setProgresso(progresso);
+    }
+  }, [secoes, perguntas, respostasExistentes, activeSecao]);
   
-  const handleResposta = (perguntaId: number, valor: "Sim" | "Não" | "Regular" | "Não se aplica") => {
+  const handleResposta = async (perguntaId: number, resposta: RespostaValor) => {
     if (!auditoriaId) return;
     
-    const pontuacao = pontuacaoMap[valor];
-    
-    let resposta: Resposta;
-    
-    // Verifica se já existe uma resposta para essa pergunta
-    if (respostas[perguntaId]) {
-      resposta = {
-        ...respostas[perguntaId],
-        resposta: valor,
-        pontuacao_obtida: pontuacao
-      };
-      db.updateResposta(resposta);
-    } else {
-      resposta = db.addResposta({
-        auditoria_id: parseInt(auditoriaId),
-        pergunta_id: perguntaId,
-        resposta: valor,
-        pontuacao_obtida: pontuacao
-      });
-    }
-    
-    // Atualiza o estado local
+    // Atualizar estado local primeiro para UI responsiva
     setRespostas(prev => ({
       ...prev,
       [perguntaId]: resposta
     }));
     
+    const pontuacao = pontuacaoMap[resposta];
+    
+    // Verificar se já existe uma resposta para essa pergunta
+    const respostaExistente = respostasExistentes?.find(r => r.pergunta_id === perguntaId);
+    
+    if (respostaExistente) {
+      // Atualizar resposta existente
+      const { error } = await supabase
+        .from('respostas')
+        .update({
+          resposta: resposta,
+          pontuacao_obtida: pontuacao
+        })
+        .eq('id', respostaExistente.id);
+      
+      if (error) {
+        toast({
+          title: "Erro ao atualizar resposta",
+          description: error.message,
+          variant: "destructive"
+        });
+      }
+    } else {
+      // Inserir nova resposta
+      const { error } = await supabase
+        .from('respostas')
+        .insert([{
+          auditoria_id: parseInt(auditoriaId),
+          pergunta_id: perguntaId,
+          resposta: resposta,
+          pontuacao_obtida: pontuacao
+        }]);
+      
+      if (error) {
+        toast({
+          title: "Erro ao salvar resposta",
+          description: error.message,
+          variant: "destructive"
+        });
+      }
+    }
+    
     // Recalcular progresso
-    const totalPerguntas = perguntas.length;
-    const respondidas = Object.keys({ ...respostas, [perguntaId]: resposta }).length;
-    setProgresso(totalPerguntas > 0 ? (respondidas / totalPerguntas) * 100 : 0);
+    if (perguntas?.length) {
+      const novasRespostas = Object.keys(respostas).length + 
+        (respostas[perguntaId] ? 0 : 1);
+      const progresso = (novasRespostas / perguntas.length) * 100;
+      setProgresso(progresso);
+    }
     
-    // Atualizar pontuação total
-    const novaPontuacao = db.calcularPontuacaoTotal(parseInt(auditoriaId));
-    setPontuacaoTotal(novaPontuacao);
-    
-    // Atualiza a auditoria com a nova pontuação
-    const auditoria = db.getAuditoria(parseInt(auditoriaId));
+    // Calcular nova pontuação total
     if (auditoria) {
-      db.updateAuditoria({
-        ...auditoria,
-        pontuacao_total: novaPontuacao
+      let pontuacaoTotal = 0;
+      
+      // Baseado nas respostas existentes
+      respostasExistentes?.forEach(r => {
+        if (r.pergunta_id !== perguntaId) {
+          pontuacaoTotal += r.pontuacao_obtida || 0;
+        }
       });
+      
+      // Adicionar a pontuação da nova resposta
+      pontuacaoTotal += pontuacao;
+      
+      // Atualizar a auditoria com a nova pontuação
+      await supabase
+        .from('auditorias')
+        .update({ pontuacao_total: pontuacaoTotal })
+        .eq('id', auditoriaId);
     }
-  };
-  
-  const handleFinalizarAuditoria = () => {
-    if (!auditoriaId) return;
-    
-    const totalPerguntas = perguntas.length;
-    const respondidas = Object.keys(respostas).length;
-    
-    if (respondidas < totalPerguntas) {
-      toast({
-        title: "Checklist incompleto",
-        description: `Você respondeu ${respondidas} de ${totalPerguntas} perguntas. Deseja finalizar mesmo assim?`,
-        action: (
-          <Button variant="default" onClick={() => navigate(`/relatorio/${auditoriaId}`)}>
-            Finalizar
-          </Button>
-        )
-      });
-      return;
-    }
-    
-    navigate(`/relatorio/${auditoriaId}`);
   };
   
   const getPerguntasBySecao = (secaoId: number) => {
-    return perguntas.filter(pergunta => pergunta.secao_id === secaoId);
+    return perguntas?.filter(pergunta => pergunta.secao_id === secaoId) || [];
   };
   
+  if (loadingAuditoria || loadingSecoes || loadingPerguntas || loadingRespostas) {
+    return <div className="flex justify-center items-center h-96">Carregando...</div>;
+  }
+  
+  const activeSecaoObj = secoes?.find(s => s.id === activeSecao);
+  const perguntasSecaoAtiva = getPerguntasBySecao(activeSecao || 0);
+  const secaoIndex = secoes?.findIndex(s => s.id === activeSecao) || 0;
+  
   return (
-    <div>
-      <PageTitle 
-        title="Checklist de Auditoria" 
-        description="Responda todas as perguntas para completar a auditoria"
-      />
+    <div className="pb-12">
+      {/* Cabeçalho */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center">
+          <Button variant="ghost" size="icon" asChild className="mr-2">
+            <Link to="/">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+          </Button>
+          <h1 className="text-xl font-semibold flex items-center">
+            <Store className="mr-2 h-5 w-5 text-primary" />
+            {auditoria?.loja?.nome} {auditoria?.loja?.numero}
+          </h1>
+        </div>
+        <Button variant="outline" size="sm" asChild>
+          <Link to="/" className="flex items-center">
+            <List className="mr-2 h-4 w-4" />
+            Voltar para lojas
+          </Link>
+        </Button>
+      </div>
       
       <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <div className="text-sm font-medium">Progresso da Auditoria</div>
-          <div className="text-sm font-medium">{Math.round(progresso)}%</div>
+        <div className="text-sm text-muted-foreground mb-2">
+          {Math.round(progresso)}% completo
         </div>
-        <Progress value={progresso} className="h-2" />
+        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-primary rounded-full transition-all duration-300"
+            style={{ width: `${progresso}%` }}
+          ></div>
+        </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-6">
-        <div className="space-y-6">
-          {secoes.map((secao) => {
-            const secaoPerguntas = getPerguntasBySecao(secao.id);
-            if (secaoPerguntas.length === 0) return null;
-            
-            return (
-              <Accordion 
-                key={secao.id} 
-                type="single" 
-                collapsible 
-                defaultValue={secao.id.toString()}
-                className="border rounded-lg"
-              >
-                <AccordionItem value={secao.id.toString()} className="border-none">
-                  <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                    <div className="flex items-center">
-                      <span>{secao.nome}</span>
-                      <div className="ml-2 text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">
-                        {secaoPerguntas.filter(p => respostas[p.id]).length}/{secaoPerguntas.length}
-                      </div>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4">
-                    <div className="space-y-6">
-                      {secaoPerguntas.map((pergunta) => (
-                        <Card key={pergunta.id} className={respostas[pergunta.id] ? 'border-primary/20 bg-primary/5' : ''}>
-                          <CardContent className="pt-6">
-                            <div className="mb-3">{pergunta.texto}</div>
-                            <RadioGroup 
-                              value={respostas[pergunta.id]?.resposta} 
-                              onValueChange={(value) => handleResposta(
-                                pergunta.id, 
-                                value as "Sim" | "Não" | "Regular" | "Não se aplica"
-                              )}
-                              className="grid grid-cols-2 gap-2"
-                            >
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem 
-                                  value="Sim" 
-                                  id={`${pergunta.id}-sim`} 
-                                  className="border-success text-success" 
-                                />
-                                <Label 
-                                  htmlFor={`${pergunta.id}-sim`}
-                                  className="cursor-pointer text-success font-medium"
-                                >
-                                  Sim (+1)
-                                </Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem 
-                                  value="Não" 
-                                  id={`${pergunta.id}-nao`} 
-                                  className="border-danger text-danger" 
-                                />
-                                <Label 
-                                  htmlFor={`${pergunta.id}-nao`}
-                                  className="cursor-pointer text-danger font-medium"
-                                >
-                                  Não (-1)
-                                </Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem 
-                                  value="Regular" 
-                                  id={`${pergunta.id}-regular`} 
-                                  className="border-warning text-warning" 
-                                />
-                                <Label 
-                                  htmlFor={`${pergunta.id}-regular`}
-                                  className="cursor-pointer text-warning font-medium"
-                                >
-                                  Regular (+0,5)
-                                </Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem 
-                                  value="Não se aplica" 
-                                  id={`${pergunta.id}-na`} 
-                                  className="border-muted-foreground text-muted-foreground" 
-                                />
-                                <Label 
-                                  htmlFor={`${pergunta.id}-na`}
-                                  className="cursor-pointer text-muted-foreground font-medium"
-                                >
-                                  Não se aplica (0)
-                                </Label>
-                              </div>
-                            </RadioGroup>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            );
-          })}
+      {/* Informações da auditoria */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div>
+          <label className="text-sm text-muted-foreground">Supervisor(a)</label>
+          <div className="border rounded-md p-2.5">{auditoria?.usuario?.nome}</div>
         </div>
-        
-        <div className="space-y-6">
-          <Card className="sticky top-6">
-            <CardHeader>
-              <CardTitle className="text-xl">Resumo da Auditoria</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <div className="text-sm font-medium text-muted-foreground mb-1">
-                  Pontuação Total
-                </div>
-                <div className={`text-3xl font-bold ${
-                  pontuacaoTotal > 0 ? 'text-success' : pontuacaoTotal < 0 ? 'text-danger' : 'text-muted-foreground'
-                }`}>
-                  {pontuacaoTotal.toFixed(1)}
-                </div>
-              </div>
-              
-              <div>
-                <div className="text-sm font-medium text-muted-foreground mb-1">
-                  Perguntas Respondidas
-                </div>
-                <div className="flex items-center">
-                  <div className="text-lg font-semibold">
-                    {Object.keys(respostas).length} de {perguntas.length}
-                  </div>
-                  <div className="text-xs ml-2 px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">
-                    {Math.round(progresso)}%
-                  </div>
-                </div>
-              </div>
-              
-              {progresso < 100 && (
-                <div className="bg-warning/10 border border-warning/20 text-warning rounded-md p-3 flex items-start">
-                  <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm">
-                    Ainda há perguntas pendentes. Complete todas as perguntas para uma auditoria mais precisa.
-                  </div>
-                </div>
-              )}
-            </CardContent>
-            <CardFooter className="flex-col space-y-2">
-              <Button 
-                className="w-full" 
-                onClick={handleFinalizarAuditoria}
-              >
-                <ClipboardCheck className="mr-2 h-4 w-4" />
-                Finalizar Auditoria
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full" 
-                onClick={() => toast({
-                  title: "Auditoria salva",
-                  description: "Suas respostas foram salvas automaticamente."
-                })}
-              >
-                <Save className="mr-2 h-4 w-4" />
-                Salvar e Continuar Depois
-              </Button>
-            </CardFooter>
-          </Card>
+        <div>
+          <label className="text-sm text-muted-foreground">Gerente da Loja</label>
+          <div className="border rounded-md p-2.5">{auditoria?.loja?.gerente || 'Não definido'}</div>
         </div>
       </div>
+      
+      {/* Abas de seções */}
+      <div className="flex overflow-x-auto space-x-2 mb-6 pb-2">
+        {secoes?.map((secao) => (
+          <Button
+            key={secao.id}
+            variant={activeSecao === secao.id ? "default" : "outline"}
+            onClick={() => setActiveSecao(secao.id)}
+            className="whitespace-nowrap"
+          >
+            {secao.nome}
+          </Button>
+        ))}
+      </div>
+      
+      {activeSecaoObj && (
+        <>
+          <h2 className="text-xl font-semibold mb-4">{activeSecaoObj.nome}</h2>
+          <div className="text-sm text-muted-foreground mb-4">
+            Seção {secaoIndex + 1} de {secoes?.length}
+          </div>
+          
+          <div className="space-y-6">
+            {perguntasSecaoAtiva.map((pergunta) => (
+              <div key={pergunta.id} className="border rounded-lg p-6">
+                <h3 className="text-lg font-medium mb-4">{pergunta.texto}</h3>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <Button
+                    variant={respostas[pergunta.id] === 'Sim' ? "default" : "outline"}
+                    className={respostas[pergunta.id] === 'Sim' ? "bg-green-500 hover:bg-green-600" : ""}
+                    onClick={() => handleResposta(pergunta.id, 'Sim')}
+                  >
+                    Sim
+                  </Button>
+                  <Button
+                    variant={respostas[pergunta.id] === 'Não' ? "default" : "outline"}
+                    className={respostas[pergunta.id] === 'Não' ? "bg-red-500 hover:bg-red-600" : ""}
+                    onClick={() => handleResposta(pergunta.id, 'Não')}
+                  >
+                    Não
+                  </Button>
+                  <Button
+                    variant={respostas[pergunta.id] === 'Regular' ? "default" : "outline"}
+                    className={respostas[pergunta.id] === 'Regular' ? "bg-yellow-500 hover:bg-yellow-600" : ""}
+                    onClick={() => handleResposta(pergunta.id, 'Regular')}
+                  >
+                    Regular
+                  </Button>
+                  <Button
+                    variant={respostas[pergunta.id] === 'N/A' ? "default" : "outline"}
+                    className={respostas[pergunta.id] === 'N/A' ? "bg-gray-500 hover:bg-gray-600" : ""}
+                    onClick={() => handleResposta(pergunta.id, 'N/A')}
+                  >
+                    N/A
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };
