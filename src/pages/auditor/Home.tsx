@@ -10,9 +10,7 @@ import { Store, Calendar, User } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
 
 // Types for our Supabase data
-type Loja = Database['public']['Tables']['lojas']['Row'] & {
-  gerente?: string;
-};
+type Loja = Database['public']['Tables']['lojas']['Row'];
 type Auditoria = Database['public']['Tables']['auditorias']['Row'] & {
   loja?: Loja;
   usuario?: Database['public']['Tables']['usuarios']['Row'];
@@ -84,7 +82,7 @@ const Home: React.FC = () => {
                       </div>
                       <div className="flex items-center">
                         <Store className="h-4 w-4 mr-2" />
-                        Gerente: {loja.gerente || 'Não definido'}
+                        Gerente: {latestAudit.gerente || 'Não definido'}
                       </div>
                       {latestAudit.pontuacao_total !== undefined && (
                         <div className="text-success font-medium">

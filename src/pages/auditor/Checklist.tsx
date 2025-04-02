@@ -32,7 +32,7 @@ const Checklist: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [activeSecao, setActiveSecao] = useState<number | null>(null);
+  const [activeSecao, setActiveSecao] = useState<string | null>(null);
   const [respostas, setRespostas] = useState<Record<string, RespostaValor>>({});
   const [progresso, setProgresso] = useState<number>(0);
   
@@ -64,6 +64,11 @@ const Checklist: React.FC = () => {
       
       if (error) throw error;
       return data as Secao[];
+    },
+    onSuccess: (data) => {
+      if (data?.length && activeSecao === null) {
+        setActiveSecao(data[0].id);
+      }
     }
   });
   
@@ -116,13 +121,6 @@ const Checklist: React.FC = () => {
       }
     }
   }, [respostasExistentes, perguntas]);
-  
-  useEffect(() => {
-    // Quando as seções carregarem, defina a primeira como ativa
-    if (secoes?.length && activeSecao === null) {
-      setActiveSecao(Number(secoes[0].id));
-    }
-  }, [secoes, activeSecao]);
   
   const handleResposta = async (perguntaId: string, resposta: RespostaValor) => {
     if (!auditoriaId) return;
@@ -205,17 +203,17 @@ const Checklist: React.FC = () => {
     }
   };
   
-  const getPerguntasBySecao = (secaoId: number) => {
-    return perguntas?.filter(pergunta => Number(pergunta.secao_id) === secaoId) || [];
+  const getPerguntasBySecao = (secaoId: string) => {
+    return perguntas?.filter(pergunta => pergunta.secao_id === secaoId) || [];
   };
   
   if (loadingAuditoria || loadingSecoes || loadingPerguntas || loadingRespostas) {
     return <div className="flex justify-center items-center h-96">Carregando...</div>;
   }
   
-  const activeSecaoObj = secoes?.find(s => Number(s.id) === activeSecao);
-  const perguntasSecaoAtiva = getPerguntasBySecao(activeSecao || 0);
-  const secaoIndex = secoes?.findIndex(s => Number(s.id) === activeSecao) || 0;
+  const activeSecaoObj = secoes?.find(s => s.id === activeSecao);
+  const perguntasSecaoAtiva = getPerguntasBySecao(activeSecao || '');
+  const secaoIndex = secoes?.findIndex(s => s.id === activeSecao) || 0;
   
   return (
     <div className="pb-12">
@@ -269,8 +267,8 @@ const Checklist: React.FC = () => {
         {secoes?.map((secao) => (
           <Button
             key={secao.id}
-            variant={activeSecao === Number(secao.id) ? "default" : "outline"}
-            onClick={() => setActiveSecao(Number(secao.id))}
+            variant={activeSecao === secao.id ? "default" : "outline"}
+            onClick={() => setActiveSecao(secao.id)}
             className="whitespace-nowrap"
           >
             {secao.nome}
