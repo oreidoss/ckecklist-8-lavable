@@ -1,142 +1,170 @@
 
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription, 
-  CardContent, 
-  CardFooter 
-} from "@/components/ui/card";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageTitle } from "@/components/PageTitle";
-import { db, Auditoria } from "@/lib/db";
-import { ClipboardCheck, FileText, Store } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { 
+  Store, 
+  ClipboardCheck, 
+  BarChart 
+} from 'lucide-react';
 
-const AuditorHome: React.FC = () => {
-  const [auditorias, setAuditorias] = useState<Auditoria[]>(db.getAuditorias());
-  const navigate = useNavigate();
-  const lojas = db.getLojas();
+// Types for our Supabase data
+interface Loja {
+  id: string;
+  numero: string;
+  nome: string;
+}
 
-  // Obter as auditorias mais recentes (limitado a 5)
-  const auditoriasRecentes = [...auditorias]
-    .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
-    .slice(0, 5);
+interface Auditoria {
+  id: string;
+  loja_id: string;
+  data: string;
+  status: string;
+  pontuacao_total: number;
+  loja?: Loja;
+}
+
+const Home: React.FC = () => {
+  // Fetch stores
+  const { 
+    data: lojas, 
+    isLoading: loadingLojas 
+  } = useQuery({
+    queryKey: ['lojas'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('lojas').select('*');
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  // Fetch recent audits with store details
+  const { 
+    data: auditorias, 
+    isLoading: loadingAuditorias 
+  } = useQuery({
+    queryKey: ['auditorias'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('auditorias')
+        .select('*, loja:lojas(numero, nome)')
+        .order('data', { ascending: false })
+        .limit(6);
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  if (loadingLojas || loadingAuditorias) {
+    return <div>Carregando...</div>;
+  }
 
   return (
     <div>
       <PageTitle 
-        title="Painel do Auditor" 
-        description="Gerencie e inicie auditorias para as lojas cadastradas"
+        title="Audit Flow Compass" 
+        description="Gerencie suas auditorias de forma simples e eficiente"
       />
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Stores Section */}
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-xl">Nova Auditoria</CardTitle>
-            <CardDescription>Iniciar um novo processo de auditoria</CardDescription>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Store className="mr-2 h-6 w-6" />
+              Lojas Disponíveis
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-center p-4">
-              <ClipboardCheck className="h-16 w-16 text-primary" />
+            <div className="grid grid-cols-2 gap-4">
+              {lojas?.map((loja) => (
+                <Link 
+                  key={loja.id} 
+                  to={`/nova-auditoria?loja=${loja.id}`} 
+                  className="hover:bg-muted rounded-lg p-2 transition-colors"
+                >
+                  <div className="flex items-center space-x-2">
+                    <Store className="h-5 w-5 text-muted-foreground" />
+                    <span>{loja.nome} ({loja.numero})</span>
+                  </div>
+                </Link>
+              ))}
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full" onClick={() => navigate('/nova-auditoria')}>
-              Iniciar Auditoria
+            <Button variant="outline" asChild className="w-full">
+              <Link to="/admin/lojas">
+                Gerenciar Lojas
+              </Link>
             </Button>
           </CardFooter>
         </Card>
-        
+
+        {/* Recent Audits Section */}
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-xl">Lojas Disponíveis</CardTitle>
-            <CardDescription>Total de lojas cadastradas</CardDescription>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <ClipboardCheck className="mr-2 h-6 w-6" />
+              Auditorias Recentes
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-center p-4">
-              <div className="text-4xl font-bold text-primary">{lojas.length}</div>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" className="w-full" onClick={() => navigate('/nova-auditoria')}>
-              Ver Lojas
-            </Button>
-          </CardFooter>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-xl">Auditorias Realizadas</CardTitle>
-            <CardDescription>Total de auditorias concluídas</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-center p-4">
-              <div className="text-4xl font-bold text-primary">{auditorias.length}</div>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" className="w-full" onClick={() => navigate('/admin/relatorios')}>
-              Ver Relatórios
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-      
-      <h2 className="text-xl font-semibold mb-4">Auditorias Recentes</h2>
-      
-      {auditoriasRecentes.length > 0 ? (
-        <div className="space-y-4">
-          {auditoriasRecentes.map((auditoria) => {
-            const loja = lojas.find(l => l.id === auditoria.loja_id);
-            return (
-              <Card key={auditoria.id}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <Store className="h-8 w-8 text-muted-foreground" />
-                      <div>
-                        <h3 className="font-medium">{loja?.nome || 'Loja não encontrada'}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {format(new Date(auditoria.data), "dd 'de' MMMM 'de' yyyy, HH:mm", { locale: ptBR })}
-                        </p>
-                      </div>
+            {auditorias?.length ? (
+              <div className="space-y-4">
+                {auditorias.map((auditoria) => (
+                  <div 
+                    key={auditoria.id} 
+                    className="flex justify-between items-center border-b pb-2 last:border-b-0"
+                  >
+                    <div>
+                      <p className="font-medium">
+                        {auditoria.loja?.nome} ({auditoria.loja?.numero})
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(auditoria.data).toLocaleDateString('pt-BR')}
+                      </p>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        auditoria.pontuacao_total > 0 
-                          ? 'bg-success/10 text-success' 
-                          : 'bg-danger/10 text-danger'
-                      }`}>
-                        {auditoria.pontuacao_total > 0 ? 'Aprovado' : 'Não aprovado'}
+                      <span 
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          auditoria.status === 'concluido' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}
+                      >
+                        {auditoria.status === 'concluido' ? 'Concluído' : 'Em Andamento'}
                       </span>
                       <Link to={`/relatorio/${auditoria.id}`}>
-                        <Button variant="ghost" size="icon">
-                          <FileText className="h-5 w-5" />
+                        <Button size="sm" variant="outline">
+                          Ver Relatório
                         </Button>
                       </Link>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="p-6 text-center">
-            <p className="text-muted-foreground">Nenhuma auditoria realizada ainda.</p>
-            <Button className="mt-4" onClick={() => navigate('/nova-auditoria')}>
-              Iniciar Primeira Auditoria
-            </Button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-muted-foreground py-6">
+                Nenhuma auditoria recente
+              </div>
+            )}
           </CardContent>
+          <CardFooter>
+            <Button variant="outline" asChild className="w-full">
+              <Link to="/admin/relatorios">
+                <BarChart className="mr-2 h-4 w-4" />
+                Todos os Relatórios
+              </Link>
+            </Button>
+          </CardFooter>
         </Card>
-      )}
+      </div>
     </div>
   );
 };
 
-export default AuditorHome;
+export default Home;

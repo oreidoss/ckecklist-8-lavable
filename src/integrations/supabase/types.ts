@@ -9,7 +9,170 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      auditorias: {
+        Row: {
+          data: string | null
+          gerente: string | null
+          id: string
+          loja_id: string | null
+          pontuacao_total: number | null
+          status: string | null
+          supervisor: string | null
+          usuario_id: string | null
+        }
+        Insert: {
+          data?: string | null
+          gerente?: string | null
+          id?: string
+          loja_id?: string | null
+          pontuacao_total?: number | null
+          status?: string | null
+          supervisor?: string | null
+          usuario_id?: string | null
+        }
+        Update: {
+          data?: string | null
+          gerente?: string | null
+          id?: string
+          loja_id?: string | null
+          pontuacao_total?: number | null
+          status?: string | null
+          supervisor?: string | null
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auditorias_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auditorias_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lojas: {
+        Row: {
+          id: string
+          nome: string
+          numero: string
+        }
+        Insert: {
+          id?: string
+          nome: string
+          numero: string
+        }
+        Update: {
+          id?: string
+          nome?: string
+          numero?: string
+        }
+        Relationships: []
+      }
+      perguntas: {
+        Row: {
+          id: string
+          secao_id: string | null
+          texto: string
+        }
+        Insert: {
+          id?: string
+          secao_id?: string | null
+          texto: string
+        }
+        Update: {
+          id?: string
+          secao_id?: string | null
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "perguntas_secao_id_fkey"
+            columns: ["secao_id"]
+            isOneToOne: false
+            referencedRelation: "secoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      respostas: {
+        Row: {
+          auditoria_id: string | null
+          id: string
+          pergunta_id: string | null
+          pontuacao_obtida: number | null
+          resposta: string | null
+        }
+        Insert: {
+          auditoria_id?: string | null
+          id?: string
+          pergunta_id?: string | null
+          pontuacao_obtida?: number | null
+          resposta?: string | null
+        }
+        Update: {
+          auditoria_id?: string | null
+          id?: string
+          pergunta_id?: string | null
+          pontuacao_obtida?: number | null
+          resposta?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "respostas_auditoria_id_fkey"
+            columns: ["auditoria_id"]
+            isOneToOne: false
+            referencedRelation: "auditorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "respostas_pergunta_id_fkey"
+            columns: ["pergunta_id"]
+            isOneToOne: false
+            referencedRelation: "perguntas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      secoes: {
+        Row: {
+          id: string
+          nome: string
+        }
+        Insert: {
+          id?: string
+          nome: string
+        }
+        Update: {
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      usuarios: {
+        Row: {
+          email: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          email: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          email?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
