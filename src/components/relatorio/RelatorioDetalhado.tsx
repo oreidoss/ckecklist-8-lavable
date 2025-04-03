@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -136,6 +137,9 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
         };
       });
   };
+
+  // Get the critical items by calling the function
+  const itensCriticos = getItensCriticos();
 
   // Generate and download PDF
   const exportarPDF = () => {
