@@ -39,21 +39,181 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetDescription, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger,
+  SheetClose
+} from "@/components/ui/sheet";
 import { PageTitle } from "@/components/PageTitle";
-import { db, Secao } from "@/lib/db";
 import { useToast } from '@/hooks/use-toast';
-import { Edit, Layers, Plus, Trash2 } from 'lucide-react';
+import { Edit, Layers, Plus, Trash2, Store, HelpCircle, UserCheck } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+type Secao = {
+  id: string;
+  nome: string;
+};
+
+type Loja = {
+  id: string;
+  nome: string;
+  numero: string;
+};
+
+type Pergunta = {
+  id: string;
+  texto: string;
+  secao_id: string;
+};
+
+type Usuario = {
+  id: string;
+  nome: string;
+  email: string;
+};
 
 const AdminSecoes: React.FC = () => {
-  const [secoes, setSecoes] = useState<Secao[]>([]);
   const [secaoParaEditar, setSecaoParaEditar] = useState<Secao | null>(null);
   const [novaSecao, setNovaSecao] = useState({ nome: '' });
+  const [secaoSelecionada, setSecaoSelecionada] = useState<Secao | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   
-  useEffect(() => {
-    // Carregar seções do banco de dados
-    setSecoes(db.getSecoes());
-  }, []);
+  // Fetch data using React Query
+  const { data: secoes = [], isLoading: isLoadingSecoes } = useQuery({
+    queryKey: ['secoes'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('secoes').select('*');
+      if (error) throw error;
+      return data;
+    },
+  });
+  
+  const { data: lojas = [] } = useQuery({
+    queryKey: ['lojas'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('lojas').select('*');
+      if (error) throw error;
+      return data;
+    },
+  });
+  
+  const { data: perguntas = [] } = useQuery({
+    queryKey: ['perguntas'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('perguntas').select('*');
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: usuarios = [] } = useQuery({
+    queryKey: ['usuarios'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('usuarios').select('*');
+      if (error) throw error;
+      return data;
+    },
+  });
+  
+  // Mutations for CRUD operations
+  const adicionarSecaoMutation = useMutation({
+    mutationFn: async (novaSecao: { nome: string }) => {
+      const { data, error } = await supabase
+        .from('secoes')
+        .insert([{ nome: novaSecao.nome }])
+        .select();
+      
+      if (error) throw error;
+      return data[0];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['secoes'] });
+      setNovaSecao({ nome: '' });
+      toast({
+        title: "Seção adicionada",
+        description: "A seção foi adicionada com sucesso."
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao adicionar seção",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+  
+  const atualizarSecaoMutation = useMutation({
+    mutationFn: async (secao: Secao) => {
+      const { data, error } = await supabase
+        .from('secoes')
+        .update({ nome: secao.nome })
+        .eq('id', secao.id)
+        .select();
+      
+      if (error) throw error;
+      return data[0];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['secoes'] });
+      setSecaoParaEditar(null);
+      toast({
+        title: "Seção atualizada",
+        description: "A seção foi atualizada com sucesso."
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao atualizar seção",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+  
+  const excluirSecaoMutation = useMutation({
+    mutationFn: async (id: string) => {
+      // Primeiro verificamos se há perguntas relacionadas
+      const { data: perguntasRelacionadas } = await supabase
+        .from('perguntas')
+        .select('id')
+        .eq('secao_id', id);
+      
+      if (perguntasRelacionadas && perguntasRelacionadas.length > 0) {
+        throw new Error("Esta seção possui perguntas associadas. Exclua as perguntas primeiro.");
+      }
+      
+      const { error } = await supabase
+        .from('secoes')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['secoes'] });
+      toast({
+        title: "Seção excluída",
+        description: "A seção foi excluída com sucesso."
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao excluir seção",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
   
   const handleAdicionarSecao = () => {
     if (!novaSecao.nome) {
@@ -65,24 +225,7 @@ const AdminSecoes: React.FC = () => {
       return;
     }
     
-    // Verificar se já existe uma seção com o mesmo nome
-    if (secoes.some(secao => secao.nome.toLowerCase() === novaSecao.nome.toLowerCase())) {
-      toast({
-        title: "Nome duplicado",
-        description: "Já existe uma seção com este nome.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const adicionada = db.addSecao(novaSecao);
-    setSecoes([...secoes, adicionada]);
-    setNovaSecao({ nome: '' });
-    
-    toast({
-      title: "Seção adicionada",
-      description: `Seção ${adicionada.nome} foi adicionada com sucesso.`
-    });
+    adicionarSecaoMutation.mutate(novaSecao);
   };
   
   const handleAtualizarSecao = () => {
@@ -97,50 +240,15 @@ const AdminSecoes: React.FC = () => {
       return;
     }
     
-    // Verificar se já existe outra seção com o mesmo nome (exceto a própria)
-    if (secoes.some(secao => 
-      secao.nome.toLowerCase() === secaoParaEditar.nome.toLowerCase() && 
-      secao.id !== secaoParaEditar.id)
-    ) {
-      toast({
-        title: "Nome duplicado",
-        description: "Já existe uma seção com este nome.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    db.updateSecao(secaoParaEditar);
-    setSecoes(secoes.map(secao => secao.id === secaoParaEditar.id ? secaoParaEditar : secao));
-    setSecaoParaEditar(null);
-    
-    toast({
-      title: "Seção atualizada",
-      description: `Seção ${secaoParaEditar.nome} foi atualizada com sucesso.`
-    });
+    atualizarSecaoMutation.mutate(secaoParaEditar);
   };
   
-  const handleExcluirSecao = (id: number) => {
-    // Verificar se há perguntas associadas a esta seção
-    const perguntas = db.getPerguntas();
-    const temPerguntas = perguntas.some(pergunta => pergunta.secao_id === id);
-    
-    if (temPerguntas) {
-      toast({
-        title: "Não é possível excluir",
-        description: "Esta seção possui perguntas associadas. Exclua as perguntas primeiro.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    db.deleteSecao(id);
-    setSecoes(secoes.filter(secao => secao.id !== id));
-    
-    toast({
-      title: "Seção excluída",
-      description: "A seção foi excluída com sucesso."
-    });
+  const handleExcluirSecao = (id: string) => {
+    excluirSecaoMutation.mutate(id);
+  };
+
+  const perguntasPorSecao = (secaoId: string) => {
+    return perguntas.filter(pergunta => pergunta.secao_id === secaoId);
   };
   
   return (
@@ -199,11 +307,16 @@ const AdminSecoes: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {secoes.length > 0 ? (
+          {isLoadingSecoes ? (
+            <div className="flex justify-center py-10">
+              <div className="animate-pulse">Carregando...</div>
+            </div>
+          ) : secoes.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
+                  <TableHead>Nº de Perguntas</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -211,8 +324,49 @@ const AdminSecoes: React.FC = () => {
                 {secoes.map((secao) => (
                   <TableRow key={secao.id}>
                     <TableCell className="font-medium">{secao.nome}</TableCell>
+                    <TableCell>{perguntasPorSecao(secao.id).length}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
+                        <Sheet>
+                          <SheetTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="icon"
+                              onClick={() => setSecaoSelecionada(secao)}
+                            >
+                              <HelpCircle className="h-4 w-4" />
+                            </Button>
+                          </SheetTrigger>
+                          <SheetContent className={isMobile ? "w-full" : "w-[500px]"}>
+                            <SheetHeader>
+                              <SheetTitle>Perguntas da Seção: {secaoSelecionada?.nome}</SheetTitle>
+                              <SheetDescription>
+                                Lista de perguntas relacionadas a esta seção.
+                              </SheetDescription>
+                            </SheetHeader>
+                            <div className="mt-6">
+                              {secaoSelecionada && perguntasPorSecao(secaoSelecionada.id).length > 0 ? (
+                                <ul className="space-y-2">
+                                  {perguntasPorSecao(secaoSelecionada.id).map((pergunta) => (
+                                    <li key={pergunta.id} className="p-3 border rounded-md">
+                                      {pergunta.texto}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <div className="text-center py-6 text-muted-foreground">
+                                  Nenhuma pergunta cadastrada para esta seção.
+                                </div>
+                              )}
+                              <div className="mt-4 flex justify-end">
+                                <SheetClose asChild>
+                                  <Button>Fechar</Button>
+                                </SheetClose>
+                              </div>
+                            </div>
+                          </SheetContent>
+                        </Sheet>
+
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button 
@@ -301,6 +455,84 @@ const AdminSecoes: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Lojas Cadastradas</CardTitle>
+            <CardDescription>
+              Lista de todas as lojas disponíveis para auditoria
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {lojas.length > 0 ? (
+              <div className="max-h-[300px] overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {lojas.map((loja) => (
+                      <TableRow key={loja.id}>
+                        <TableCell className="font-medium">{loja.nome}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <Store className="h-10 w-10 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium">Nenhuma loja cadastrada</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Você pode adicionar lojas na página de gerenciamento de lojas.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Usuários Cadastrados</CardTitle>
+            <CardDescription>
+              Lista de gerentes e supervisores disponíveis para auditoria
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {usuarios.length > 0 ? (
+              <div className="max-h-[300px] overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Email</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {usuarios.map((usuario) => (
+                      <TableRow key={usuario.id}>
+                        <TableCell className="font-medium">{usuario.nome}</TableCell>
+                        <TableCell>{usuario.email}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <UserCheck className="h-10 w-10 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium">Nenhum usuário cadastrado</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Você pode adicionar usuários na página de gerenciamento de usuários.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
