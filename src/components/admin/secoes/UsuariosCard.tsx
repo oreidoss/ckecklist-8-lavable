@@ -36,6 +36,14 @@ export const UsuariosCard: React.FC<UsuariosCardProps> = ({
   usuarios,
   isLoading = false
 }) => {
+  // Function to determine role based on email if role property doesn't exist
+  const getUserRole = (usuario: Usuario): string | undefined => {
+    if (usuario.role) return usuario.role;
+    if (usuario.email.includes('supervisor')) return 'supervisor';
+    if (usuario.email.includes('gerente')) return 'gerente';
+    return undefined;
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -70,21 +78,24 @@ export const UsuariosCard: React.FC<UsuariosCardProps> = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {usuarios.map((usuario) => (
-                  <TableRow key={usuario.id}>
-                    <TableCell className="font-medium">{usuario.nome}</TableCell>
-                    <TableCell>{usuario.email}</TableCell>
-                    <TableCell>
-                      {usuario.role ? (
-                        <Badge variant={usuario.role === 'gerente' ? 'default' : 'secondary'}>
-                          {usuario.role === 'gerente' ? 'Gerente' : 'Supervisora'}
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">Não definida</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {usuarios.map((usuario) => {
+                  const role = getUserRole(usuario);
+                  return (
+                    <TableRow key={usuario.id}>
+                      <TableCell className="font-medium">{usuario.nome}</TableCell>
+                      <TableCell>{usuario.email}</TableCell>
+                      <TableCell>
+                        {role ? (
+                          <Badge variant={role === 'gerente' ? 'default' : 'secondary'}>
+                            {role === 'gerente' ? 'Gerente' : 'Supervisora'}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">Não definida</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>

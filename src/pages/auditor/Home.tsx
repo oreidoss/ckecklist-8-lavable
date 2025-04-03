@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -28,7 +27,9 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 // Types for our Supabase data
 type Loja = Database['public']['Tables']['lojas']['Row'];
-type Usuario = Database['public']['Tables']['usuarios']['Row'];
+type Usuario = Database['public']['Tables']['usuarios']['Row'] & {
+  role?: string;
+};
 type Auditoria = Database['public']['Tables']['auditorias']['Row'] & {
   loja?: Loja;
   usuario?: Usuario;
@@ -76,8 +77,8 @@ const Home: React.FC = () => {
   });
 
   // Filter users by role
-  const supervisores = usuarios?.filter(u => u.role === 'supervisor') || [];
-  const gerentes = usuarios?.filter(u => u.role === 'gerente') || [];
+  const supervisores = usuarios?.filter(u => u.role === 'supervisor' || u.email.includes('supervisor')) || [];
+  const gerentes = usuarios?.filter(u => u.role === 'gerente' || u.email.includes('gerente')) || [];
 
   const openNewAuditDialog = (lojaId: string) => {
     setSelectedLoja(lojaId);
@@ -91,7 +92,6 @@ const Home: React.FC = () => {
     setIsCreatingAudit(true);
 
     try {
-      // Get names of selected supervisor and manager for display
       const supervisorNome = usuarios?.find(u => u.id === selectedSupervisor)?.nome || null;
       const gerenteNome = usuarios?.find(u => u.id === selectedGerente)?.nome || null;
       
@@ -99,9 +99,9 @@ const Home: React.FC = () => {
         .from('auditorias')
         .insert({
           loja_id: selectedLoja,
-          usuario_id: selectedSupervisor, // This is the user who performs the audit (supervisor)
-          supervisor: supervisorNome, // Name for display
-          gerente: gerenteNome, // Name for display
+          usuario_id: selectedSupervisor,
+          supervisor: supervisorNome,
+          gerente: gerenteNome,
           data: new Date().toISOString(),
           status: 'em_andamento',
           pontuacao_total: 0
@@ -116,7 +116,6 @@ const Home: React.FC = () => {
         description: "Nova auditoria iniciada com sucesso!",
       });
       
-      // Navigate to the checklist
       navigate(`/checklist/${data.id}`);
     } catch (error) {
       console.error('Error creating audit:', error);
@@ -143,12 +142,10 @@ const Home: React.FC = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {lojas?.map((loja) => {
-          // Get the most recent audit for this store, if any
           const latestAudit = loja.auditorias?.sort((a, b) => 
             new Date(b.data || '').getTime() - new Date(a.data || '').getTime()
           )[0];
 
-          // Check if there's an ongoing audit
           const hasOngoingAudit = latestAudit && latestAudit.status !== 'concluido';
 
           return (
