@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -41,12 +40,10 @@ const Checklist: React.FC = () => {
   const [completedSections, setCompletedSections] = useState<string[]>([]);
   
   useEffect(() => {
-    // Set current date in PT-BR format (DD/MM/YYYY)
     const now = new Date();
     setCurrentDate(now.toLocaleDateString('pt-BR'));
   }, []);
   
-  // Fetch auditoria data
   const { data: auditoria, isLoading: loadingAuditoria } = useQuery({
     queryKey: ['auditoria', auditoriaId],
     queryFn: async () => {
@@ -63,7 +60,6 @@ const Checklist: React.FC = () => {
     }
   });
   
-  // Fetch secoes
   const { data: secoes, isLoading: loadingSecoes } = useQuery({
     queryKey: ['secoes'],
     queryFn: async () => {
@@ -84,7 +80,6 @@ const Checklist: React.FC = () => {
     }
   });
   
-  // Fetch perguntas
   const { data: perguntas, isLoading: loadingPerguntas } = useQuery({
     queryKey: ['perguntas'],
     queryFn: async () => {
@@ -98,7 +93,6 @@ const Checklist: React.FC = () => {
     }
   });
   
-  // Fetch respostas existentes
   const { data: respostasExistentes, isLoading: loadingRespostas } = useQuery({
     queryKey: ['respostas', auditoriaId],
     queryFn: async () => {
@@ -115,7 +109,6 @@ const Checklist: React.FC = () => {
   });
   
   useEffect(() => {
-    // Quando as respostas existentes carregarem, preencher o estado
     if (respostasExistentes?.length && perguntas?.length) {
       const respostasMap: Record<string, RespostaValor> = {};
       respostasExistentes.forEach(resposta => {
@@ -126,14 +119,11 @@ const Checklist: React.FC = () => {
       
       setRespostas(respostasMap);
       
-      // Atualizar progresso geral
       const progresso = (respostasExistentes.length / perguntas.length) * 100;
       setProgresso(progresso);
       
-      // Verificar e atualizar seções completas
       const completedSections: string[] = [];
       
-      // Agrupar perguntas por seção para checar se todas as perguntas de uma seção foram respondidas
       if (secoes && perguntas) {
         secoes.forEach(secao => {
           const perguntasSecao = perguntas.filter(p => p.secao_id === secao.id);
@@ -154,7 +144,6 @@ const Checklist: React.FC = () => {
   const handleResposta = async (perguntaId: string, resposta: RespostaValor) => {
     if (!auditoriaId) return;
     
-    // Atualizar estado local primeiro para UI responsiva
     setRespostas(prev => ({
       ...prev,
       [perguntaId]: resposta
@@ -162,90 +151,93 @@ const Checklist: React.FC = () => {
     
     const pontuacao = pontuacaoMap[resposta];
     
-    // Verificar se já existe uma resposta para essa pergunta
     const respostaExistente = respostasExistentes?.find(r => r.pergunta_id === perguntaId);
     
-    if (respostaExistente) {
-      // Atualizar resposta existente
-      const { error } = await supabase
-        .from('respostas')
-        .update({
-          resposta: resposta,
-          pontuacao_obtida: pontuacao
-        })
-        .eq('id', respostaExistente.id);
-      
-      if (error) {
-        toast({
-          title: "Erro ao atualizar resposta",
-          description: error.message,
-          variant: "destructive"
-        });
-      }
-    } else {
-      // Inserir nova resposta
-      const { error } = await supabase
-        .from('respostas')
-        .insert({
-          auditoria_id: auditoriaId,
-          pergunta_id: perguntaId,
-          resposta: resposta,
-          pontuacao_obtida: pontuacao
-        });
-      
-      if (error) {
-        toast({
-          title: "Erro ao salvar resposta",
-          description: error.message,
-          variant: "destructive"
-        });
-      }
-    }
-    
-    // Recalcular progresso e verificar se a seção atual está completa
-    if (perguntas?.length) {
-      // Atualizar respostas locais para incluir a nova resposta
-      const novasRespostas = {
-        ...respostas,
-        [perguntaId]: resposta
-      };
-      
-      const novasRespostasCount = Object.keys(novasRespostas).length;
-      const progresso = (novasRespostasCount / perguntas.length) * 100;
-      setProgresso(progresso);
-      
-      // Verificar se todas as perguntas da seção atual foram respondidas
-      if (activeSecao && perguntas) {
-        const perguntasSecaoAtiva = perguntas.filter(p => p.secao_id === activeSecao);
-        const todasRespondidasSecaoAtiva = perguntasSecaoAtiva.every(p => 
-          novasRespostas[p.id] !== undefined
-        );
+    try {
+      if (respostaExistente) {
+        const { error } = await supabase
+          .from('respostas')
+          .update({
+            resposta: resposta,
+            pontuacao_obtida: pontuacao
+          })
+          .eq('id', respostaExistente.id);
         
-        if (todasRespondidasSecaoAtiva && !completedSections.includes(activeSecao)) {
-          setCompletedSections(prev => [...prev, activeSecao]);
+        if (error) {
+          console.error("Erro ao atualizar resposta:", error);
+          toast({
+            title: "Erro ao atualizar resposta",
+            description: error.message,
+            variant: "destructive"
+          });
+          return;
+        }
+      } else {
+        const { error } = await supabase
+          .from('respostas')
+          .insert({
+            auditoria_id: auditoriaId,
+            pergunta_id: perguntaId,
+            resposta: resposta,
+            pontuacao_obtida: pontuacao
+          });
+        
+        if (error) {
+          console.error("Erro ao salvar resposta:", error);
+          toast({
+            title: "Erro ao salvar resposta",
+            description: error.message,
+            variant: "destructive"
+          });
+          return;
         }
       }
-    }
-    
-    // Calcular nova pontuação total
-    if (auditoria) {
-      let pontuacaoTotal = 0;
       
-      // Baseado nas respostas existentes
-      respostasExistentes?.forEach(r => {
-        if (r.pergunta_id !== perguntaId) {
-          pontuacaoTotal += r.pontuacao_obtida || 0;
+      if (perguntas?.length) {
+        const novasRespostas = {
+          ...respostas,
+          [perguntaId]: resposta
+        };
+        
+        const novasRespostasCount = Object.keys(novasRespostas).length;
+        const progresso = (novasRespostasCount / perguntas.length) * 100;
+        setProgresso(progresso);
+        
+        if (activeSecao && perguntas) {
+          const perguntasSecaoAtiva = perguntas.filter(p => p.secao_id === activeSecao);
+          const todasRespondidasSecaoAtiva = perguntasSecaoAtiva.every(p => 
+            novasRespostas[p.id] !== undefined
+          );
+          
+          if (todasRespondidasSecaoAtiva && !completedSections.includes(activeSecao)) {
+            setCompletedSections(prev => [...prev, activeSecao]);
+          }
         }
+      }
+      
+      if (auditoria) {
+        let pontuacaoTotal = 0;
+        
+        respostasExistentes?.forEach(r => {
+          if (r.pergunta_id !== perguntaId) {
+            pontuacaoTotal += r.pontuacao_obtida || 0;
+          }
+        });
+        
+        pontuacaoTotal += pontuacao;
+        
+        await supabase
+          .from('auditorias')
+          .update({ pontuacao_total: pontuacaoTotal })
+          .eq('id', auditoriaId);
+      }
+    } catch (error) {
+      console.error("Erro ao processar resposta:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao processar a resposta.",
+        variant: "destructive"
       });
-      
-      // Adicionar a pontuação da nova resposta
-      pontuacaoTotal += pontuacao;
-      
-      // Atualizar a auditoria com a nova pontuação
-      await supabase
-        .from('auditorias')
-        .update({ pontuacao_total: pontuacaoTotal })
-        .eq('id', auditoriaId);
     }
   };
   
@@ -259,18 +251,15 @@ const Checklist: React.FC = () => {
     setIsSaving(true);
     
     try {
-      // Calcula a pontuação total
       let pontuacaoTotal = 0;
       respostasExistentes?.forEach(r => {
         pontuacaoTotal += r.pontuacao_obtida || 0;
       });
       
-      // Atualiza a auditoria com a pontuação calculada
       const { error } = await supabase
         .from('auditorias')
         .update({ 
           pontuacao_total: pontuacaoTotal,
-          // Opcionalmente, definir status como 'concluido' se todas as perguntas respondidas
           status: progresso === 100 ? 'concluido' : 'em_andamento'
         })
         .eq('id', auditoriaId);
@@ -282,7 +271,6 @@ const Checklist: React.FC = () => {
         description: "Todas as respostas foram salvas com sucesso!",
       });
       
-      // Navegar para a página inicial
       navigate('/');
     } catch (error) {
       console.error('Error saving audit:', error);
@@ -296,14 +284,12 @@ const Checklist: React.FC = () => {
     }
   };
 
-  // Navegação entre seções
   const goToNextSection = () => {
     if (!secoes || !activeSecao) return;
     
     const currentIndex = secoes.findIndex(s => s.id === activeSecao);
     if (currentIndex < secoes.length - 1) {
       setActiveSecao(secoes[currentIndex + 1].id);
-      // Scroll to top when changing section
       window.scrollTo(0, 0);
     }
   };
@@ -314,7 +300,6 @@ const Checklist: React.FC = () => {
     const currentIndex = secoes.findIndex(s => s.id === activeSecao);
     if (currentIndex > 0) {
       setActiveSecao(secoes[currentIndex - 1].id);
-      // Scroll to top when changing section
       window.scrollTo(0, 0);
     }
   };
@@ -330,12 +315,10 @@ const Checklist: React.FC = () => {
   const isFirstSection = secaoIndex === 0;
   const isLastSection = secaoIndex === totalSecoes - 1;
   
-  // Verificar se a seção ativa está completa
   const isActiveSecaoCompleta = completedSections.includes(activeSecao || '');
   
   return (
     <div className="pb-12 max-w-4xl mx-auto">
-      {/* Cabeçalho */}
       <div className="flex items-center justify-between mb-6">
         <Link to="/" className="flex items-center text-gray-700">
           <ChevronLeft className="h-5 w-5 mr-1" />
@@ -355,7 +338,6 @@ const Checklist: React.FC = () => {
           </div>
         </div>
         
-        {/* Informações da auditoria */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div>
             <label className="text-sm text-gray-600 block mb-1">Supervisor(a)</label>
@@ -377,7 +359,6 @@ const Checklist: React.FC = () => {
           </div>
         </div>
         
-        {/* Abas de seções com indicador de completo */}
         <div className="flex overflow-x-auto space-x-2 mb-6 pb-2">
           {secoes?.map((secao) => {
             const isCompleted = completedSections.includes(secao.id);
@@ -409,7 +390,6 @@ const Checklist: React.FC = () => {
             Seção {secaoIndex + 1} de {totalSecoes}
           </div>
           
-          {/* Progress bar */}
           <div className="mb-6">
             <Progress value={(secaoIndex + 1) / totalSecoes * 100} className="h-2" />
           </div>
@@ -453,7 +433,6 @@ const Checklist: React.FC = () => {
             ))}
           </div>
           
-          {/* Botões de navegação entre seções */}
           <div className="mt-10 flex justify-between">
             <Button
               variant="outline"
@@ -488,7 +467,6 @@ const Checklist: React.FC = () => {
         </div>
       )}
       
-      {/* Return to stores button */}
       <div className="mt-6 text-center">
         <Button variant="outline" asChild className="border-[#00bfa5] text-[#00bfa5]">
           <Link to="/" className="flex items-center justify-center">
