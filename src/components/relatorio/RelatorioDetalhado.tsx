@@ -1,5 +1,4 @@
-
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PageTitle } from '@/components/PageTitle';
@@ -39,11 +38,11 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
     }
   });
 
-  // Calculate section scores from audit responses
+  // Calcular pontuação por seção com a nova lógica de pontuação
   const calcularPontuacaoPorSecao = () => {
     if (!auditoria.respostas || !secoes || !perguntas) return [];
     
-    // Group questions by section - incluindo TODAS as perguntas do sistema
+    // Agrupa perguntas por seção
     const perguntasPorSecao = perguntas.reduce((acc, pergunta) => {
       if (!acc[pergunta.secao_id]) {
         acc[pergunta.secao_id] = [];
@@ -52,7 +51,7 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
       return acc;
     }, {} as Record<string, typeof perguntas>);
     
-    // Calculate score for each section
+    // Calcula pontuação para cada seção
     return secoes.map(secao => {
       const perguntasSecao = perguntasPorSecao[secao.id] || [];
       const respostasSecao = auditoria.respostas.filter(resposta => 
@@ -61,17 +60,24 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
       
       let pontuacao = 0;
       respostasSecao.forEach(resposta => {
-        if (resposta.resposta === 'Sim') pontuacao += 1;
-        else if (resposta.resposta === 'Não') pontuacao -= 1;
-        else if (resposta.resposta === 'Regular') pontuacao += 0.5;
-        // 'N/A' não afeta a pontuação
+        switch(resposta.resposta) {
+          case 'Sim':
+            pontuacao += 1;
+            break;
+          case 'Não':
+            pontuacao -= 1;
+            break;
+          case 'Regular':
+            pontuacao += 0.5;
+            break;
+          // 'N/A' doesn't affect score
+        }
       });
       
       return {
         id: secao.id,
         nome: secao.nome,
         pontuacao: pontuacao,
-        // O total de perguntas na seção
         total: perguntasSecao.length,
         percentual: perguntasSecao.length > 0 
           ? (pontuacao / perguntasSecao.length) * 100 
@@ -79,6 +85,39 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
       };
     });
   };
+
+  // Calcular pontuação total corretamente
+  const calcularPontuacaoTotal = () => {
+    if (!auditoria.respostas) return 0;
+    
+    return auditoria.respostas.reduce((total, resposta) => {
+      switch(resposta.resposta) {
+        case 'Sim':
+          return total + 1;
+        case 'Não':
+          return total - 1;
+        case 'Regular':
+          return total + 0.5;
+        default:
+          return total;
+      }
+    }, 0);
+  };
+
+  const pontuacoesPorSecao = calcularPontuacaoPorSecao();
+  const pontuacaoTotal = calcularPontuacaoTotal();
+
+  // Atualiza a auditoria com a pontuação total calculada
+  useEffect(() => {
+    const updateAuditoriaScore = async () => {
+      await supabase
+        .from('auditorias')
+        .update({ pontuacao_total: pontuacaoTotal })
+        .eq('id', auditoria.id);
+    };
+
+    updateAuditoriaScore();
+  }, [pontuacaoTotal, auditoria.id]);
 
   // Get items that need attention (negative score)
   const getItensCriticos = () => {
@@ -103,9 +142,6 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
     exportToPdf(reportRef, undefined, "O relatório foi exportado com sucesso!");
   };
 
-  const pontuacoesPorSecao = calcularPontuacaoPorSecao();
-  const itensCriticos = getItensCriticos();
-
   return (
     <div>
       <RelatorioActions 
@@ -121,7 +157,12 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
           description="Resumo completo da auditoria realizada"
         />
         
-        <InformacoesGerais auditoria={auditoria} />
+        <InformacoesGerais 
+          auditoria={{
+            ...auditoria,
+            pontuacao_total: pontuacaoTotal
+          }} 
+        />
         
         <PontuacaoPorSecao pontuacoesPorSecao={pontuacoesPorSecao} />
         
@@ -130,7 +171,7 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
         )}
         
         <AnaliseGeral 
-          pontuacaoTotal={auditoria.pontuacao_total} 
+          pontuacaoTotal={pontuacaoTotal} 
           pontuacoesPorSecao={pontuacoesPorSecao}
           itensCriticos={itensCriticos}
         />
