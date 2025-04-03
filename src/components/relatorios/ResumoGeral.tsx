@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BarChart3 } from 'lucide-react';
+import { BarChart3, Target, Info } from 'lucide-react';
 import { 
   Card, 
   CardContent, 
@@ -8,6 +8,11 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 interface EstatisticasProps {
   total: number;
@@ -27,6 +32,10 @@ export const ResumoGeral: React.FC<ResumoGeralProps> = ({
   estatisticas,
   auditorias
 }) => {
+  // Calculate the target score - one point per audit on average is ideal
+  const metaTotal = estatisticas.total;
+  const pontuacaoTotal = estatisticas.media * estatisticas.total;
+  
   return (
     <div className="space-y-6">
       <Card>
@@ -71,7 +80,49 @@ export const ResumoGeral: React.FC<ResumoGeralProps> = ({
           </div>
           
           <div className="mt-6">
-            <h3 className="text-sm font-medium text-muted-foreground mb-2">Pontuação Média Geral</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-muted-foreground">Pontuação Média Geral</h3>
+              <HoverCard>
+                <HoverCardTrigger asChild>
+                  <div className="flex items-center bg-blue-50 px-2 py-1 rounded-md cursor-help">
+                    <Target className="h-4 w-4 mr-1 text-blue-500" />
+                    <span className="text-xs font-medium text-blue-700">
+                      Meta: {metaTotal} pts
+                    </span>
+                  </div>
+                </HoverCardTrigger>
+                <HoverCardContent className="w-80">
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-semibold">Detalhes da Pontuação Geral</h4>
+                    <div className="text-sm">
+                      <p className="mb-2">Informações detalhadas sobre o progresso geral:</p>
+                      <div className="grid grid-cols-2 gap-2 bg-muted p-2 rounded-md">
+                        <div>
+                          <div className="text-xs text-muted-foreground">Pontuação Total</div>
+                          <div className="font-medium">{pontuacaoTotal.toFixed(1)}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-muted-foreground">Meta Total</div>
+                          <div className="font-medium">{metaTotal}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-muted-foreground">Progresso</div>
+                          <div className="font-medium">
+                            {metaTotal > 0 
+                              ? `${Math.round((pontuacaoTotal / metaTotal) * 100)}%` 
+                              : '0%'}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-muted-foreground">Média por Loja</div>
+                          <div className="font-medium">{estatisticas.media.toFixed(1)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </HoverCardContent>
+              </HoverCard>
+            </div>
             <div className="flex items-center">
               <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
                 <div 

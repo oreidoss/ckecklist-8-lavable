@@ -9,7 +9,12 @@ import {
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';
-import { Store, Calendar, User, Target } from 'lucide-react';
+import { Store, Calendar, User, Target, Info } from 'lucide-react';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 interface InformacoesGeraisProps {
   auditoria: any;
@@ -63,12 +68,54 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
                 ? `${auditoria.pontuacao_total.toFixed(1)} pontos` 
                 : '0 pontos'}
             </div>
-            <div className="flex items-center bg-blue-50 px-3 py-1 rounded-md border border-blue-200">
-              <Target className="h-4 w-4 mr-1 text-blue-500" />
-              <span className="text-sm font-medium text-blue-700">
-                Meta: {meta} pontos
-              </span>
-            </div>
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <div className="flex items-center bg-blue-50 px-3 py-1 rounded-md border border-blue-200 cursor-help">
+                  <Target className="h-4 w-4 mr-1 text-blue-500" />
+                  <span className="text-sm font-medium text-blue-700">
+                    Meta: {meta} pontos
+                  </span>
+                </div>
+              </HoverCardTrigger>
+              <HoverCardContent className="w-80">
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold">Detalhes da Pontuação</h4>
+                  <div className="text-sm">
+                    <p className="mb-2">Informações detalhadas sobre o progresso da auditoria:</p>
+                    <div className="grid grid-cols-2 gap-2 bg-muted p-2 rounded-md">
+                      <div>
+                        <div className="text-xs text-muted-foreground">Pontuação Atual</div>
+                        <div className="font-medium">
+                          {auditoria.pontuacao_total !== null && auditoria.pontuacao_total !== undefined 
+                            ? `${auditoria.pontuacao_total.toFixed(1)}` 
+                            : '0'}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted-foreground">Meta Total</div>
+                        <div className="font-medium">{meta}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted-foreground">Progresso</div>
+                        <div className="font-medium">
+                          {auditoria.pontuacao_total && meta 
+                            ? `${Math.round((auditoria.pontuacao_total / meta) * 100)}%` 
+                            : '0%'}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted-foreground">Restante</div>
+                        <div className="font-medium">
+                          {auditoria.pontuacao_total !== null && auditoria.pontuacao_total !== undefined 
+                            ? `${(meta - auditoria.pontuacao_total).toFixed(1)}` 
+                            : meta}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </HoverCardContent>
+            </HoverCard>
           </div>
           <div className="bg-gray-50 p-2 rounded-md text-sm border">
             <span className="font-medium text-gray-700">Total de Perguntas:</span> {totalPerguntas}
