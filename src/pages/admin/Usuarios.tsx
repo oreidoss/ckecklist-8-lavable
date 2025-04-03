@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -59,7 +58,12 @@ interface UsuarioComFuncao extends Usuario {
 const AdminUsuarios: React.FC = () => {
   const [usuarios, setUsuarios] = useState<UsuarioComFuncao[]>([]);
   const [usuarioParaEditar, setUsuarioParaEditar] = useState<UsuarioComFuncao | null>(null);
-  const [novoUsuario, setNovoUsuario] = useState({ nome: '', email: '', role: '', senha: '' });
+  const [novoUsuario, setNovoUsuario] = useState({ 
+    nome: '', 
+    email: '', 
+    role: '', 
+    senha: '' 
+  });
   const { toast } = useToast();
   
   useEffect(() => {
@@ -98,6 +102,15 @@ const AdminUsuarios: React.FC = () => {
       toast({
         title: "Email duplicado",
         description: "Já existe um usuário com este email.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!novoUsuario.senha || novoUsuario.senha.length < 4) {
+      toast({
+        title: "Senha inválida",
+        description: "A senha deve ter pelo menos 4 caracteres.",
         variant: "destructive"
       });
       return;
@@ -159,6 +172,15 @@ const AdminUsuarios: React.FC = () => {
       return;
     }
     
+    if (usuarioParaEditar.senha && usuarioParaEditar.senha.length < 4) {
+      toast({
+        title: "Senha inválida",
+        description: "A senha deve ter pelo menos 4 caracteres.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     db.updateUsuario(usuarioParaEditar);
     
     setUsuarios(usuarios.map(usuario => 
@@ -195,7 +217,6 @@ const AdminUsuarios: React.FC = () => {
     });
   };
 
-  // Função para exibir a badge correta conforme a função do usuário
   const renderRoleBadge = (role?: string) => {
     if (!role) return <span className="text-muted-foreground text-sm">Não definida</span>;
     

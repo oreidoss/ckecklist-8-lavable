@@ -1,4 +1,3 @@
-
 import { Usuario } from '../types';
 import { BaseService } from './baseService';
 
@@ -37,13 +36,12 @@ export class UsuarioService extends BaseService {
     return usuario?.role === 'admin';
   }
 
-  // Login method
   login(nome: string, senha: string): Usuario | null {
     const usuarios = this.getUsuarios();
     const usuario = usuarios.find(u => u.nome === nome && u.senha === senha);
     
     if (usuario) {
-      // Store the authenticated user (without senha)
+      // Remover a senha antes de armazenar no localStorage
       const { senha: _, ...userWithoutSenha } = usuario;
       localStorage.setItem(this.AUTH_KEY, JSON.stringify(userWithoutSenha));
       return usuario;
@@ -61,6 +59,12 @@ export class UsuarioService extends BaseService {
   // Logout method
   logout(): void {
     localStorage.removeItem(this.AUTH_KEY);
+  }
+
+  // Método para verificar credenciais sem login
+  verificarCredenciais(nome: string, senha: string): boolean {
+    const usuarios = this.getUsuarios();
+    return usuarios.some(u => u.nome === nome && u.senha === senha);
   }
 }
 
