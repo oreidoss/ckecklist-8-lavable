@@ -205,7 +205,7 @@ const AdminRelatorios: React.FC = () => {
                     <SelectValue placeholder="Todas as lojas" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas as lojas</SelectItem>
+                    <SelectItem value="todas-lojas">Todas as lojas</SelectItem>
                     {lojas.map((loja) => (
                       <SelectItem key={loja.id} value={loja.id}>
                         {loja.numero} - {loja.nome}
