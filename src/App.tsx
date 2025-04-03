@@ -5,7 +5,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Layout } from "./components/Layout";
 import { db } from "./lib/db";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -44,21 +43,19 @@ const App = () => {
                 {/* Public route for login */}
                 <Route path="/login" element={<Login />} />
                 
-                {/* Protected routes inside Layout */}
-                <Route element={<Layout />}>
-                  {/* Rotas do Auditor */}
-                  <Route path="/" element={<ProtectedRoute element={<AuditorHome />} />} />
-                  <Route path="/checklist/:auditoriaId" element={<ProtectedRoute element={<Checklist />} />} />
-                  <Route path="/relatorio/:auditoriaId" element={<ProtectedRoute element={<Relatorio />} />} />
-                  <Route path="/relatorio/loja/:lojaId" element={<ProtectedRoute element={<Relatorio />} />} />
-                  
-                  {/* Rotas do Admin - requireAdmin=true */}
-                  <Route path="/admin" element={<ProtectedRoute element={<AdminLojas />} requireAdmin={true} />} />
-                  <Route path="/admin/secoes" element={<ProtectedRoute element={<AdminSecoes />} requireAdmin={true} />} />
-                  <Route path="/admin/perguntas" element={<ProtectedRoute element={<AdminPerguntas />} requireAdmin={true} />} />
-                  <Route path="/admin/usuarios" element={<ProtectedRoute element={<AdminUsuarios />} requireAdmin={true} />} />
-                  <Route path="/admin/relatorios" element={<ProtectedRoute element={<AdminRelatorios />} requireAdmin={true} />} />
-                </Route>
+                {/* Protected routes */}
+                {/* Rotas do Auditor */}
+                <Route path="/" element={<ProtectedRoute element={<AuditorHome />} />} />
+                <Route path="/checklist/:auditoriaId" element={<ProtectedRoute element={<Checklist />} />} />
+                <Route path="/relatorio/:auditoriaId" element={<ProtectedRoute element={<Relatorio />} />} />
+                <Route path="/relatorio/loja/:lojaId" element={<ProtectedRoute element={<Relatorio />} />} />
+                
+                {/* Rotas do Admin - requireAdmin=true */}
+                <Route path="/admin" element={<ProtectedRoute element={<AdminLojas />} requireAdmin={true} />} />
+                <Route path="/admin/secoes" element={<ProtectedRoute element={<AdminSecoes />} requireAdmin={true} />} />
+                <Route path="/admin/perguntas" element={<ProtectedRoute element={<AdminPerguntas />} requireAdmin={true} />} />
+                <Route path="/admin/usuarios" element={<ProtectedRoute element={<AdminUsuarios />} requireAdmin={true} />} />
+                <Route path="/admin/relatorios" element={<ProtectedRoute element={<AdminRelatorios />} requireAdmin={true} />} />
                 
                 {/* Outras rotas */}
                 <Route path="*" element={<NotFound />} />
