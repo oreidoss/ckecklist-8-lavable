@@ -59,50 +59,54 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <ClipboardCheck className="h-12 w-12 text-primary" />
+          <div className="flex justify-center mb-2 sm:mb-4">
+            <ClipboardCheck className="h-10 w-10 sm:h-12 sm:w-12 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Audit Flow Compass</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-xl sm:text-2xl">Audit Flow Compass</CardTitle>
+          <CardDescription className="text-sm sm:text-base">
             Entre com suas credenciais para acessar o sistema
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin}>
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="nome">Nome de usuário</Label>
-                <Input
-                  id="nome"
-                  type="text"
-                  placeholder="Seu nome de usuário"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  disabled={loading}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="senha">Senha</Label>
-                <Input
-                  id="senha"
-                  type="password"
-                  placeholder="Sua senha"
-                  value={senha}
-                  onChange={(e) => setSenha(e.target.value)}
-                  disabled={loading}
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Entrando..." : "Entrar"}
-              </Button>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="nome">Nome de usuário</Label>
+              <Input
+                id="nome"
+                type="text"
+                placeholder="Seu nome de usuário"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                disabled={loading}
+                className="h-10 sm:h-11"
+              />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="senha">Senha</Label>
+              <Input
+                id="senha"
+                type="password"
+                placeholder="Sua senha"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                disabled={loading}
+                className="h-10 sm:h-11"
+              />
+            </div>
+            <Button 
+              type="submit" 
+              className="w-full h-10 sm:h-11 mt-2" 
+              disabled={loading}
+            >
+              {loading ? "Entrando..." : "Entrar"}
+            </Button>
           </form>
         </CardContent>
         <CardFooter className="flex flex-col">
-          <p className="text-xs text-center text-muted-foreground mt-4">
+          <p className="text-xs sm:text-sm text-center text-muted-foreground mt-2 sm:mt-4">
             Esqueceu sua senha? Entre em contato com um administrador.
           </p>
         </CardFooter>
