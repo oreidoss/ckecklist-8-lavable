@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Store, List, ChevronLeft, Save, Home, ArrowRight, Check, ArrowLeftCircle, ArrowRightCircle } from 'lucide-react';
+import { ArrowLeft, Store, List, ChevronLeft, Save, Home, ArrowRight, Check, ArrowLeftCircle, ArrowRightCircle, Edit, UserRound } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
 import { Progress } from "@/components/ui/progress";
 
@@ -39,12 +40,17 @@ const Checklist: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [completedSections, setCompletedSections] = useState<string[]>([]);
   
+  const [isEditingSupervisor, setIsEditingSupervisor] = useState(false);
+  const [isEditingGerente, setIsEditingGerente] = useState(false);
+  const [supervisor, setSupervisor] = useState('');
+  const [gerente, setGerente] = useState('');
+  
   useEffect(() => {
     const now = new Date();
     setCurrentDate(now.toLocaleDateString('pt-BR'));
   }, []);
   
-  const { data: auditoria, isLoading: loadingAuditoria } = useQuery({
+  const { data: auditoria, isLoading: loadingAuditoria, refetch: refetchAuditoria } = useQuery({
     queryKey: ['auditoria', auditoriaId],
     queryFn: async () => {
       if (!auditoriaId) throw new Error('ID da auditoria não fornecido');
@@ -57,6 +63,14 @@ const Checklist: React.FC = () => {
       
       if (error) throw error;
       return data as Auditoria;
+    },
+    meta: {
+      onSuccess: (data) => {
+        if (data) {
+          setSupervisor(data.supervisor || '');
+          setGerente(data.gerente || '');
+        }
+      }
     }
   });
   
@@ -243,6 +257,62 @@ const Checklist: React.FC = () => {
     }
   };
   
+  const handleSaveSupervisor = async () => {
+    if (!auditoriaId) return;
+    
+    try {
+      const { error } = await supabase
+        .from('auditorias')
+        .update({ supervisor })
+        .eq('id', auditoriaId);
+      
+      if (error) throw error;
+      
+      setIsEditingSupervisor(false);
+      refetchAuditoria();
+      
+      toast({
+        title: "Supervisor(a) atualizado(a)",
+        description: "Nome do supervisor(a) foi salvo com sucesso."
+      });
+    } catch (error) {
+      console.error("Erro ao salvar supervisor:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar o nome do supervisor(a).",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const handleSaveGerente = async () => {
+    if (!auditoriaId) return;
+    
+    try {
+      const { error } = await supabase
+        .from('auditorias')
+        .update({ gerente })
+        .eq('id', auditoriaId);
+      
+      if (error) throw error;
+      
+      setIsEditingGerente(false);
+      refetchAuditoria();
+      
+      toast({
+        title: "Gerente atualizado(a)",
+        description: "Nome do gerente foi salvo com sucesso."
+      });
+    } catch (error) {
+      console.error("Erro ao salvar gerente:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar o nome do gerente.",
+        variant: "destructive"
+      });
+    }
+  };
+  
   const getPerguntasBySecao = (secaoId: string) => {
     return perguntas?.filter(pergunta => pergunta.secao_id === secaoId) || [];
   };
@@ -348,21 +418,98 @@ const Checklist: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div>
             <label className="text-sm text-gray-600 block mb-1">Supervisor(a)</label>
-            <input 
-              type="text" 
-              value={auditoria?.usuario?.nome || ''} 
-              readOnly 
-              className="w-full p-3 border rounded-md bg-gray-50"
-            />
+            <div className="relative">
+              {isEditingSupervisor ? (
+                <div className="flex items-center gap-2">
+                  <Input 
+                    type="text" 
+                    value={supervisor} 
+                    onChange={(e) => setSupervisor(e.target.value)}
+                    className="w-full p-3 border rounded-md"
+                    placeholder="Nome do supervisor(a)"
+                  />
+                  <Button 
+                    onClick={handleSaveSupervisor}
+                    variant="outline" 
+                    className="h-10 px-3 bg-green-50 hover:bg-green-100 text-green-600 border-green-200"
+                  >
+                    <Save className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setIsEditingSupervisor(false);
+                      setSupervisor(auditoria?.supervisor || '');
+                    }}
+                    variant="outline" 
+                    className="h-10 px-3"
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 p-3 border rounded-md bg-gray-50 flex items-center">
+                    <UserRound className="h-5 w-5 text-gray-400 mr-2" />
+                    {supervisor || 'Não definido'}
+                  </div>
+                  <Button 
+                    onClick={() => setIsEditingSupervisor(true)}
+                    variant="outline" 
+                    className="h-10 px-3"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
+          
           <div>
             <label className="text-sm text-gray-600 block mb-1">Gerente da Loja</label>
-            <input 
-              type="text" 
-              value={auditoria?.gerente || ''} 
-              readOnly 
-              className="w-full p-3 border rounded-md bg-gray-50"
-            />
+            <div className="relative">
+              {isEditingGerente ? (
+                <div className="flex items-center gap-2">
+                  <Input 
+                    type="text" 
+                    value={gerente} 
+                    onChange={(e) => setGerente(e.target.value)}
+                    className="w-full p-3 border rounded-md"
+                    placeholder="Nome do gerente"
+                  />
+                  <Button 
+                    onClick={handleSaveGerente}
+                    variant="outline" 
+                    className="h-10 px-3 bg-green-50 hover:bg-green-100 text-green-600 border-green-200"
+                  >
+                    <Save className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setIsEditingGerente(false);
+                      setGerente(auditoria?.gerente || '');
+                    }}
+                    variant="outline" 
+                    className="h-10 px-3"
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 p-3 border rounded-md bg-gray-50 flex items-center">
+                    <UserRound className="h-5 w-5 text-gray-400 mr-2" />
+                    {gerente || 'Não definido'}
+                  </div>
+                  <Button 
+                    onClick={() => setIsEditingGerente(true)}
+                    variant="outline" 
+                    className="h-10 px-3"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         
