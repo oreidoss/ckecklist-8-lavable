@@ -16,7 +16,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { UserCheck } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { UserCheck, Link } from 'lucide-react';
+import { Link as RouterLink } from 'react-router-dom';
 
 type Usuario = {
   id: string;
@@ -27,19 +29,37 @@ type Usuario = {
 
 interface UsuariosCardProps {
   usuarios: Usuario[];
+  isLoading?: boolean;
 }
 
-export const UsuariosCard: React.FC<UsuariosCardProps> = ({ usuarios }) => {
+export const UsuariosCard: React.FC<UsuariosCardProps> = ({ 
+  usuarios,
+  isLoading = false
+}) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Usuários Cadastrados</CardTitle>
-        <CardDescription>
-          Lista de gerentes e supervisores disponíveis para auditoria
-        </CardDescription>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Usuários Cadastrados</CardTitle>
+            <CardDescription>
+              Lista de gerentes e supervisores disponíveis para auditoria
+            </CardDescription>
+          </div>
+          <Button variant="outline" size="sm" asChild>
+            <RouterLink to="/admin/usuarios">
+              <Link className="h-4 w-4 mr-2" />
+              Gerenciar
+            </RouterLink>
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
-        {usuarios.length > 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center py-6">
+            <div className="animate-pulse">Carregando usuários...</div>
+          </div>
+        ) : usuarios.length > 0 ? (
           <div className="max-h-[300px] overflow-y-auto">
             <Table>
               <TableHeader>
@@ -55,10 +75,12 @@ export const UsuariosCard: React.FC<UsuariosCardProps> = ({ usuarios }) => {
                     <TableCell className="font-medium">{usuario.nome}</TableCell>
                     <TableCell>{usuario.email}</TableCell>
                     <TableCell>
-                      {usuario.role && (
+                      {usuario.role ? (
                         <Badge variant={usuario.role === 'gerente' ? 'default' : 'secondary'}>
                           {usuario.role === 'gerente' ? 'Gerente' : 'Supervisora'}
                         </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">Não definida</span>
                       )}
                     </TableCell>
                   </TableRow>

@@ -4,7 +4,24 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from "@/components/ui/button";
-import { Store, Calendar, User, Plus } from 'lucide-react';
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Store, Calendar, User, Plus, Users } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -22,6 +39,10 @@ const Home: React.FC = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [isCreatingAudit, setIsCreatingAudit] = useState(false);
+  const [selectedLoja, setSelectedLoja] = useState<string | null>(null);
+  const [selectedSupervisor, setSelectedSupervisor] = useState<string | null>(null);
+  const [selectedGerente, setSelectedGerente] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   // Fetch stores with their audits
   const { 
@@ -54,19 +75,33 @@ const Home: React.FC = () => {
     }
   });
 
-  const createNewAudit = async (lojaId: string) => {
-    if (isCreatingAudit) return;
+  // Filter users by role
+  const supervisores = usuarios?.filter(u => u.role === 'supervisor') || [];
+  const gerentes = usuarios?.filter(u => u.role === 'gerente') || [];
+
+  const openNewAuditDialog = (lojaId: string) => {
+    setSelectedLoja(lojaId);
+    setSelectedSupervisor(null);
+    setSelectedGerente(null);
+    setDialogOpen(true);
+  };
+
+  const createNewAudit = async () => {
+    if (isCreatingAudit || !selectedLoja) return;
     setIsCreatingAudit(true);
 
     try {
-      // Use the first user as default supervisor
-      const defaultUser = usuarios && usuarios.length > 0 ? usuarios[0] : null;
+      // Get names of selected supervisor and manager for display
+      const supervisorNome = usuarios?.find(u => u.id === selectedSupervisor)?.nome || null;
+      const gerenteNome = usuarios?.find(u => u.id === selectedGerente)?.nome || null;
       
       const { data, error } = await supabase
         .from('auditorias')
         .insert({
-          loja_id: lojaId,
-          usuario_id: defaultUser?.id,
+          loja_id: selectedLoja,
+          usuario_id: selectedSupervisor, // This is the user who performs the audit (supervisor)
+          supervisor: supervisorNome, // Name for display
+          gerente: gerenteNome, // Name for display
           data: new Date().toISOString(),
           status: 'em_andamento',
           pontuacao_total: 0
@@ -92,6 +127,7 @@ const Home: React.FC = () => {
       });
     } finally {
       setIsCreatingAudit(false);
+      setDialogOpen(false);
     }
   };
 
@@ -165,7 +201,7 @@ const Home: React.FC = () => {
                   <Button
                     variant={!hasOngoingAudit ? "default" : "outline"}
                     className={`text-xs md:text-sm ${!hasOngoingAudit ? "bg-[#00bfa5] hover:bg-[#00a896]" : ""}`}
-                    onClick={() => createNewAudit(loja.id)}
+                    onClick={() => openNewAuditDialog(loja.id)}
                     disabled={isCreatingAudit}
                     size={isMobile ? "sm" : "default"}
                   >
@@ -188,6 +224,89 @@ const Home: React.FC = () => {
           );
         })}
       </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Nova Auditoria</DialogTitle>
+            <DialogDescription>
+              Selecione o supervisor e gerente para a auditoria
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="supervisor" className="text-right">
+                Supervisor
+              </Label>
+              <div className="col-span-3">
+                <Select 
+                  value={selectedSupervisor || ""} 
+                  onValueChange={setSelectedSupervisor}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecione um supervisor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {supervisores.length > 0 ? (
+                      supervisores.map(supervisor => (
+                        <SelectItem key={supervisor.id} value={supervisor.id}>
+                          {supervisor.nome}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="none" disabled>
+                        Nenhum supervisor disponível
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="gerente" className="text-right">
+                Gerente
+              </Label>
+              <div className="col-span-3">
+                <Select 
+                  value={selectedGerente || ""} 
+                  onValueChange={setSelectedGerente}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Selecione um gerente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {gerentes.length > 0 ? (
+                      gerentes.map(gerente => (
+                        <SelectItem key={gerente.id} value={gerente.id}>
+                          {gerente.nome}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="none" disabled>
+                        Nenhum gerente disponível
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={createNewAudit} 
+              disabled={!selectedSupervisor || isCreatingAudit}
+            >
+              {isCreatingAudit ? "Criando..." : "Iniciar Auditoria"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

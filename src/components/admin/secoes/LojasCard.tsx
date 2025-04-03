@@ -15,40 +15,65 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Store } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Store, Link } from 'lucide-react';
+import { Link as RouterLink } from 'react-router-dom';
 
 type Loja = {
   id: string;
-  nome: string;
   numero: string;
+  nome: string;
 };
 
 interface LojasCardProps {
   lojas: Loja[];
+  isLoading?: boolean;
 }
 
-export const LojasCard: React.FC<LojasCardProps> = ({ lojas }) => {
+export const LojasCard: React.FC<LojasCardProps> = ({ 
+  lojas,
+  isLoading = false
+}) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Lojas Cadastradas</CardTitle>
-        <CardDescription>
-          Lista de todas as lojas disponíveis para auditoria
-        </CardDescription>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Lojas Cadastradas</CardTitle>
+            <CardDescription>
+              Lista de lojas disponíveis para auditoria
+            </CardDescription>
+          </div>
+          <Button variant="outline" size="sm" asChild>
+            <RouterLink to="/admin/lojas">
+              <Link className="h-4 w-4 mr-2" />
+              Gerenciar
+            </RouterLink>
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
-        {lojas.length > 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center py-6">
+            <div className="animate-pulse">Carregando lojas...</div>
+          </div>
+        ) : lojas.length > 0 ? (
           <div className="max-h-[300px] overflow-y-auto">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Número</TableHead>
                   <TableHead>Nome</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {lojas.map((loja) => (
                   <TableRow key={loja.id}>
-                    <TableCell className="font-medium">{loja.nome}</TableCell>
+                    <TableCell className="font-medium">
+                      <Badge variant="outline">{loja.numero}</Badge>
+                    </TableCell>
+                    <TableCell>{loja.nome}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -59,7 +84,7 @@ export const LojasCard: React.FC<LojasCardProps> = ({ lojas }) => {
             <Store className="h-10 w-10 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium">Nenhuma loja cadastrada</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              Você pode adicionar lojas na página de gerenciamento de lojas.
+              Adicione lojas na página de gerenciamento de lojas.
             </p>
           </div>
         )}
