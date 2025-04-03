@@ -10,7 +10,6 @@ import { db } from "./lib/db";
 
 // Páginas do Auditor
 import AuditorHome from "./pages/auditor/Home";
-import NovaAuditoria from "./pages/auditor/NovaAuditoria";
 import Checklist from "./pages/auditor/Checklist";
 import Relatorio from "./pages/auditor/Relatorio";
 
@@ -42,7 +41,6 @@ const App = () => {
             <Routes>
               {/* Rotas do Auditor */}
               <Route path="/" element={<AuditorHome />} />
-              <Route path="/nova-auditoria" element={<NovaAuditoria />} />
               <Route path="/checklist/:auditoriaId" element={<Checklist />} />
               <Route path="/relatorio/:auditoriaId" element={<Relatorio />} />
               

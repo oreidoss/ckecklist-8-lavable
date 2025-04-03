@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Store, List, ChevronLeft } from 'lucide-react';
+import { ArrowLeft, Store, List, ChevronLeft, Save, Home } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
 
 type Loja = Database['public']['Tables']['lojas']['Row'];
@@ -36,6 +36,7 @@ const Checklist: React.FC = () => {
   const [respostas, setRespostas] = useState<Record<string, RespostaValor>>({});
   const [progresso, setProgresso] = useState<number>(0);
   const [currentDate, setCurrentDate] = useState<string>('');
+  const [isSaving, setIsSaving] = useState(false);
   
   useEffect(() => {
     // Set current date in PT-BR format (DD/MM/YYYY)
@@ -215,6 +216,49 @@ const Checklist: React.FC = () => {
   const getPerguntasBySecao = (secaoId: string) => {
     return perguntas?.filter(pergunta => pergunta.secao_id === secaoId) || [];
   };
+
+  const saveAndNavigateHome = async () => {
+    if (isSaving || !auditoriaId) return;
+    
+    setIsSaving(true);
+    
+    try {
+      // Calcula a pontuação total
+      let pontuacaoTotal = 0;
+      respostasExistentes?.forEach(r => {
+        pontuacaoTotal += r.pontuacao_obtida || 0;
+      });
+      
+      // Atualiza a auditoria com a pontuação calculada
+      const { error } = await supabase
+        .from('auditorias')
+        .update({ 
+          pontuacao_total: pontuacaoTotal,
+          // Opcionalmente, definir status como 'concluido' se todas as perguntas respondidas
+          status: progresso === 100 ? 'concluido' : 'em_andamento'
+        })
+        .eq('id', auditoriaId);
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Respostas salvas",
+        description: "Todas as respostas foram salvas com sucesso!",
+      });
+      
+      // Navegar para a página inicial
+      navigate('/');
+    } catch (error) {
+      console.error('Error saving audit:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar as respostas.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
   
   if (loadingAuditoria || loadingSecoes || loadingPerguntas || loadingRespostas) {
     return <div className="flex justify-center items-center h-96">Carregando...</div>;
@@ -337,6 +381,19 @@ const Checklist: React.FC = () => {
               </div>
             ))}
           </div>
+          
+          {/* Botão para voltar à página principal salvando as respostas */}
+          <div className="mt-10 flex justify-center">
+            <Button
+              variant="default"
+              className="bg-[#00bfa5] hover:bg-[#00a896] px-6 py-2 h-12"
+              onClick={saveAndNavigateHome}
+              disabled={isSaving}
+            >
+              <Save className="mr-2 h-5 w-5" />
+              Salvar e Voltar à Página Principal
+            </Button>
+          </div>
         </div>
       )}
       
@@ -344,7 +401,7 @@ const Checklist: React.FC = () => {
       <div className="mt-6 text-center">
         <Button variant="outline" asChild className="border-[#00bfa5] text-[#00bfa5]">
           <Link to="/" className="flex items-center justify-center">
-            <Store className="mr-2 h-4 w-4" />
+            <Home className="mr-2 h-4 w-4" />
             Voltar para lojas
           </Link>
         </Button>

@@ -1,20 +1,26 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from "@/components/ui/button";
-import { Store, Calendar, User } from 'lucide-react';
+import { Store, Calendar, User, Plus } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
+import { useToast } from '@/hooks/use-toast';
 
 // Types for our Supabase data
 type Loja = Database['public']['Tables']['lojas']['Row'];
+type Usuario = Database['public']['Tables']['usuarios']['Row'];
 type Auditoria = Database['public']['Tables']['auditorias']['Row'] & {
   loja?: Loja;
-  usuario?: Database['public']['Tables']['usuarios']['Row'];
+  usuario?: Usuario;
 };
 
 const Home: React.FC = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isCreatingAudit, setIsCreatingAudit] = useState(false);
+
   // Fetch stores with their audits
   const { 
     data: lojas, 
@@ -31,6 +37,62 @@ const Home: React.FC = () => {
     }
   });
 
+  // Fetch users for new audit
+  const { 
+    data: usuarios 
+  } = useQuery({
+    queryKey: ['usuarios'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('*');
+      
+      if (error) throw error;
+      return data as Usuario[];
+    }
+  });
+
+  const createNewAudit = async (lojaId: string) => {
+    if (isCreatingAudit) return;
+    setIsCreatingAudit(true);
+
+    try {
+      // Use the first user as default supervisor
+      const defaultUser = usuarios && usuarios.length > 0 ? usuarios[0] : null;
+      
+      const { data, error } = await supabase
+        .from('auditorias')
+        .insert({
+          loja_id: lojaId,
+          usuario_id: defaultUser?.id,
+          data: new Date().toISOString(),
+          status: 'em_andamento',
+          pontuacao_total: 0
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Auditoria criada",
+        description: "Nova auditoria iniciada com sucesso!",
+      });
+      
+      // Navigate to the checklist
+      navigate(`/checklist/${data.id}`);
+    } catch (error) {
+      console.error('Error creating audit:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível criar a auditoria.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCreatingAudit(false);
+    }
+  };
+
   if (loadingLojas) {
     return <div className="flex justify-center items-center h-96">Carregando...</div>;
   }
@@ -39,12 +101,6 @@ const Home: React.FC = () => {
     <div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-[#00bfa5]">Lojas</h1>
-        <Button asChild className="bg-[#00bfa5] hover:bg-[#00a896]">
-          <Link to="/nova-auditoria" className="flex items-center">
-            <span className="mr-2">+</span>
-            Nova Loja
-          </Link>
-        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -106,11 +162,11 @@ const Home: React.FC = () => {
                   <Button
                     variant={!hasOngoingAudit ? "default" : "outline"}
                     className={!hasOngoingAudit ? "bg-[#00bfa5] hover:bg-[#00a896]" : ""}
-                    asChild
+                    onClick={() => createNewAudit(loja.id)}
+                    disabled={isCreatingAudit}
                   >
-                    <Link to={`/nova-auditoria?loja=${loja.id}`}>
-                      {!hasOngoingAudit ? "Avaliar" : "Nova Avaliação"}
-                    </Link>
+                    <Plus className="h-4 w-4 mr-1" />
+                    {!hasOngoingAudit ? "Avaliar" : "Nova Avaliação"}
                   </Button>
                   <Button variant="outline" asChild>
                     <Link to={`/relatorio/loja/${loja.id}`}>
