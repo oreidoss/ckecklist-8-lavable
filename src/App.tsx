@@ -43,6 +43,7 @@ const App = () => {
               <Route path="/" element={<AuditorHome />} />
               <Route path="/checklist/:auditoriaId" element={<Checklist />} />
               <Route path="/relatorio/:auditoriaId" element={<Relatorio />} />
+              <Route path="/relatorio/loja/:lojaId" element={<Relatorio />} />
               
               {/* Rotas do Admin */}
               <Route path="/admin" element={<AdminLojas />} />

@@ -83,7 +83,7 @@ const AdminRelatorios: React.FC = () => {
         : 0;
       
       return {
-        nome: loja.nome,
+        nome: `${loja.numero} - ${loja.nome}`,
         pontuacao: parseFloat(mediaPontuacao.toFixed(1))
       };
     }).sort((a, b) => b.pontuacao - a.pontuacao); // Sort by score descending
@@ -134,6 +134,10 @@ const AdminRelatorios: React.FC = () => {
   };
   
   const estatisticas = calcularEstatisticas();
+
+  const handleVerHistoricoLoja = (lojaId: string) => {
+    navigate(`/relatorio/loja/${lojaId}`);
+  };
   
   return (
     <div>
@@ -165,6 +169,13 @@ const AdminRelatorios: React.FC = () => {
                         fill="hsl(var(--primary))" 
                         name="Pontuação"
                         radius={[4, 4, 0, 0]}
+                        onClick={(data) => {
+                          const store = lojas?.find(l => `${l.numero} - ${l.nome}` === data.nome);
+                          if (store) {
+                            handleVerHistoricoLoja(store.id);
+                          }
+                        }}
+                        style={{ cursor: 'pointer' }}
                       />
                     </BarChart>
                   </ResponsiveContainer>
