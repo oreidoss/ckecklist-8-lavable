@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -203,7 +202,7 @@ const Relatorio: React.FC = () => {
           id: resposta.id,
           pergunta_texto: pergunta?.texto || 'Pergunta não encontrada',
           secao_nome: secao?.nome || 'Seção não encontrada',
-          observacao: resposta.observacao || 'Sem observação'
+          observacao: resposta.resposta === 'nao' ? 'Item não conforme' : ''
         };
       });
   };
