@@ -3,9 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PageTitle } from "@/components/PageTitle";
 import { Store, Calendar, User } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
 
@@ -39,13 +37,10 @@ const Home: React.FC = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <PageTitle 
-          title="Lojas" 
-          description=""
-        />
-        <Button asChild>
-          <Link to="/nova-auditoria">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-[#00bfa5]">Lojas</h1>
+        <Button asChild className="bg-[#00bfa5] hover:bg-[#00a896]">
+          <Link to="/nova-auditoria" className="flex items-center">
             <span className="mr-2">+</span>
             Nova Loja
           </Link>
@@ -59,61 +54,72 @@ const Home: React.FC = () => {
             new Date(b.data || '').getTime() - new Date(a.data || '').getTime()
           )[0];
 
+          // Check if there's an ongoing audit
+          const hasOngoingAudit = latestAudit && latestAudit.status !== 'concluido';
+
           return (
-            <Card key={loja.id} className="overflow-hidden">
-              <CardContent className="p-0">
-                <div className="p-5">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center">
-                      <Store className="h-5 w-5 text-primary mr-2" />
-                      <h3 className="text-lg font-semibold">{loja.nome} {loja.numero}</h3>
-                    </div>
-                  </div>
-
-                  {latestAudit && (
-                    <div className="space-y-2 text-sm text-muted-foreground mb-4">
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        {new Date(latestAudit.data || '').toLocaleDateString('pt-BR')}
-                      </div>
-                      <div className="flex items-center">
-                        <User className="h-4 w-4 mr-2" />
-                        Supervisor(a): {latestAudit.usuario?.nome || 'Não definido'}
-                      </div>
-                      <div className="flex items-center">
-                        <Store className="h-4 w-4 mr-2" />
-                        Gerente: {latestAudit.gerente || 'Não definido'}
-                      </div>
-                      {latestAudit.pontuacao_total !== undefined && (
-                        <div className="text-success font-medium">
-                          {latestAudit.pontuacao_total} pts
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="flex flex-col sm:flex-row gap-2 mt-4">
-                    {latestAudit && latestAudit.status !== 'concluido' && (
-                      <Button variant="default" className="flex-1" asChild>
-                        <Link to={`/checklist/${latestAudit.id}`}>
-                          Continuar Checklist
-                        </Link>
-                      </Button>
-                    )}
-                    <Button variant="outline" className="flex-1" asChild>
-                      <Link to={`/nova-auditoria?loja=${loja.id}`}>
-                        Nova Avaliação
-                      </Link>
-                    </Button>
-                    <Button variant="outline" className="flex-1" asChild>
-                      <Link to={`/relatorio/loja/${loja.id}`}>
-                        Histórico
-                      </Link>
-                    </Button>
+            <div key={loja.id} className="border rounded-lg overflow-hidden bg-white shadow-sm">
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center">
+                    <Store className="h-6 w-6 text-[#00bfa5] mr-3" />
+                    <h2 className="text-xl font-bold">{loja.nome} {loja.numero}</h2>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+
+                {latestAudit && (
+                  <div className="space-y-3 mb-5">
+                    {latestAudit.data && (
+                      <div className="flex items-center text-gray-600">
+                        <Calendar className="h-5 w-5 mr-2 text-gray-500" />
+                        {new Date(latestAudit.data).toLocaleDateString('pt-BR')}
+                      </div>
+                    )}
+                    <div className="flex items-center text-gray-600">
+                      <User className="h-5 w-5 mr-2 text-gray-500" />
+                      Supervisor(a): {latestAudit.usuario?.nome || 'Não definido'}
+                    </div>
+                    <div className="flex items-center text-gray-600">
+                      <User className="h-5 w-5 mr-2 text-gray-500" />
+                      Gerente: {latestAudit.gerente || 'Não definido'}
+                    </div>
+                    {latestAudit.pontuacao_total !== null && latestAudit.pontuacao_total !== undefined && (
+                      <div className="flex items-center text-[#00c853] font-medium">
+                        <span className="inline-block w-5 h-5 mr-2">↗</span>
+                        {latestAudit.pontuacao_total} pts
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {hasOngoingAudit && (
+                    <Button
+                      className="bg-[#ffc107] hover:bg-[#ffb300] text-black"
+                      asChild
+                    >
+                      <Link to={`/checklist/${latestAudit.id}`}>
+                        Continuar Checklist
+                      </Link>
+                    </Button>
+                  )}
+                  <Button
+                    variant={!hasOngoingAudit ? "default" : "outline"}
+                    className={!hasOngoingAudit ? "bg-[#00bfa5] hover:bg-[#00a896]" : ""}
+                    asChild
+                  >
+                    <Link to={`/nova-auditoria?loja=${loja.id}`}>
+                      {!hasOngoingAudit ? "Avaliar" : "Nova Avaliação"}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link to={`/relatorio/loja/${loja.id}`}>
+                      Histórico
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
           );
         })}
       </div>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Store, List } from 'lucide-react';
+import { ArrowLeft, Store, List, ChevronLeft } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
 
 type Loja = Database['public']['Tables']['lojas']['Row'];
@@ -35,6 +35,13 @@ const Checklist: React.FC = () => {
   const [activeSecao, setActiveSecao] = useState<string | null>(null);
   const [respostas, setRespostas] = useState<Record<string, RespostaValor>>({});
   const [progresso, setProgresso] = useState<number>(0);
+  const [currentDate, setCurrentDate] = useState<string>('');
+  
+  useEffect(() => {
+    // Set current date in PT-BR format (DD/MM/YYYY)
+    const now = new Date();
+    setCurrentDate(now.toLocaleDateString('pt-BR'));
+  }, []);
   
   // Fetch auditoria data
   const { data: auditoria, isLoading: loadingAuditoria } = useQuery({
@@ -216,105 +223,112 @@ const Checklist: React.FC = () => {
   const activeSecaoObj = secoes?.find(s => s.id === activeSecao);
   const perguntasSecaoAtiva = getPerguntasBySecao(activeSecao || '');
   const secaoIndex = secoes?.findIndex(s => s.id === activeSecao) || 0;
+  const totalSecoes = secoes?.length || 0;
   
   return (
-    <div className="pb-12">
+    <div className="pb-12 max-w-4xl mx-auto">
       {/* Cabeçalho */}
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center">
-          <Button variant="ghost" size="icon" asChild className="mr-2">
-            <Link to="/">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-          </Button>
-          <h1 className="text-xl font-semibold flex items-center">
-            <Store className="mr-2 h-5 w-5 text-primary" />
-            {auditoria?.loja?.nome} {auditoria?.loja?.numero}
-          </h1>
-        </div>
-        <Button variant="outline" size="sm" asChild>
-          <Link to="/" className="flex items-center">
-            <List className="mr-2 h-4 w-4" />
-            Voltar para lojas
-          </Link>
-        </Button>
-      </div>
-      
-      <div className="mb-6">
-        <div className="text-sm text-muted-foreground mb-2">
-          {Math.round(progresso)}% completo
-        </div>
-        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-primary rounded-full transition-all duration-300"
-            style={{ width: `${progresso}%` }}
-          ></div>
+        <Link to="/" className="flex items-center text-gray-700">
+          <ChevronLeft className="h-5 w-5 mr-1" />
+          <span>Voltar</span>
+        </Link>
+        <div className="text-right text-gray-600">
+          {currentDate}
         </div>
       </div>
       
-      {/* Informações da auditoria */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div>
-          <label className="text-sm text-muted-foreground">Supervisor(a)</label>
-          <div className="border rounded-md p-2.5">{auditoria?.usuario?.nome}</div>
+      <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
+        <div className="flex items-center mb-4">
+          <Store className="h-5 w-5 text-[#00bfa5] mr-2" />
+          <h1 className="text-xl font-bold">{auditoria?.loja?.nome} {auditoria?.loja?.numero}</h1>
+          <div className="ml-auto px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+            {Math.round(progresso)}% completo
+          </div>
         </div>
-        <div>
-          <label className="text-sm text-muted-foreground">Gerente da Loja</label>
-          <div className="border rounded-md p-2.5">{auditoria?.gerente || 'Não definido'}</div>
+        
+        {/* Informações da auditoria */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div>
+            <label className="text-sm text-gray-600 block mb-1">Supervisor(a)</label>
+            <input 
+              type="text" 
+              value={auditoria?.usuario?.nome || ''} 
+              readOnly 
+              className="w-full p-3 border rounded-md bg-gray-50"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-gray-600 block mb-1">Gerente da Loja</label>
+            <input 
+              type="text" 
+              value={auditoria?.gerente || ''} 
+              readOnly 
+              className="w-full p-3 border rounded-md bg-gray-50"
+            />
+          </div>
         </div>
-      </div>
-      
-      {/* Abas de seções */}
-      <div className="flex overflow-x-auto space-x-2 mb-6 pb-2">
-        {secoes?.map((secao) => (
-          <Button
-            key={secao.id}
-            variant={activeSecao === secao.id ? "default" : "outline"}
-            onClick={() => setActiveSecao(secao.id)}
-            className="whitespace-nowrap"
-          >
-            {secao.nome}
-          </Button>
-        ))}
+        
+        {/* Abas de seções */}
+        <div className="flex overflow-x-auto space-x-2 mb-6 pb-2">
+          {secoes?.map((secao) => (
+            <Button
+              key={secao.id}
+              variant={activeSecao === secao.id ? "default" : "outline"}
+              onClick={() => setActiveSecao(secao.id)}
+              className={`whitespace-nowrap ${activeSecao === secao.id ? 'bg-[#00bfa5] hover:bg-[#00a896]' : ''}`}
+            >
+              {secao.nome}
+            </Button>
+          ))}
+        </div>
       </div>
       
       {activeSecaoObj && (
-        <>
-          <h2 className="text-xl font-semibold mb-4">{activeSecaoObj.nome}</h2>
-          <div className="text-sm text-muted-foreground mb-4">
-            Seção {secaoIndex + 1} de {secoes?.length}
+        <div className="bg-white rounded-lg p-6 shadow-sm">
+          <h2 className="text-2xl font-bold mb-2">{activeSecaoObj.nome}</h2>
+          <div className="text-sm text-gray-600 mb-4">
+            Seção {secaoIndex + 1} de {totalSecoes}
           </div>
           
-          <div className="space-y-6">
-            {perguntasSecaoAtiva.map((pergunta) => (
+          {/* Progress bar */}
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-6">
+            <div 
+              className="h-full bg-[#00bfa5] rounded-full"
+              style={{ width: `${(secaoIndex + 1) / totalSecoes * 100}%` }}
+            ></div>
+          </div>
+          
+          <div className="space-y-8">
+            {perguntasSecaoAtiva.map((pergunta, index) => (
               <div key={pergunta.id} className="border rounded-lg p-6">
-                <h3 className="text-lg font-medium mb-4">{pergunta.texto}</h3>
+                <h3 className="text-lg font-medium mb-6">{pergunta.texto}</h3>
                 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <Button
-                    variant={respostas[pergunta.id] === 'Sim' ? "default" : "outline"}
-                    className={respostas[pergunta.id] === 'Sim' ? "bg-green-500 hover:bg-green-600" : ""}
+                    variant="outline"
+                    className={`h-12 ${respostas[pergunta.id] === 'Sim' ? 'bg-green-500 hover:bg-green-600 text-white' : ''}`}
                     onClick={() => handleResposta(pergunta.id, 'Sim')}
                   >
                     Sim
                   </Button>
                   <Button
-                    variant={respostas[pergunta.id] === 'Não' ? "default" : "outline"}
-                    className={respostas[pergunta.id] === 'Não' ? "bg-red-500 hover:bg-red-600" : ""}
+                    variant="outline"
+                    className={`h-12 ${respostas[pergunta.id] === 'Não' ? 'bg-red-500 hover:bg-red-600 text-white' : ''}`}
                     onClick={() => handleResposta(pergunta.id, 'Não')}
                   >
                     Não
                   </Button>
                   <Button
-                    variant={respostas[pergunta.id] === 'Regular' ? "default" : "outline"}
-                    className={respostas[pergunta.id] === 'Regular' ? "bg-yellow-500 hover:bg-yellow-600" : ""}
+                    variant="outline"
+                    className={`h-12 ${respostas[pergunta.id] === 'Regular' ? 'bg-yellow-500 hover:bg-yellow-600 text-white' : ''}`}
                     onClick={() => handleResposta(pergunta.id, 'Regular')}
                   >
                     Regular
                   </Button>
                   <Button
-                    variant={respostas[pergunta.id] === 'N/A' ? "default" : "outline"}
-                    className={respostas[pergunta.id] === 'N/A' ? "bg-gray-500 hover:bg-gray-600" : ""}
+                    variant="outline"
+                    className={`h-12 ${respostas[pergunta.id] === 'N/A' ? 'bg-gray-500 hover:bg-gray-600 text-white' : ''}`}
                     onClick={() => handleResposta(pergunta.id, 'N/A')}
                   >
                     N/A
@@ -323,8 +337,18 @@ const Checklist: React.FC = () => {
               </div>
             ))}
           </div>
-        </>
+        </div>
       )}
+      
+      {/* Return to stores button */}
+      <div className="mt-6 text-center">
+        <Button variant="outline" asChild className="border-[#00bfa5] text-[#00bfa5]">
+          <Link to="/" className="flex items-center justify-center">
+            <Store className="mr-2 h-4 w-4" />
+            Voltar para lojas
+          </Link>
+        </Button>
+      </div>
     </div>
   );
 };
