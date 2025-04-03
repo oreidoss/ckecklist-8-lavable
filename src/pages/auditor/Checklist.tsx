@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Store, List, ChevronLeft, Save, Home } from 'lucide-react';
+import { ArrowLeft, Store, List, ChevronLeft, Save, Home, ArrowRight, Check, ArrowLeftCircle, ArrowRightCircle } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
+import { Progress } from "@/components/ui/progress";
 
 type Loja = Database['public']['Tables']['lojas']['Row'];
 type Usuario = Database['public']['Tables']['usuarios']['Row'];
@@ -37,6 +38,7 @@ const Checklist: React.FC = () => {
   const [progresso, setProgresso] = useState<number>(0);
   const [currentDate, setCurrentDate] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
+  const [completedSections, setCompletedSections] = useState<string[]>([]);
   
   useEffect(() => {
     // Set current date in PT-BR format (DD/MM/YYYY)
@@ -114,7 +116,7 @@ const Checklist: React.FC = () => {
   
   useEffect(() => {
     // Quando as respostas existentes carregarem, preencher o estado
-    if (respostasExistentes?.length) {
+    if (respostasExistentes?.length && perguntas?.length) {
       const respostasMap: Record<string, RespostaValor> = {};
       respostasExistentes.forEach(resposta => {
         if (resposta.pergunta_id && resposta.resposta) {
@@ -124,13 +126,30 @@ const Checklist: React.FC = () => {
       
       setRespostas(respostasMap);
       
-      // Atualizar progresso
-      if (perguntas?.length) {
-        const progresso = (respostasExistentes.length / perguntas.length) * 100;
-        setProgresso(progresso);
+      // Atualizar progresso geral
+      const progresso = (respostasExistentes.length / perguntas.length) * 100;
+      setProgresso(progresso);
+      
+      // Verificar e atualizar seções completas
+      const completedSections: string[] = [];
+      
+      // Agrupar perguntas por seção para checar se todas as perguntas de uma seção foram respondidas
+      if (secoes && perguntas) {
+        secoes.forEach(secao => {
+          const perguntasSecao = perguntas.filter(p => p.secao_id === secao.id);
+          const todasRespondidas = perguntasSecao.every(pergunta => 
+            respostasExistentes.some(resp => resp.pergunta_id === pergunta.id)
+          );
+          
+          if (todasRespondidas && perguntasSecao.length > 0) {
+            completedSections.push(secao.id);
+          }
+        });
+        
+        setCompletedSections(completedSections);
       }
     }
-  }, [respostasExistentes, perguntas]);
+  }, [respostasExistentes, perguntas, secoes]);
   
   const handleResposta = async (perguntaId: string, resposta: RespostaValor) => {
     if (!auditoriaId) return;
@@ -183,12 +202,29 @@ const Checklist: React.FC = () => {
       }
     }
     
-    // Recalcular progresso
+    // Recalcular progresso e verificar se a seção atual está completa
     if (perguntas?.length) {
-      const novasRespostas = Object.keys(respostas).length + 
-        (respostas[perguntaId] ? 0 : 1);
-      const progresso = (novasRespostas / perguntas.length) * 100;
+      // Atualizar respostas locais para incluir a nova resposta
+      const novasRespostas = {
+        ...respostas,
+        [perguntaId]: resposta
+      };
+      
+      const novasRespostasCount = Object.keys(novasRespostas).length;
+      const progresso = (novasRespostasCount / perguntas.length) * 100;
       setProgresso(progresso);
+      
+      // Verificar se todas as perguntas da seção atual foram respondidas
+      if (activeSecao && perguntas) {
+        const perguntasSecaoAtiva = perguntas.filter(p => p.secao_id === activeSecao);
+        const todasRespondidasSecaoAtiva = perguntasSecaoAtiva.every(p => 
+          novasRespostas[p.id] !== undefined
+        );
+        
+        if (todasRespondidasSecaoAtiva && !completedSections.includes(activeSecao)) {
+          setCompletedSections(prev => [...prev, activeSecao]);
+        }
+      }
     }
     
     // Calcular nova pontuação total
@@ -259,6 +295,29 @@ const Checklist: React.FC = () => {
       setIsSaving(false);
     }
   };
+
+  // Navegação entre seções
+  const goToNextSection = () => {
+    if (!secoes || !activeSecao) return;
+    
+    const currentIndex = secoes.findIndex(s => s.id === activeSecao);
+    if (currentIndex < secoes.length - 1) {
+      setActiveSecao(secoes[currentIndex + 1].id);
+      // Scroll to top when changing section
+      window.scrollTo(0, 0);
+    }
+  };
+  
+  const goToPreviousSection = () => {
+    if (!secoes || !activeSecao) return;
+    
+    const currentIndex = secoes.findIndex(s => s.id === activeSecao);
+    if (currentIndex > 0) {
+      setActiveSecao(secoes[currentIndex - 1].id);
+      // Scroll to top when changing section
+      window.scrollTo(0, 0);
+    }
+  };
   
   if (loadingAuditoria || loadingSecoes || loadingPerguntas || loadingRespostas) {
     return <div className="flex justify-center items-center h-96">Carregando...</div>;
@@ -268,6 +327,11 @@ const Checklist: React.FC = () => {
   const perguntasSecaoAtiva = getPerguntasBySecao(activeSecao || '');
   const secaoIndex = secoes?.findIndex(s => s.id === activeSecao) || 0;
   const totalSecoes = secoes?.length || 0;
+  const isFirstSection = secaoIndex === 0;
+  const isLastSection = secaoIndex === totalSecoes - 1;
+  
+  // Verificar se a seção ativa está completa
+  const isActiveSecaoCompleta = completedSections.includes(activeSecao || '');
   
   return (
     <div className="pb-12 max-w-4xl mx-auto">
@@ -313,18 +377,28 @@ const Checklist: React.FC = () => {
           </div>
         </div>
         
-        {/* Abas de seções */}
+        {/* Abas de seções com indicador de completo */}
         <div className="flex overflow-x-auto space-x-2 mb-6 pb-2">
-          {secoes?.map((secao) => (
-            <Button
-              key={secao.id}
-              variant={activeSecao === secao.id ? "default" : "outline"}
-              onClick={() => setActiveSecao(secao.id)}
-              className={`whitespace-nowrap ${activeSecao === secao.id ? 'bg-[#00bfa5] hover:bg-[#00a896]' : ''}`}
-            >
-              {secao.nome}
-            </Button>
-          ))}
+          {secoes?.map((secao) => {
+            const isCompleted = completedSections.includes(secao.id);
+            return (
+              <Button
+                key={secao.id}
+                variant={activeSecao === secao.id ? "default" : "outline"}
+                onClick={() => setActiveSecao(secao.id)}
+                className={`whitespace-nowrap flex items-center gap-1 ${
+                  activeSecao === secao.id 
+                    ? 'bg-[#00bfa5] hover:bg-[#00a896]' 
+                    : isCompleted 
+                      ? 'bg-[#4ade80] text-white hover:bg-[#22c55e]' 
+                      : ''
+                }`}
+              >
+                {isCompleted && <Check className="h-4 w-4" />}
+                {secao.nome}
+              </Button>
+            );
+          })}
         </div>
       </div>
       
@@ -336,11 +410,8 @@ const Checklist: React.FC = () => {
           </div>
           
           {/* Progress bar */}
-          <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-6">
-            <div 
-              className="h-full bg-[#00bfa5] rounded-full"
-              style={{ width: `${(secaoIndex + 1) / totalSecoes * 100}%` }}
-            ></div>
+          <div className="mb-6">
+            <Progress value={(secaoIndex + 1) / totalSecoes * 100} className="h-2" />
           </div>
           
           <div className="space-y-8">
@@ -382,8 +453,18 @@ const Checklist: React.FC = () => {
             ))}
           </div>
           
-          {/* Botão para voltar à página principal salvando as respostas */}
-          <div className="mt-10 flex justify-center">
+          {/* Botões de navegação entre seções */}
+          <div className="mt-10 flex justify-between">
+            <Button
+              variant="outline"
+              onClick={goToPreviousSection}
+              disabled={isFirstSection}
+              className="flex items-center"
+            >
+              <ArrowLeftCircle className="mr-2 h-5 w-5" />
+              Seção Anterior
+            </Button>
+            
             <Button
               variant="default"
               className="bg-[#00bfa5] hover:bg-[#00a896] px-6 py-2 h-12"
@@ -392,6 +473,16 @@ const Checklist: React.FC = () => {
             >
               <Save className="mr-2 h-5 w-5" />
               Salvar e Voltar à Página Principal
+            </Button>
+            
+            <Button
+              variant="outline"
+              onClick={goToNextSection}
+              disabled={isLastSection}
+              className="flex items-center"
+            >
+              Próxima Seção
+              <ArrowRightCircle className="ml-2 h-5 w-5" />
             </Button>
           </div>
         </div>
