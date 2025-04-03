@@ -9,7 +9,7 @@ import {
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';
-import { Store, Calendar, User, Target, Info } from 'lucide-react';
+import { Store, Calendar, User, Target, Info, Flag, Award } from 'lucide-react';
 import {
   HoverCard,
   HoverCardContent,
@@ -26,6 +26,21 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
   
   // Calculate goal (total questions - meta should be equal to total)
   const meta = totalPerguntas;
+  
+  // Formato da pontuação atual
+  const pontuacaoAtual = auditoria.pontuacao_total !== null && auditoria.pontuacao_total !== undefined 
+    ? auditoria.pontuacao_total.toFixed(1) 
+    : '0';
+  
+  // Calcular o progresso percentual
+  const progressoPercentual = auditoria.pontuacao_total && meta 
+    ? Math.round((auditoria.pontuacao_total / meta) * 100)
+    : 0;
+  
+  // Pontuação restante para alcançar a meta
+  const pontuacaoRestante = auditoria.pontuacao_total !== null && auditoria.pontuacao_total !== undefined 
+    ? (meta - auditoria.pontuacao_total).toFixed(1)
+    : meta.toString();
   
   return (
     <Card>
@@ -63,17 +78,19 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
         <div className="space-y-2">
           <div className="text-sm text-muted-foreground">Pontuação Total</div>
           <div className="flex items-center justify-between">
-            <div className={`text-xl font-bold ${auditoria.pontuacao_total && auditoria.pontuacao_total > 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {auditoria.pontuacao_total !== null && auditoria.pontuacao_total !== undefined 
-                ? `${auditoria.pontuacao_total.toFixed(1)} pontos` 
-                : '0 pontos'}
+            <div className="flex items-center space-x-2">
+              <Award className="h-5 w-5 text-primary" />
+              <div className={`text-xl font-bold ${auditoria.pontuacao_total && auditoria.pontuacao_total > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {pontuacaoAtual} / {meta} pontos
+              </div>
             </div>
+            
             <HoverCard>
               <HoverCardTrigger asChild>
                 <div className="flex items-center bg-blue-50 px-3 py-1 rounded-md border border-blue-200 cursor-help">
-                  <Target className="h-4 w-4 mr-1 text-blue-500" />
+                  <Info className="h-4 w-4 mr-1 text-blue-500" />
                   <span className="text-sm font-medium text-blue-700">
-                    Meta: {meta} pontos
+                    Detalhes
                   </span>
                 </div>
               </HoverCardTrigger>
@@ -84,12 +101,8 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
                     <p className="mb-2">Informações detalhadas sobre o progresso da auditoria:</p>
                     <div className="grid grid-cols-2 gap-2 bg-muted p-2 rounded-md">
                       <div>
-                        <div className="text-xs text-muted-foreground">Pontuação Atual</div>
-                        <div className="font-medium">
-                          {auditoria.pontuacao_total !== null && auditoria.pontuacao_total !== undefined 
-                            ? `${auditoria.pontuacao_total.toFixed(1)}` 
-                            : '0'}
-                        </div>
+                        <div className="text-xs text-muted-foreground">Pontuação Conquistada</div>
+                        <div className="font-medium">{pontuacaoAtual}</div>
                       </div>
                       <div>
                         <div className="text-xs text-muted-foreground">Meta Total</div>
@@ -98,19 +111,24 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
                       <div>
                         <div className="text-xs text-muted-foreground">Progresso</div>
                         <div className="font-medium">
-                          {auditoria.pontuacao_total && meta 
-                            ? `${Math.round((auditoria.pontuacao_total / meta) * 100)}%` 
-                            : '0%'}
+                          {progressoPercentual}%
                         </div>
                       </div>
                       <div>
                         <div className="text-xs text-muted-foreground">Restante</div>
                         <div className="font-medium">
-                          {auditoria.pontuacao_total !== null && auditoria.pontuacao_total !== undefined 
-                            ? `${(meta - auditoria.pontuacao_total).toFixed(1)}` 
-                            : meta}
+                          {pontuacaoRestante}
                         </div>
                       </div>
+                    </div>
+                  </div>
+                  <div className="mt-2 pt-2 border-t">
+                    <div className="text-xs text-muted-foreground mb-1">Progresso visual</div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div 
+                        className="bg-primary h-2.5 rounded-full" 
+                        style={{ width: `${progressoPercentual}%` }}
+                      ></div>
                     </div>
                   </div>
                 </div>
