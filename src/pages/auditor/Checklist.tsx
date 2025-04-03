@@ -65,9 +65,11 @@ const Checklist: React.FC = () => {
       if (error) throw error;
       return data as Secao[];
     },
-    onSuccess: (data) => {
-      if (data?.length && activeSecao === null) {
-        setActiveSecao(data[0].id);
+    meta: {
+      onSuccess: (data: Secao[]) => {
+        if (data?.length && activeSecao === null) {
+          setActiveSecao(data[0].id);
+        }
       }
     }
   });
