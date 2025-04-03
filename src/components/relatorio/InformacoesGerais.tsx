@@ -15,6 +15,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface InformacoesGeraisProps {
   auditoria: any;
@@ -24,8 +25,10 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
   // Calculate total questions
   const totalPerguntas = auditoria.respostas?.length || 0;
   
-  // Calculate goal (total questions - meta should be equal to total)
-  const meta = totalPerguntas;
+  // Total de todas as perguntas disponíveis no sistema (meta real)
+  // Nota: Isso seria idealmente obtido do total de perguntas no sistema
+  // Aqui estamos definindo como 111 conforme especificado
+  const metaTotal = 111;
   
   // Formato da pontuação atual
   const pontuacaoAtual = auditoria.pontuacao_total !== null && auditoria.pontuacao_total !== undefined 
@@ -33,14 +36,14 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
     : '0';
   
   // Calcular o progresso percentual
-  const progressoPercentual = auditoria.pontuacao_total && meta 
-    ? Math.round((auditoria.pontuacao_total / meta) * 100)
+  const progressoPercentual = auditoria.pontuacao_total && metaTotal 
+    ? Math.round((auditoria.pontuacao_total / metaTotal) * 100)
     : 0;
   
   // Pontuação restante para alcançar a meta
   const pontuacaoRestante = auditoria.pontuacao_total !== null && auditoria.pontuacao_total !== undefined 
-    ? (meta - auditoria.pontuacao_total).toFixed(1)
-    : meta.toString();
+    ? (metaTotal - auditoria.pontuacao_total).toFixed(1)
+    : metaTotal.toString();
   
   return (
     <Card>
@@ -81,7 +84,7 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
             <div className="flex items-center space-x-2">
               <Award className="h-5 w-5 text-primary" />
               <div className={`text-xl font-bold ${auditoria.pontuacao_total && auditoria.pontuacao_total > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                {pontuacaoAtual} / {meta} pontos
+                {pontuacaoAtual} / {metaTotal} pontos
               </div>
             </div>
             
@@ -106,7 +109,7 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
                       </div>
                       <div>
                         <div className="text-xs text-muted-foreground">Meta Total</div>
-                        <div className="font-medium">{meta}</div>
+                        <div className="font-medium">{metaTotal}</div>
                       </div>
                       <div>
                         <div className="text-xs text-muted-foreground">Progresso</div>
@@ -136,7 +139,24 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
             </HoverCard>
           </div>
           <div className="bg-gray-50 p-2 rounded-md text-sm border">
-            <span className="font-medium text-gray-700">Total de Perguntas:</span> {totalPerguntas}
+            <div className="flex items-center justify-between">
+              <span>
+                <span className="font-medium text-gray-700">Perguntas respondidas:</span> {totalPerguntas}
+              </span>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <div className="flex items-center bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                      <Info className="h-3 w-3 mr-1 text-blue-500" />
+                      <span className="text-xs font-medium text-blue-700">Info</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs">A meta é baseada no total de perguntas disponíveis no sistema (111)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
         </div>
         

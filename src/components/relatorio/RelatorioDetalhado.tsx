@@ -43,7 +43,7 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
   const calcularPontuacaoPorSecao = () => {
     if (!auditoria.respostas || !secoes || !perguntas) return [];
     
-    // Group questions by section
+    // Group questions by section - incluindo TODAS as perguntas do sistema
     const perguntasPorSecao = perguntas.reduce((acc, pergunta) => {
       if (!acc[pergunta.secao_id]) {
         acc[pergunta.secao_id] = [];
@@ -64,16 +64,17 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
         if (resposta.resposta === 'Sim') pontuacao += 1;
         else if (resposta.resposta === 'Não') pontuacao -= 1;
         else if (resposta.resposta === 'Regular') pontuacao += 0.5;
-        // 'N/A' doesn't affect score
+        // 'N/A' não afeta a pontuação
       });
       
       return {
         id: secao.id,
         nome: secao.nome,
         pontuacao: pontuacao,
-        total: respostasSecao.length,
-        percentual: respostasSecao.length > 0 
-          ? (pontuacao / respostasSecao.length) * 100 
+        // O total de perguntas na seção
+        total: perguntasSecao.length,
+        percentual: perguntasSecao.length > 0 
+          ? (pontuacao / perguntasSecao.length) * 100 
           : 0
       };
     });
