@@ -7,7 +7,8 @@ export class UsuarioService extends BaseService {
   private readonly AUTH_KEY = 'currentUser';
 
   getUsuarios(): Usuario[] {
-    return this.getItem<Usuario>(this.STORAGE_KEY);
+    const usuarios = this.getItem<Usuario>(this.STORAGE_KEY) || [];
+    return usuarios;
   }
 
   addUsuario(usuario: Omit<Usuario, "id">): Usuario {
@@ -43,9 +44,10 @@ export class UsuarioService extends BaseService {
     // Debug info for troubleshooting
     console.log("Tentando login para: ", nome);
     console.log("Usuários disponíveis: ", usuarios.length);
+    console.log("Lista de usuários:", JSON.stringify(usuarios));
     
-    // Check if the user exists by name first
-    const usuario = usuarios.find(u => u.nome === nome);
+    // Check if the user exists by name first (case insensitive)
+    const usuario = usuarios.find(u => u.nome.toLowerCase() === nome.toLowerCase());
     
     if (!usuario) {
       console.log("Usuário não encontrado");
@@ -53,7 +55,7 @@ export class UsuarioService extends BaseService {
     }
     
     console.log("Usuário encontrado, verificando senha");
-    // Then check if the password matches
+    // Then check if the password matches exactly
     if (usuario.senha === senha) {
       console.log("Senha correta, login bem-sucedido");
       // Remove the password before storing in localStorage
@@ -62,7 +64,7 @@ export class UsuarioService extends BaseService {
       return usuario;
     }
     
-    console.log("Senha incorreta");
+    console.log("Senha incorreta, fornecida:", senha, "esperada:", usuario.senha);
     return null;
   }
 
@@ -80,7 +82,7 @@ export class UsuarioService extends BaseService {
   // Método para verificar credenciais sem login
   verificarCredenciais(nome: string, senha: string): boolean {
     const usuarios = this.getUsuarios();
-    return usuarios.some(u => u.nome === nome && u.senha === senha);
+    return usuarios.some(u => u.nome.toLowerCase() === nome.toLowerCase() && u.senha === senha);
   }
 }
 

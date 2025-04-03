@@ -22,6 +22,10 @@ const Login = () => {
     if (currentUser) {
       navigate('/');
     }
+    
+    // Debug users on mount
+    const usuarios = usuarioService.getUsuarios();
+    console.log("Usuários disponíveis ao carregar página de login:", usuarios);
   }, [navigate]);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -39,6 +43,8 @@ const Login = () => {
       return;
     }
 
+    console.log(`Tentando login com: nome="${nome}", senha="${senha}"`);
+    
     // Let's debug the current users in the system
     const usuarios = usuarioService.getUsuarios();
     console.log("Usuários disponíveis no sistema:", usuarios);
@@ -113,6 +119,10 @@ const Login = () => {
           <p className="text-xs sm:text-sm text-center text-muted-foreground mt-2 sm:mt-4">
             Esqueceu sua senha? Entre em contato com um administrador.
           </p>
+          <div className="mt-4 text-xs text-center text-muted-foreground">
+            <p>Usuário de teste: <strong>testeuser</strong></p>
+            <p>Senha de teste: <strong>Teste123!</strong></p>
+          </div>
         </CardFooter>
       </Card>
     </div>
