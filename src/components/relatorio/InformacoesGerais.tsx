@@ -19,8 +19,8 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
   // Calculate total questions
   const totalPerguntas = auditoria.respostas?.length || 0;
   
-  // Calculate goal (total questions + 1)
-  const meta = totalPerguntas + 1;
+  // Calculate goal (total questions - meta should be equal to total)
+  const meta = totalPerguntas;
   
   return (
     <Card>

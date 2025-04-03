@@ -52,7 +52,7 @@ export const PontuacaoPorSecao: React.FC<PontuacaoPorSecaoProps> = ({
             </thead>
             <tbody>
               {pontuacoesPorSecao.map((secao) => {
-                const meta = secao.total + 1;
+                const meta = secao.total;
                 const percentual = secao.total > 0 ? (secao.pontuacao / secao.total) * 100 : 0;
                 const corPontuacao = secao.pontuacao > 0 
                   ? 'text-green-600' 
@@ -86,7 +86,7 @@ export const PontuacaoPorSecao: React.FC<PontuacaoPorSecaoProps> = ({
                 </td>
                 <td className="py-3 px-4 text-center">
                   <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md">
-                    {pontuacoesPorSecao.reduce((total, secao) => total + secao.total, 0) + 1}
+                    {pontuacoesPorSecao.reduce((total, secao) => total + secao.total, 0)}
                   </span>
                 </td>
               </tr>
