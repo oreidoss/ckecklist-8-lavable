@@ -160,16 +160,19 @@ export type Database = {
           email: string
           id: string
           nome: string
+          senha: string | null
         }
         Insert: {
           email: string
           id?: string
           nome: string
+          senha?: string | null
         }
         Update: {
           email?: string
           id?: string
           nome?: string
+          senha?: string | null
         }
         Relationships: []
       }

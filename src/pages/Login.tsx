@@ -39,6 +39,10 @@ const Login = () => {
       return;
     }
 
+    // Let's debug the current users in the system
+    const usuarios = usuarioService.getUsuarios();
+    console.log("Usuários disponíveis no sistema:", usuarios);
+    
     // Try to login
     const user = usuarioService.login(nome, senha);
     

@@ -1,3 +1,4 @@
+
 import { Usuario } from '../types';
 import { BaseService } from './baseService';
 
@@ -38,15 +39,30 @@ export class UsuarioService extends BaseService {
 
   login(nome: string, senha: string): Usuario | null {
     const usuarios = this.getUsuarios();
-    const usuario = usuarios.find(u => u.nome === nome && u.senha === senha);
     
-    if (usuario) {
-      // Remover a senha antes de armazenar no localStorage
+    // Debug info for troubleshooting
+    console.log("Tentando login para: ", nome);
+    console.log("Usuários disponíveis: ", usuarios.length);
+    
+    // Check if the user exists by name first
+    const usuario = usuarios.find(u => u.nome === nome);
+    
+    if (!usuario) {
+      console.log("Usuário não encontrado");
+      return null;
+    }
+    
+    console.log("Usuário encontrado, verificando senha");
+    // Then check if the password matches
+    if (usuario.senha === senha) {
+      console.log("Senha correta, login bem-sucedido");
+      // Remove the password before storing in localStorage
       const { senha: _, ...userWithoutSenha } = usuario;
       localStorage.setItem(this.AUTH_KEY, JSON.stringify(userWithoutSenha));
       return usuario;
     }
     
+    console.log("Senha incorreta");
     return null;
   }
 
