@@ -26,12 +26,16 @@ import { Edit, Save } from 'lucide-react';
 interface EditInformacoesDialogProps {
   auditoria: any;
   usuarios: any[];
+  supervisores?: any[]; // Added this prop
+  gerentes?: any[]; // Added this prop
   refetchAuditoria: () => void;
 }
 
 export const EditInformacoesDialog: React.FC<EditInformacoesDialogProps> = ({
   auditoria,
   usuarios,
+  supervisores = [], // Default to empty array if not provided
+  gerentes = [], // Default to empty array if not provided
   refetchAuditoria
 }) => {
   const { toast } = useToast();
@@ -85,6 +89,10 @@ export const EditInformacoesDialog: React.FC<EditInformacoesDialogProps> = ({
     }
   };
 
+  // Use the filtered lists if provided, otherwise use all usuarios
+  const supervisorOptions = supervisores.length > 0 ? supervisores : usuarios;
+  const gerenteOptions = gerentes.length > 0 ? gerentes : usuarios;
+
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogTrigger asChild>
@@ -118,7 +126,7 @@ export const EditInformacoesDialog: React.FC<EditInformacoesDialogProps> = ({
                         <SelectValue placeholder="Selecione um supervisor" />
                       </SelectTrigger>
                       <SelectContent>
-                        {usuarios?.map((usuario) => (
+                        {supervisorOptions?.map((usuario) => (
                           <SelectItem key={usuario.id} value={usuario.nome}>
                             {usuario.nome}
                           </SelectItem>
@@ -145,7 +153,7 @@ export const EditInformacoesDialog: React.FC<EditInformacoesDialogProps> = ({
                         <SelectValue placeholder="Selecione um gerente" />
                       </SelectTrigger>
                       <SelectContent>
-                        {usuarios?.map((usuario) => (
+                        {gerenteOptions?.map((usuario) => (
                           <SelectItem key={usuario.id} value={usuario.nome}>
                             {usuario.nome}
                           </SelectItem>
