@@ -1,11 +1,11 @@
 
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
-import { useEffect } from "react";
 import { db } from "./lib/db";
 
 // Páginas do Auditor
@@ -25,40 +25,40 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => {
-  // Inicializa o banco de dados na primeira renderização
-  useEffect(() => {
-    db.initDatabase();
-  }, []);
+// Initialize database outside of component
+db.initDatabase();
 
+const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <TooltipProvider>
-          <Layout>
-            <Routes>
-              {/* Rotas do Auditor */}
-              <Route path="/" element={<AuditorHome />} />
-              <Route path="/checklist/:auditoriaId" element={<Checklist />} />
-              <Route path="/relatorio/:auditoriaId" element={<Relatorio />} />
-              <Route path="/relatorio/loja/:lojaId" element={<Relatorio />} />
-              
-              {/* Rotas do Admin */}
-              <Route path="/admin" element={<AdminLojas />} />
-              <Route path="/admin/secoes" element={<AdminSecoes />} />
-              <Route path="/admin/perguntas" element={<AdminPerguntas />} />
-              <Route path="/admin/usuarios" element={<AdminUsuarios />} />
-              <Route path="/admin/relatorios" element={<AdminRelatorios />} />
-              
-              {/* Outras rotas */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Layout>
-          <Toaster />
-          <Sonner />
-        </TooltipProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <TooltipProvider>
+            <Layout>
+              <Routes>
+                {/* Rotas do Auditor */}
+                <Route path="/" element={<AuditorHome />} />
+                <Route path="/checklist/:auditoriaId" element={<Checklist />} />
+                <Route path="/relatorio/:auditoriaId" element={<Relatorio />} />
+                <Route path="/relatorio/loja/:lojaId" element={<Relatorio />} />
+                
+                {/* Rotas do Admin */}
+                <Route path="/admin" element={<AdminLojas />} />
+                <Route path="/admin/secoes" element={<AdminSecoes />} />
+                <Route path="/admin/perguntas" element={<AdminPerguntas />} />
+                <Route path="/admin/usuarios" element={<AdminUsuarios />} />
+                <Route path="/admin/relatorios" element={<AdminRelatorios />} />
+                
+                {/* Outras rotas */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Layout>
+            <Toaster />
+            <Sonner />
+          </TooltipProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </React.StrictMode>
   );
 };
 
