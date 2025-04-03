@@ -15,12 +15,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { UserCheck } from 'lucide-react';
 
 type Usuario = {
   id: string;
   nome: string;
   email: string;
+  role?: string;
 };
 
 interface UsuariosCardProps {
@@ -44,6 +46,7 @@ export const UsuariosCard: React.FC<UsuariosCardProps> = ({ usuarios }) => {
                 <TableRow>
                   <TableHead>Nome</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Função</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -51,6 +54,13 @@ export const UsuariosCard: React.FC<UsuariosCardProps> = ({ usuarios }) => {
                   <TableRow key={usuario.id}>
                     <TableCell className="font-medium">{usuario.nome}</TableCell>
                     <TableCell>{usuario.email}</TableCell>
+                    <TableCell>
+                      {usuario.role && (
+                        <Badge variant={usuario.role === 'gerente' ? 'default' : 'secondary'}>
+                          {usuario.role === 'gerente' ? 'Gerente' : 'Supervisora'}
+                        </Badge>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

@@ -20,6 +20,10 @@ export const RelatorioActions: React.FC<RelatorioActionsProps> = ({
 }) => {
   const navigate = useNavigate();
 
+  // Filter usuarios by role if available
+  const supervisores = usuarios.filter(u => u.role === 'supervisor' || !u.role);
+  const gerentes = usuarios.filter(u => u.role === 'gerente' || !u.role);
+
   return (
     <div className="flex items-center justify-between mb-6">
       <Button variant="outline" onClick={() => navigate(-1)}>
@@ -29,7 +33,9 @@ export const RelatorioActions: React.FC<RelatorioActionsProps> = ({
       <div className="flex space-x-2">
         <EditInformacoesDialog 
           auditoria={auditoria} 
-          usuarios={usuarios} 
+          usuarios={usuarios}
+          supervisores={supervisores}
+          gerentes={gerentes}
           refetchAuditoria={refetchAuditoria} 
         />
         

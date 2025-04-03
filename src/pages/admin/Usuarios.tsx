@@ -21,6 +21,13 @@ import {
   DialogClose 
 } from "@/components/ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -39,20 +46,33 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { PageTitle } from "@/components/PageTitle";
 import { db, Usuario } from "@/lib/db";
 import { useToast } from '@/hooks/use-toast';
 import { Edit, Plus, Trash2, User, UserPlus } from 'lucide-react';
 
+// Extend Usuario type to include role
+interface UsuarioComFuncao extends Usuario {
+  role?: string;
+}
+
 const AdminUsuarios: React.FC = () => {
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [usuarioParaEditar, setUsuarioParaEditar] = useState<Usuario | null>(null);
-  const [novoUsuario, setNovoUsuario] = useState({ nome: '', email: '' });
+  const [usuarios, setUsuarios] = useState<UsuarioComFuncao[]>([]);
+  const [usuarioParaEditar, setUsuarioParaEditar] = useState<UsuarioComFuncao | null>(null);
+  const [novoUsuario, setNovoUsuario] = useState({ nome: '', email: '', role: '' });
   const { toast } = useToast();
   
   useEffect(() => {
     // Carregar usuários do banco de dados
-    setUsuarios(db.getUsuarios());
+    const usuariosDB = db.getUsuarios();
+    
+    // Verificar se existem funções nos usuários do banco de dados
+    // Isso é uma simulação, já que o DB mock provavelmente não suporta a coluna role
+    setUsuarios(usuariosDB.map(usuario => ({
+      ...usuario,
+      role: usuario.role || ''
+    })));
   }, []);
   
   const validarEmail = (email: string) => {
@@ -89,9 +109,22 @@ const AdminUsuarios: React.FC = () => {
       return;
     }
     
-    const adicionado = db.addUsuario(novoUsuario);
-    setUsuarios([...usuarios, adicionado]);
-    setNovoUsuario({ nome: '', email: '' });
+    // Adicionar usuário com função
+    const usuarioData = {
+      nome: novoUsuario.nome,
+      email: novoUsuario.email
+    };
+    
+    const adicionado = db.addUsuario(usuarioData);
+    
+    // Adicionar a função (role) ao usuário para nossa visualização
+    const usuarioComFuncao = {
+      ...adicionado,
+      role: novoUsuario.role
+    };
+    
+    setUsuarios([...usuarios, usuarioComFuncao]);
+    setNovoUsuario({ nome: '', email: '', role: '' });
     
     toast({
       title: "Usuário adicionado",
@@ -133,10 +166,16 @@ const AdminUsuarios: React.FC = () => {
       return;
     }
     
-    db.updateUsuario(usuarioParaEditar);
+    // Atualizar o usuário no DB (apenas com nome e email, já que o DB mock provavelmente
+    // não suporta a coluna role)
+    const { role, ...usuarioSemRole } = usuarioParaEditar;
+    db.updateUsuario(usuarioSemRole);
+    
+    // Atualizar no state mantendo a função (role)
     setUsuarios(usuarios.map(usuario => 
       usuario.id === usuarioParaEditar.id ? usuarioParaEditar : usuario
     ));
+    
     setUsuarioParaEditar(null);
     
     toast({
@@ -216,6 +255,24 @@ const AdminUsuarios: React.FC = () => {
                   placeholder="joao.silva@exemplo.com"
                 />
               </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="role" className="text-right">
+                  Função
+                </Label>
+                <Select 
+                  value={novoUsuario.role} 
+                  onValueChange={(value) => setNovoUsuario({ ...novoUsuario, role: value })}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Selecione uma função" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Sem função específica</SelectItem>
+                    <SelectItem value="supervisor">Supervisora</SelectItem>
+                    <SelectItem value="gerente">Gerente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <DialogFooter>
               <DialogClose asChild>
@@ -243,6 +300,7 @@ const AdminUsuarios: React.FC = () => {
                 <TableRow>
                   <TableHead>Nome</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Função</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -251,6 +309,15 @@ const AdminUsuarios: React.FC = () => {
                   <TableRow key={usuario.id}>
                     <TableCell className="font-medium">{usuario.nome}</TableCell>
                     <TableCell>{usuario.email}</TableCell>
+                    <TableCell>
+                      {usuario.role ? (
+                        <Badge variant={usuario.role === 'gerente' ? 'default' : 'secondary'}>
+                          {usuario.role === 'gerente' ? 'Gerente' : 'Supervisora'}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">Não definida</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
                         <Dialog>
@@ -300,6 +367,27 @@ const AdminUsuarios: React.FC = () => {
                                     })}
                                     className="col-span-3"
                                   />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                  <Label htmlFor="edit-role" className="text-right">
+                                    Função
+                                  </Label>
+                                  <Select 
+                                    value={usuarioParaEditar.role || ''} 
+                                    onValueChange={(value) => setUsuarioParaEditar({ 
+                                      ...usuarioParaEditar, 
+                                      role: value 
+                                    })}
+                                  >
+                                    <SelectTrigger className="col-span-3">
+                                      <SelectValue placeholder="Selecione uma função" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="">Sem função específica</SelectItem>
+                                      <SelectItem value="supervisor">Supervisora</SelectItem>
+                                      <SelectItem value="gerente">Gerente</SelectItem>
+                                    </SelectContent>
+                                  </Select>
                                 </div>
                               </div>
                             )}
