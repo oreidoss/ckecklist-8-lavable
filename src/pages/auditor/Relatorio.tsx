@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Card, 
@@ -11,6 +11,26 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { 
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose
+} from "@/components/ui/dialog";
 import { 
   Table, 
   TableBody, 
@@ -28,12 +48,15 @@ import {
   ArrowLeft, 
   Check, 
   Download, 
+  Edit, 
   Mail, 
   X 
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { Database } from '@/integrations/supabase/types';
+import html2pdf from 'html2pdf.js';
+import { useForm } from 'react-hook-form';
 
 type Loja = Database['public']['Tables']['lojas']['Row'];
 type Usuario = Database['public']['Tables']['usuarios']['Row'];
@@ -45,18 +68,25 @@ type Auditoria = Database['public']['Tables']['auditorias']['Row'] & {
   usuario?: Usuario;
 };
 
+type AuditoriaFormData = {
+  supervisor: string;
+  gerente: string;
+};
+
 const Relatorio: React.FC = () => {
   const { auditoriaId, lojaId } = useParams<{ auditoriaId?: string; lojaId?: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const reportRef = useRef<HTMLDivElement>(null);
   
   const [pontuacoesPorSecao, setPontuacoesPorSecao] = useState<Record<string, number>>({});
   const [pontosCriticos, setPontosCriticos] = useState<{ secaoId: string, nome: string, pontuacao: number }[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
   
   // Handle both routing patterns
   const realAuditoriaId = auditoriaId || lojaId;
   
-  const { data: auditoria, isLoading: loadingAuditoria } = useQuery({
+  const { data: auditoria, isLoading: loadingAuditoria, refetch: refetchAuditoria } = useQuery({
     queryKey: ['auditoria', realAuditoriaId],
     queryFn: async () => {
       if (!realAuditoriaId) throw new Error('ID da auditoria não fornecido');
@@ -113,6 +143,23 @@ const Relatorio: React.FC = () => {
     }
   });
   
+  const form = useForm<AuditoriaFormData>({
+    defaultValues: {
+      supervisor: '',
+      gerente: ''
+    }
+  });
+  
+  // Update form values when auditoria data is loaded
+  useEffect(() => {
+    if (auditoria) {
+      form.reset({
+        supervisor: auditoria.supervisor || '',
+        gerente: auditoria.gerente || ''
+      });
+    }
+  }, [auditoria, form]);
+  
   // Calculate pontuação por seção and identify pontos críticos
   useEffect(() => {
     if (!respostas || !perguntas || !secoes) return;
@@ -153,6 +200,37 @@ const Relatorio: React.FC = () => {
     
     setPontosCriticos(criticos);
   }, [respostas, perguntas, secoes]);
+
+  const onSubmit = async (data: AuditoriaFormData) => {
+    if (!realAuditoriaId) return;
+    
+    try {
+      const { error } = await supabase
+        .from('auditorias')
+        .update({
+          supervisor: data.supervisor,
+          gerente: data.gerente
+        })
+        .eq('id', realAuditoriaId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Dados atualizados",
+        description: "Supervisor e gerente atualizados com sucesso."
+      });
+      
+      setIsEditing(false);
+      refetchAuditoria();
+    } catch (error) {
+      console.error("Erro ao atualizar dados:", error);
+      toast({
+        title: "Erro ao atualizar",
+        description: "Não foi possível atualizar os dados.",
+        variant: "destructive"
+      });
+    }
+  };
   
   const handleEnviarEmail = () => {
     toast({
@@ -162,10 +240,69 @@ const Relatorio: React.FC = () => {
   };
   
   const handleDownloadPDF = () => {
-    toast({
-      title: "PDF gerado",
-      description: "O relatório foi salvo em PDF com sucesso."
-    });
+    if (!reportRef.current) return;
+    
+    // Clone the report element to avoid modifying the original
+    const reportElement = reportRef.current.cloneNode(true) as HTMLElement;
+    
+    // Add PDF specific styling
+    const styleElement = document.createElement('style');
+    styleElement.textContent = `
+      @page {
+        margin: 1cm;
+      }
+      body {
+        font-family: Arial, sans-serif;
+      }
+      .pdf-header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+      }
+      table, th, td {
+        border: 1px solid #ddd;
+      }
+      th, td {
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+    `;
+    reportElement.appendChild(styleElement);
+    
+    // Configure PDF options
+    const options = {
+      margin: [10, 10, 10, 10],
+      filename: `relatorio-auditoria-${auditoria?.loja?.numero || 'loja'}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    html2pdf()
+      .from(reportElement)
+      .set(options)
+      .save()
+      .then(() => {
+        toast({
+          title: "PDF gerado",
+          description: "O relatório foi salvo em PDF com sucesso."
+        });
+      })
+      .catch((error) => {
+        console.error("Erro ao gerar PDF:", error);
+        toast({
+          title: "Erro ao gerar PDF",
+          description: "Não foi possível gerar o PDF.",
+          variant: "destructive"
+        });
+      });
   };
   
   const getRespostasBySecao = (secaoId: string) => {
@@ -190,6 +327,8 @@ const Relatorio: React.FC = () => {
         return <X className="h-4 w-4 text-red-500" />;
       case "Regular":
         return <div className="h-4 w-4 rounded-full bg-yellow-500"></div>;
+      case "N/A":
+        return <div className="h-4 w-4 rounded-full bg-gray-400"></div>;
       default:
         return <div className="h-4 w-4 rounded-full bg-gray-400"></div>;
     }
@@ -232,7 +371,7 @@ const Relatorio: React.FC = () => {
       />
       
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-6">
-        <div className="space-y-6">
+        <div className="space-y-6" ref={reportRef}>
           <Card>
             <CardHeader className="pb-4">
               <CardTitle>Informações Gerais</CardTitle>
@@ -249,6 +388,18 @@ const Relatorio: React.FC = () => {
                   <p className="text-lg font-semibold">
                     {auditoria.data ? format(new Date(auditoria.data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : 'Data não informada'}
                   </p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Supervisor</h4>
+                  <div className="flex items-center">
+                    <p className="text-lg font-semibold">{auditoria.supervisor || 'Não informado'}</p>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Gerente</h4>
+                  <div className="flex items-center">
+                    <p className="text-lg font-semibold">{auditoria.gerente || 'Não informado'}</p>
+                  </div>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Auditor</h4>
@@ -438,6 +589,66 @@ const Relatorio: React.FC = () => {
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Voltar para o Dashboard
               </Button>
+              
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Editar Supervisor/Gerente
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Editar Informações</DialogTitle>
+                    <DialogDescription>
+                      Atualize os dados do supervisor e gerente da loja.
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="supervisor"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Supervisor</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Nome do supervisor" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="gerente"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Gerente</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Nome do gerente" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <DialogFooter>
+                        <DialogClose asChild>
+                          <Button variant="outline" type="button">Cancelar</Button>
+                        </DialogClose>
+                        <Button type="submit">Salvar Alterações</Button>
+                      </DialogFooter>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
           
