@@ -20,7 +20,6 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { PageTitle } from "@/components/PageTitle";
-import { db, Auditoria, Loja, Usuario, Secao, Pergunta, Resposta } from "@/lib/db";
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -32,65 +31,128 @@ import {
   Mail, 
   X 
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
+import { Database } from '@/integrations/supabase/types';
+
+type Loja = Database['public']['Tables']['lojas']['Row'];
+type Usuario = Database['public']['Tables']['usuarios']['Row'];
+type Secao = Database['public']['Tables']['secoes']['Row'];
+type Pergunta = Database['public']['Tables']['perguntas']['Row'];
+type Resposta = Database['public']['Tables']['respostas']['Row'];
+type Auditoria = Database['public']['Tables']['auditorias']['Row'] & {
+  loja?: Loja;
+  usuario?: Usuario;
+};
 
 const Relatorio: React.FC = () => {
-  const { auditoriaId } = useParams<{ auditoriaId: string }>();
+  const { auditoriaId, lojaId } = useParams<{ auditoriaId?: string; lojaId?: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [auditoria, setAuditoria] = useState<Auditoria | null>(null);
-  const [loja, setLoja] = useState<Loja | null>(null);
-  const [usuario, setUsuario] = useState<Usuario | null>(null);
-  const [pontuacoesPorSecao, setPontuacoesPorSecao] = useState<Record<number, number>>({});
-  const [secoes, setSecoes] = useState<Secao[]>([]);
-  const [pontosCriticos, setPontosCriticos] = useState<{ secaoId: number, nome: string, pontuacao: number }[]>([]);
-  const [respostas, setRespostas] = useState<Resposta[]>([]);
-  const [perguntas, setPerguntas] = useState<Pergunta[]>([]);
+  const [pontuacoesPorSecao, setPontuacoesPorSecao] = useState<Record<string, number>>({});
+  const [pontosCriticos, setPontosCriticos] = useState<{ secaoId: string, nome: string, pontuacao: number }[]>([]);
   
-  useEffect(() => {
-    if (!auditoriaId) return;
-    
-    const auditoriaData = db.getAuditoria(parseInt(auditoriaId));
-    if (!auditoriaData) {
-      toast({
-        title: "Auditoria não encontrada",
-        description: "Não foi possível encontrar a auditoria solicitada.",
-        variant: "destructive"
-      });
-      navigate('/');
-      return;
+  // Handle both routing patterns
+  const realAuditoriaId = auditoriaId || lojaId;
+  
+  const { data: auditoria, isLoading: loadingAuditoria } = useQuery({
+    queryKey: ['auditoria', realAuditoriaId],
+    queryFn: async () => {
+      if (!realAuditoriaId) throw new Error('ID da auditoria não fornecido');
+      
+      const { data, error } = await supabase
+        .from('auditorias')
+        .select('*, loja:lojas(*), usuario:usuarios(*)')
+        .eq('id', realAuditoriaId)
+        .single();
+      
+      if (error) throw error;
+      return data as Auditoria;
     }
+  });
+  
+  const { data: secoes } = useQuery({
+    queryKey: ['secoes'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('secoes')
+        .select('*')
+        .order('id');
+      
+      if (error) throw error;
+      return data as Secao[];
+    }
+  });
+  
+  const { data: perguntas } = useQuery({
+    queryKey: ['perguntas'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('perguntas')
+        .select('*')
+        .order('secao_id, id');
+      
+      if (error) throw error;
+      return data as Pergunta[];
+    }
+  });
+  
+  const { data: respostas, isLoading: loadingRespostas } = useQuery({
+    queryKey: ['respostas', realAuditoriaId],
+    queryFn: async () => {
+      if (!realAuditoriaId) throw new Error('ID da auditoria não fornecido');
+      
+      const { data, error } = await supabase
+        .from('respostas')
+        .select('*')
+        .eq('auditoria_id', realAuditoriaId);
+      
+      if (error) throw error;
+      return data as Resposta[];
+    }
+  });
+  
+  // Calculate pontuação por seção and identify pontos críticos
+  useEffect(() => {
+    if (!respostas || !perguntas || !secoes) return;
     
-    setAuditoria(auditoriaData);
+    // Calculate pontuação por seção
+    const pontuacoes: Record<string, number> = {};
     
-    // Carregar loja
-    const lojaData = db.getLojas().find(l => l.id === auditoriaData.loja_id);
-    setLoja(lojaData || null);
+    secoes.forEach(secao => {
+      // Obter todas as perguntas desta seção 
+      const perguntasSecao = perguntas.filter(p => p.secao_id === secao.id);
+      
+      // Obter todas as respostas das perguntas desta seção
+      let pontuacaoSecao = 0;
+      let totalRespondido = 0;
+      
+      perguntasSecao.forEach(pergunta => {
+        const resposta = respostas.find(r => r.pergunta_id === pergunta.id);
+        if (resposta) {
+          pontuacaoSecao += resposta.pontuacao_obtida || 0;
+          totalRespondido++;
+        }
+      });
+      
+      // Salvar a pontuação média da seção
+      pontuacoes[secao.id] = totalRespondido > 0 ? pontuacaoSecao : 0;
+    });
     
-    // Carregar usuário
-    const usuarioData = db.getUsuarios().find(u => u.id === auditoriaData.usuario_id);
-    setUsuario(usuarioData || null);
-    
-    // Carregar seções
-    const secoesData = db.getSecoes();
-    setSecoes(secoesData);
-    
-    // Carregar perguntas
-    const perguntasData = db.getPerguntas();
-    setPerguntas(perguntasData);
-    
-    // Carregar respostas
-    const respostasData = db.getRespostasByAuditoria(parseInt(auditoriaId));
-    setRespostas(respostasData);
-    
-    // Calcular pontuações por seção
-    const pontuacoes = db.calcularPontuacaoPorSecao(parseInt(auditoriaId));
     setPontuacoesPorSecao(pontuacoes);
     
-    // Identificar pontos críticos
-    const criticos = db.identificarPontosCriticos(parseInt(auditoriaId));
+    // Identify pontos críticos (seções com pontuação <= 0)
+    const criticos = secoes
+      .filter(secao => pontuacoes[secao.id] <= 0)
+      .map(secao => ({
+        secaoId: secao.id,
+        nome: secao.nome,
+        pontuacao: pontuacoes[secao.id]
+      }));
+    
     setPontosCriticos(criticos);
-  }, [auditoriaId, navigate, toast]);
+  }, [respostas, perguntas, secoes]);
   
   const handleEnviarEmail = () => {
     toast({
@@ -106,29 +168,61 @@ const Relatorio: React.FC = () => {
     });
   };
   
-  const getRespostasBySecao = (secaoId: number) => {
+  const getRespostasBySecao = (secaoId: string) => {
+    if (!respostas || !perguntas) return [];
+    
     return respostas.filter(resposta => {
       const pergunta = perguntas.find(p => p.id === resposta.pergunta_id);
       return pergunta && pergunta.secao_id === secaoId;
     });
   };
   
+  const getPerguntasBySecao = (secaoId: string) => {
+    if (!perguntas) return [];
+    return perguntas.filter(pergunta => pergunta.secao_id === secaoId);
+  };
+  
   const getRespostaIcon = (resposta: string) => {
     switch(resposta) {
       case "Sim":
-        return <Check className="h-4 w-4 text-success" />;
+        return <Check className="h-4 w-4 text-green-500" />;
       case "Não":
-        return <X className="h-4 w-4 text-danger" />;
+        return <X className="h-4 w-4 text-red-500" />;
       case "Regular":
-        return <div className="h-4 w-4 rounded-full bg-warning"></div>;
+        return <div className="h-4 w-4 rounded-full bg-yellow-500"></div>;
       default:
-        return <div className="h-4 w-4 rounded-full bg-muted"></div>;
+        return <div className="h-4 w-4 rounded-full bg-gray-400"></div>;
     }
   };
   
-  if (!auditoria || !loja) {
-    return <div>Carregando...</div>;
+  if (loadingAuditoria || loadingRespostas) {
+    return <div className="flex justify-center items-center h-96">Carregando...</div>;
   }
+  
+  if (!auditoria || !auditoria.loja) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 text-center">
+        <AlertCircle className="h-16 w-16 text-red-500 mb-4" />
+        <h2 className="text-2xl font-bold mb-2">Auditoria não encontrada</h2>
+        <p className="text-gray-600 mb-6">Não foi possível encontrar os dados solicitados.</p>
+        <Button onClick={() => navigate('/')}>Voltar para o Dashboard</Button>
+      </div>
+    );
+  }
+  
+  // Identificar pontos fracos (perguntas com pontuação negativa)
+  const perguntasNegativas = respostas?.filter(r => r.pontuacao_obtida && r.pontuacao_obtida < 0) || [];
+  const pontosFracos = perguntasNegativas.map(resposta => {
+    const pergunta = perguntas?.find(p => p.id === resposta.pergunta_id);
+    const secao = pergunta ? secoes?.find(s => s.id === pergunta.secao_id) : null;
+    return {
+      perguntaId: resposta.pergunta_id,
+      perguntaTexto: pergunta?.texto || '',
+      secaoId: pergunta?.secao_id,
+      secaoNome: secao?.nome || '',
+      pontuacao: resposta.pontuacao_obtida || 0
+    };
+  });
   
   return (
     <div>
@@ -148,28 +242,28 @@ const Relatorio: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Loja</h4>
-                  <p className="text-lg font-semibold">{loja.numero} - {loja.nome}</p>
+                  <p className="text-lg font-semibold">{auditoria.loja.numero} - {auditoria.loja.nome}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Data da Auditoria</h4>
                   <p className="text-lg font-semibold">
-                    {format(new Date(auditoria.data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                    {auditoria.data ? format(new Date(auditoria.data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : 'Data não informada'}
                   </p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Auditor</h4>
-                  <p className="text-lg font-semibold">{usuario?.nome || 'Não informado'}</p>
+                  <p className="text-lg font-semibold">{auditoria.usuario?.nome || 'Não informado'}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Pontuação Total</h4>
                   <p className={`text-lg font-semibold ${
-                    auditoria.pontuacao_total > 0 
-                      ? 'text-success' 
-                      : auditoria.pontuacao_total < 0 
-                      ? 'text-danger' 
+                    auditoria.pontuacao_total && auditoria.pontuacao_total > 0 
+                      ? 'text-green-500' 
+                      : auditoria.pontuacao_total && auditoria.pontuacao_total < 0 
+                      ? 'text-red-500' 
                       : ''
                   }`}>
-                    {auditoria.pontuacao_total.toFixed(1)}
+                    {auditoria.pontuacao_total ? auditoria.pontuacao_total.toFixed(1) : '0'}
                   </p>
                 </div>
               </div>
@@ -179,18 +273,18 @@ const Relatorio: React.FC = () => {
               <div>
                 <h3 className="text-lg font-semibold mb-3">Pontuação por Seção</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  {secoes.map(secao => {
+                  {secoes?.map(secao => {
                     const pontuacao = pontuacoesPorSecao[secao.id] || 0;
                     const ehCritico = pontuacao <= 0;
                     
                     return (
                       <Card key={secao.id} className={`border ${
-                        ehCritico ? 'border-danger/50 bg-danger/5' : 'border-success/50 bg-success/5'
+                        ehCritico ? 'border-red-500/50 bg-red-500/5' : 'border-green-500/50 bg-green-500/5'
                       }`}>
                         <CardContent className="p-4">
                           <h4 className="font-medium mb-1">{secao.nome}</h4>
                           <p className={`text-xl font-bold ${
-                            ehCritico ? 'text-danger' : 'text-success'
+                            ehCritico ? 'text-red-500' : 'text-green-500'
                           }`}>
                             {pontuacao.toFixed(1)}
                           </p>
@@ -203,35 +297,32 @@ const Relatorio: React.FC = () => {
             </CardContent>
           </Card>
           
-          {pontosCriticos.length > 0 && (
-            <Card className="border-danger/50 bg-danger/5">
+          {pontosFracos.length > 0 && (
+            <Card className="border-red-500/50 bg-red-500/5">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center text-danger">
+                <CardTitle className="flex items-center text-red-500">
                   <AlertCircle className="h-5 w-5 mr-2" />
-                  Pontos Críticos Identificados
+                  Pontos Fracos Identificados
                 </CardTitle>
                 <CardDescription>
-                  Seções que precisam de atenção imediata
+                  Itens que precisam de atenção imediata
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {pontosCriticos.map((ponto) => {
-                    const secaoRespostas = getRespostasBySecao(ponto.secaoId);
-                    const perguntasNegativas = secaoRespostas
-                      .filter(r => r.pontuacao_obtida < 0)
-                      .map(r => perguntas.find(p => p.id === r.pergunta_id));
+                  {secoes?.map((secao) => {
+                    // Filtrar pontos fracos desta seção
+                    const pontosFracosSecao = pontosFracos.filter(p => p.secaoId === secao.id);
+                    if (pontosFracosSecao.length === 0) return null;
                     
                     return (
-                      <div key={ponto.secaoId}>
-                        <h4 className="font-medium mb-2">{ponto.nome} ({ponto.pontuacao.toFixed(1)})</h4>
+                      <div key={secao.id}>
+                        <h4 className="font-medium mb-2">{secao.nome}</h4>
                         <ul className="space-y-1 ml-5 list-disc">
-                          {perguntasNegativas.map((pergunta) => (
-                            pergunta && (
-                              <li key={pergunta.id} className="text-sm">
-                                {pergunta.texto}
-                              </li>
-                            )
+                          {pontosFracosSecao.map((ponto) => (
+                            <li key={ponto.perguntaId} className="text-sm">
+                              {ponto.perguntaTexto} ({ponto.pontuacao.toFixed(1)})
+                            </li>
                           ))}
                         </ul>
                       </div>
@@ -250,53 +341,67 @@ const Relatorio: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {secoes.map(secao => {
+              {secoes?.map(secao => {
                 const secaoRespostas = getRespostasBySecao(secao.id);
-                if (secaoRespostas.length === 0) return null;
+                const perguntasSecao = getPerguntasBySecao(secao.id);
+                if (secaoRespostas.length === 0 && perguntasSecao.length === 0) return null;
                 
                 return (
                   <div key={secao.id} className="mb-6">
                     <h3 className="text-lg font-semibold mb-3">{secao.nome}</h3>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[50%]">Pergunta</TableHead>
-                          <TableHead className="w-[20%]">Resposta</TableHead>
-                          <TableHead>Pontuação</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {secaoRespostas.map(resposta => {
-                          const pergunta = perguntas.find(p => p.id === resposta.pergunta_id);
-                          if (!pergunta) return null;
-                          
-                          return (
-                            <TableRow key={resposta.id}>
-                              <TableCell>{pergunta.texto}</TableCell>
-                              <TableCell>
-                                <div className="flex items-center space-x-2">
-                                  {getRespostaIcon(resposta.resposta)}
-                                  <span>{resposta.resposta}</span>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <span className={`font-medium ${
-                                  resposta.pontuacao_obtida > 0
-                                    ? 'text-success'
-                                    : resposta.pontuacao_obtida < 0
-                                    ? 'text-danger'
-                                    : resposta.pontuacao_obtida === 0.5
-                                    ? 'text-warning'
-                                    : 'text-muted-foreground'
-                                }`}>
-                                  {resposta.pontuacao_obtida > 0 ? '+' : ''}{resposta.pontuacao_obtida}
-                                </span>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
+                    {secaoRespostas.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[50%]">Pergunta</TableHead>
+                            <TableHead className="w-[20%]">Resposta</TableHead>
+                            <TableHead>Pontuação</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {perguntasSecao.map(pergunta => {
+                            const resposta = secaoRespostas.find(r => r.pergunta_id === pergunta.id);
+                            
+                            return (
+                              <TableRow key={pergunta.id}>
+                                <TableCell>{pergunta.texto}</TableCell>
+                                <TableCell>
+                                  {resposta ? (
+                                    <div className="flex items-center space-x-2">
+                                      {getRespostaIcon(resposta.resposta || '')}
+                                      <span>{resposta.resposta}</span>
+                                    </div>
+                                  ) : (
+                                    <span className="text-gray-400">Não respondido</span>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  {resposta ? (
+                                    <span className={`font-medium ${
+                                      resposta.pontuacao_obtida && resposta.pontuacao_obtida > 0
+                                        ? 'text-green-500'
+                                        : resposta.pontuacao_obtida && resposta.pontuacao_obtida < 0
+                                        ? 'text-red-500'
+                                        : resposta.pontuacao_obtida === 0.5
+                                        ? 'text-yellow-500'
+                                        : 'text-gray-500'
+                                    }`}>
+                                      {resposta.pontuacao_obtida && resposta.pontuacao_obtida > 0 ? '+' : ''}{resposta.pontuacao_obtida}
+                                    </span>
+                                  ) : (
+                                    <span className="text-gray-400">-</span>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="text-center py-4 text-gray-500">
+                        Nenhuma resposta registrada para esta seção
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -342,29 +447,72 @@ const Relatorio: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className={`rounded-md p-4 ${
-                auditoria.pontuacao_total > 5 
-                  ? 'bg-success/10 border border-success/20' 
-                  : auditoria.pontuacao_total > 0 
-                  ? 'bg-warning/10 border border-warning/20' 
-                  : 'bg-danger/10 border border-danger/20'
+                auditoria.pontuacao_total && auditoria.pontuacao_total > 5 
+                  ? 'bg-green-500/10 border border-green-500/20' 
+                  : auditoria.pontuacao_total && auditoria.pontuacao_total > 0 
+                  ? 'bg-yellow-500/10 border border-yellow-500/20' 
+                  : 'bg-red-500/10 border border-red-500/20'
               }`}>
                 <div className="font-medium mb-2">
-                  {auditoria.pontuacao_total > 5 
+                  {auditoria.pontuacao_total && auditoria.pontuacao_total > 5 
                     ? 'Loja em boas condições' 
-                    : auditoria.pontuacao_total > 0 
+                    : auditoria.pontuacao_total && auditoria.pontuacao_total > 0 
                     ? 'Loja necessita de melhorias' 
                     : 'Loja em condições críticas'}
                 </div>
                 <p className="text-sm">
-                  {auditoria.pontuacao_total > 5 
+                  {auditoria.pontuacao_total && auditoria.pontuacao_total > 5 
                     ? 'A loja apresenta um bom desempenho geral. Continue monitorando e implementando melhorias contínuas.' 
-                    : auditoria.pontuacao_total > 0 
+                    : auditoria.pontuacao_total && auditoria.pontuacao_total > 0 
                     ? 'A loja precisa de atenção em alguns aspectos. Recomenda-se focar nos pontos críticos identificados.' 
                     : 'A loja apresenta problemas graves que requerem atenção imediata. É necessário elaborar um plano de ação urgente.'}
                 </p>
               </div>
             </CardContent>
           </Card>
+          
+          {pontosFracos.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Análise de Pontos Fracos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-sm">
+                    Esta auditoria identificou {pontosFracos.length} {pontosFracos.length === 1 ? 'item crítico' : 'itens críticos'} que necessitam de atenção imediata. 
+                    Estes problemas estão concentrados principalmente nas seguintes áreas:
+                  </p>
+                  
+                  {/* Resumo de pontos fracos por seção */}
+                  <div className="space-y-2">
+                    {secoes?.filter(secao => {
+                      const pontosFracosSecao = pontosFracos.filter(p => p.secaoId === secao.id);
+                      return pontosFracosSecao.length > 0;
+                    }).map(secao => {
+                      const pontosFracosSecao = pontosFracos.filter(p => p.secaoId === secao.id);
+                      return (
+                        <div key={secao.id} className="flex justify-between items-center">
+                          <span>{secao.nome}</span>
+                          <span className="font-medium text-red-500">{pontosFracosSecao.length} {pontosFracosSecao.length === 1 ? 'item' : 'itens'}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="text-sm">
+                    <p className="font-medium mb-2">Recomendações:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Criar plano de ação para corrigir os pontos fracos identificados</li>
+                      <li>Priorizar as seções com maior número de itens críticos</li>
+                      <li>Realizar nova auditoria em 30 dias para verificar melhorias</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

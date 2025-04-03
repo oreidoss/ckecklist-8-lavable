@@ -25,76 +25,115 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageTitle } from "@/components/PageTitle";
-import { db, Auditoria, Loja, Usuario } from "@/lib/db";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { BarChart3, FileText, Search } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
+import { Database } from '@/integrations/supabase/types';
+
+type Loja = Database['public']['Tables']['lojas']['Row'];
+type Usuario = Database['public']['Tables']['usuarios']['Row'];
+type Auditoria = Database['public']['Tables']['auditorias']['Row'] & {
+  loja?: Loja;
+  usuario?: Usuario;
+};
 
 const AdminRelatorios: React.FC = () => {
-  const [auditorias, setAuditorias] = useState<Auditoria[]>([]);
-  const [lojas, setLojas] = useState<Loja[]>([]);
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [lojaFiltro, setLojaFiltro] = useState<string>('');
   const [dadosGrafico, setDadosGrafico] = useState<{ nome: string; pontuacao: number }[]>([]);
   const navigate = useNavigate();
   
+  const { data: auditorias, isLoading: isLoadingAuditorias } = useQuery({
+    queryKey: ['auditorias'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('auditorias')
+        .select('*, loja:lojas(*), usuario:usuarios(*)')
+        .order('data', { ascending: false });
+      
+      if (error) throw error;
+      return data as Auditoria[];
+    }
+  });
+  
+  const { data: lojas } = useQuery({
+    queryKey: ['lojas'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('lojas')
+        .select('*')
+        .order('numero');
+      
+      if (error) throw error;
+      return data as Loja[];
+    }
+  });
+  
+  // Preparar dados para o gráfico
   useEffect(() => {
-    // Carregar dados do banco de dados
-    const todasAuditorias = db.getAuditorias();
-    const todasLojas = db.getLojas();
-    const todosUsuarios = db.getUsuarios();
+    if (!auditorias || !lojas) return;
     
-    setAuditorias(todasAuditorias);
-    setLojas(todasLojas);
-    setUsuarios(todosUsuarios);
-    
-    // Preparar dados para o gráfico
-    const dadosParaGrafico = todasLojas.map(loja => {
-      const auditoriasLoja = todasAuditorias.filter(a => a.loja_id === loja.id);
+    const dadosParaGrafico = lojas.map(loja => {
+      const auditoriasLoja = auditorias.filter(a => a.loja_id === loja.id);
       const mediaPontuacao = auditoriasLoja.length > 0
-        ? auditoriasLoja.reduce((acc, curr) => acc + curr.pontuacao_total, 0) / auditoriasLoja.length
+        ? auditoriasLoja.reduce((acc, curr) => acc + (curr.pontuacao_total || 0), 0) / auditoriasLoja.length
         : 0;
       
       return {
         nome: loja.nome,
         pontuacao: parseFloat(mediaPontuacao.toFixed(1))
       };
-    });
+    }).sort((a, b) => b.pontuacao - a.pontuacao); // Sort by score descending
     
     setDadosGrafico(dadosParaGrafico);
-  }, []);
+  }, [auditorias, lojas]);
   
   // Filtra auditorias por loja selecionada
-  const auditoriasFiltradas = lojaFiltro
-    ? auditorias.filter(auditoria => auditoria.loja_id === parseInt(lojaFiltro))
+  const auditoriasFiltradas = lojaFiltro && auditorias
+    ? auditorias.filter(auditoria => auditoria.loja_id === lojaFiltro)
     : auditorias;
   
-  // Ordena por data, mais recentes primeiro
-  const auditoriasOrdenadas = [...auditoriasFiltradas].sort(
-    (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()
-  );
-  
-  const getNomeLoja = (lojaId: number) => {
-    const loja = lojas.find(l => l.id === lojaId);
-    return loja ? `${loja.numero} - ${loja.nome}` : 'Loja não encontrada';
-  };
-  
-  const getNomeUsuario = (usuarioId: number) => {
-    const usuario = usuarios.find(u => u.id === usuarioId);
-    return usuario ? usuario.nome : 'Usuário não encontrado';
-  };
-  
-  const getStatusAuditoria = (pontuacao: number) => {
+  const getStatusAuditoria = (pontuacao: number | null) => {
+    if (!pontuacao) return <Badge className="bg-gray-500 hover:bg-gray-500">Pendente</Badge>;
+    
     if (pontuacao > 5) {
-      return <Badge className="bg-success hover:bg-success">Aprovada</Badge>;
+      return <Badge className="bg-green-500 hover:bg-green-500">Aprovada</Badge>;
     } else if (pontuacao > 0) {
-      return <Badge className="bg-warning hover:bg-warning">Melhorias Necessárias</Badge>;
+      return <Badge className="bg-yellow-500 hover:bg-yellow-500">Melhorias Necessárias</Badge>;
     } else {
-      return <Badge className="bg-danger hover:bg-danger">Crítica</Badge>;
+      return <Badge className="bg-red-500 hover:bg-red-500">Crítica</Badge>;
     }
   };
+  
+  // Função para calcular estatísticas globais
+  const calcularEstatisticas = () => {
+    if (!auditorias) return { total: 0, lojasAuditadas: 0, aprovadas: 0, melhorias: 0, criticas: 0, media: 0 };
+    
+    const lojasAuditadas = new Set(auditorias.map(a => a.loja_id)).size;
+    const aprovadas = auditorias.filter(a => a.pontuacao_total && a.pontuacao_total > 5).length;
+    const melhorias = auditorias.filter(a => a.pontuacao_total && a.pontuacao_total > 0 && a.pontuacao_total <= 5).length;
+    const criticas = auditorias.filter(a => !a.pontuacao_total || a.pontuacao_total <= 0).length;
+    
+    let mediaPontuacao = 0;
+    if (auditorias.length > 0) {
+      const somaPontuacoes = auditorias.reduce((acc, curr) => acc + (curr.pontuacao_total || 0), 0);
+      mediaPontuacao = somaPontuacoes / auditorias.length;
+    }
+    
+    return {
+      total: auditorias.length,
+      lojasAuditadas,
+      aprovadas,
+      melhorias,
+      criticas,
+      media: parseFloat(mediaPontuacao.toFixed(1))
+    };
+  };
+  
+  const estatisticas = calcularEstatisticas();
   
   return (
     <div>
@@ -119,7 +158,7 @@ const AdminRelatorios: React.FC = () => {
                     <BarChart data={dadosGrafico}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="nome" />
-                      <YAxis />
+                      <YAxis domain={[-5, 10]} />
                       <Tooltip formatter={(value) => [`${value} pontos`, 'Pontuação']} />
                       <Bar 
                         dataKey="pontuacao" 
@@ -146,25 +185,31 @@ const AdminRelatorios: React.FC = () => {
                   Lista de todas as auditorias realizadas
                 </CardDescription>
               </div>
-              <Select 
-                value={lojaFiltro} 
-                onValueChange={setLojaFiltro}
-              >
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Todas as lojas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Todas as lojas</SelectItem>
-                  {lojas.map((loja) => (
-                    <SelectItem key={loja.id} value={loja.id.toString()}>
-                      {loja.numero} - {loja.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {lojas && lojas.length > 0 && (
+                <Select 
+                  value={lojaFiltro} 
+                  onValueChange={setLojaFiltro}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Todas as lojas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todas as lojas</SelectItem>
+                    {lojas.map((loja) => (
+                      <SelectItem key={loja.id} value={loja.id}>
+                        {loja.numero} - {loja.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </CardHeader>
             <CardContent>
-              {auditoriasOrdenadas.length > 0 ? (
+              {isLoadingAuditorias ? (
+                <div className="flex justify-center items-center h-64">
+                  <p>Carregando auditorias...</p>
+                </div>
+              ) : auditoriasFiltradas && auditoriasFiltradas.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -177,19 +222,19 @@ const AdminRelatorios: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {auditoriasOrdenadas.map((auditoria) => (
+                    {auditoriasFiltradas.map((auditoria) => (
                       <TableRow key={auditoria.id}>
                         <TableCell>
-                          {format(new Date(auditoria.data), "dd/MM/yyyy", { locale: ptBR })}
+                          {auditoria.data ? format(new Date(auditoria.data), "dd/MM/yyyy", { locale: ptBR }) : 'N/A'}
                         </TableCell>
-                        <TableCell>{getNomeLoja(auditoria.loja_id)}</TableCell>
-                        <TableCell>{getNomeUsuario(auditoria.usuario_id)}</TableCell>
+                        <TableCell>{auditoria.loja ? `${auditoria.loja.numero} - ${auditoria.loja.nome}` : 'N/A'}</TableCell>
+                        <TableCell>{auditoria.usuario?.nome || 'N/A'}</TableCell>
                         <TableCell className={`font-medium ${
-                          auditoria.pontuacao_total > 0 
-                            ? 'text-success' 
-                            : 'text-danger'
+                          auditoria.pontuacao_total && auditoria.pontuacao_total > 0 
+                            ? 'text-green-500' 
+                            : 'text-red-500'
                         }`}>
-                          {auditoria.pontuacao_total.toFixed(1)}
+                          {auditoria.pontuacao_total ? auditoria.pontuacao_total.toFixed(1) : '0.0'}
                         </TableCell>
                         <TableCell>
                           {getStatusAuditoria(auditoria.pontuacao_total)}
@@ -235,15 +280,13 @@ const AdminRelatorios: React.FC = () => {
                 <Card>
                   <CardContent className="p-4 flex flex-col items-center justify-center">
                     <span className="text-sm text-muted-foreground">Total de Auditorias</span>
-                    <span className="text-3xl font-bold">{auditorias.length}</span>
+                    <span className="text-3xl font-bold">{estatisticas.total}</span>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4 flex flex-col items-center justify-center">
                     <span className="text-sm text-muted-foreground">Lojas Auditadas</span>
-                    <span className="text-3xl font-bold">
-                      {new Set(auditorias.map(a => a.loja_id)).size}
-                    </span>
+                    <span className="text-3xl font-bold">{estatisticas.lojasAuditadas}</span>
                   </CardContent>
                 </Card>
               </div>
@@ -253,21 +296,15 @@ const AdminRelatorios: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm">Aprovadas</span>
-                    <span className="text-sm font-medium">
-                      {auditorias.filter(a => a.pontuacao_total > 5).length}
-                    </span>
+                    <span className="text-sm font-medium">{estatisticas.aprovadas}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm">Melhorias Necessárias</span>
-                    <span className="text-sm font-medium">
-                      {auditorias.filter(a => a.pontuacao_total > 0 && a.pontuacao_total <= 5).length}
-                    </span>
+                    <span className="text-sm font-medium">{estatisticas.melhorias}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm">Críticas</span>
-                    <span className="text-sm font-medium">
-                      {auditorias.filter(a => a.pontuacao_total <= 0).length}
-                    </span>
+                    <span className="text-sm font-medium">{estatisticas.criticas}</span>
                   </div>
                 </div>
               </div>
@@ -280,10 +317,10 @@ const AdminRelatorios: React.FC = () => {
                       className="h-full bg-primary rounded-full"
                       style={{ 
                         width: `${
-                          auditorias.length > 0 
+                          estatisticas.total > 0 
                             ? Math.min(
                                 Math.max(
-                                  (auditorias.reduce((acc, curr) => acc + curr.pontuacao_total, 0) / auditorias.length + 10) * 5, 
+                                  (estatisticas.media + 10) * 5, 
                                   0
                                 ), 
                                 100
@@ -294,9 +331,7 @@ const AdminRelatorios: React.FC = () => {
                     ></div>
                   </div>
                   <span className="ml-2 font-bold text-primary">
-                    {auditorias.length > 0 
-                      ? (auditorias.reduce((acc, curr) => acc + curr.pontuacao_total, 0) / auditorias.length).toFixed(1) 
-                      : 0}
+                    {estatisticas.media}
                   </span>
                 </div>
               </div>
@@ -305,33 +340,47 @@ const AdminRelatorios: React.FC = () => {
           
           <Card>
             <CardHeader>
-              <CardTitle>Principais Problemas</CardTitle>
+              <CardTitle>Problemas Mais Frequentes</CardTitle>
               <CardDescription>
-                Pontos críticos mais frequentes
+                Análise de pontos críticos nas auditorias
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {auditorias.length > 0 ? (
+              {auditorias && auditorias.length > 0 ? (
                 <div className="space-y-4">
                   <div className="text-sm">
-                    Com base nas auditorias realizadas, as seções com maior incidência de pontos críticos são:
+                    <p>Com base nas {auditorias.length} auditorias realizadas, identificamos os seguintes padrões de problemas:</p>
                   </div>
-                  <ul className="space-y-2">
-                    <li className="flex items-center space-x-2">
-                      <div className="w-2 h-2 rounded-full bg-danger"></div>
-                      <span>Limpeza (3 ocorrências)</span>
-                    </li>
-                    <li className="flex items-center space-x-2">
-                      <div className="w-2 h-2 rounded-full bg-danger"></div>
-                      <span>Organização (2 ocorrências)</span>
-                    </li>
-                    <li className="flex items-center space-x-2">
-                      <div className="w-2 h-2 rounded-full bg-warning"></div>
-                      <span>Atendimento (1 ocorrência)</span>
-                    </li>
-                  </ul>
+                  
+                  <div className="space-y-3 mt-3">
+                    <h4 className="font-medium">Áreas que precisam de atenção:</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                        <span className="text-sm">
+                          {estatisticas.criticas > 0 
+                            ? `${estatisticas.criticas} ${estatisticas.criticas === 1 ? 'loja precisa' : 'lojas precisam'} de intervenção urgente`
+                            : 'Nenhuma loja em situação crítica'}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <span className="text-sm">
+                          {estatisticas.melhorias} {estatisticas.melhorias === 1 ? 'loja requer' : 'lojas requerem'} melhorias pontuais
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
                   <div className="text-sm text-muted-foreground mt-4">
-                    Recomendação: Focar em treinamento de equipe para melhorar os aspectos de limpeza e organização das lojas.
+                    <p className="font-medium mb-1">Recomendação:</p>
+                    <p>
+                      {estatisticas.criticas > 0 
+                        ? 'Focar em treinamentos e intervenções nas lojas identificadas em situação crítica.'
+                        : estatisticas.melhorias > estatisticas.aprovadas
+                        ? 'Implementar melhorias de padronização nas lojas que necessitam de ajustes.'
+                        : 'Manter o padrão de qualidade e identificar melhores práticas para replicar nas demais lojas.'}
+                    </p>
                   </div>
                 </div>
               ) : (

@@ -228,7 +228,9 @@ const Checklist: React.FC = () => {
         
         await supabase
           .from('auditorias')
-          .update({ pontuacao_total: pontuacaoTotal })
+          .update({ 
+            pontuacao_total: pontuacaoTotal,
+          })
           .eq('id', auditoriaId);
       }
     } catch (error) {
@@ -282,6 +284,11 @@ const Checklist: React.FC = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const navigateToReport = () => {
+    if (!auditoriaId) return;
+    navigate(`/relatorio/${auditoriaId}`);
   };
 
   const goToNextSection = () => {
@@ -444,15 +451,27 @@ const Checklist: React.FC = () => {
               Seção Anterior
             </Button>
             
-            <Button
-              variant="default"
-              className="bg-[#00bfa5] hover:bg-[#00a896] px-6 py-2 h-12"
-              onClick={saveAndNavigateHome}
-              disabled={isSaving}
-            >
-              <Save className="mr-2 h-5 w-5" />
-              Salvar e Voltar à Página Principal
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="default"
+                className="bg-[#00bfa5] hover:bg-[#00a896] px-6 py-2 h-12"
+                onClick={saveAndNavigateHome}
+                disabled={isSaving}
+              >
+                <Save className="mr-2 h-5 w-5" />
+                Salvar e Voltar
+              </Button>
+              
+              <Button
+                variant="outline"
+                className="border-[#00bfa5] text-[#00bfa5] px-6 py-2 h-12"
+                onClick={navigateToReport}
+                disabled={isSaving}
+              >
+                <List className="mr-2 h-5 w-5" />
+                Ver Relatório
+              </Button>
+            </div>
             
             <Button
               variant="outline"
