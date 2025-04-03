@@ -59,18 +59,18 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
         </div>
         
         <div className="space-y-2">
-          <div className="text-sm text-muted-foreground">Gerente</div>
-          <div className="flex items-center">
+          <div className="text-sm text-muted-foreground">Supervisor(a)</div>
+          <div className="flex items-center bg-gray-50 p-2 rounded-md border">
             <User className="h-5 w-5 mr-2 text-primary" />
-            {auditoria.gerente || 'Não definido'}
+            {auditoria.supervisor || 'Não definido'}
           </div>
         </div>
         
         <div className="space-y-2">
-          <div className="text-sm text-muted-foreground">Supervisor</div>
-          <div className="flex items-center">
+          <div className="text-sm text-muted-foreground">Gerente</div>
+          <div className="flex items-center bg-gray-50 p-2 rounded-md border">
             <User className="h-5 w-5 mr-2 text-primary" />
-            {auditoria.supervisor || 'Não definido'}
+            {auditoria.gerente || 'Não definido'}
           </div>
         </div>
       </CardContent>

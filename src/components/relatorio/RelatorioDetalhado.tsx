@@ -10,7 +10,7 @@ import { PageTitle } from '@/components/PageTitle';
 import { Button } from '@/components/ui/button';
 import { 
   Card, 
-  CardContent, 
+  CardContent,
   CardDescription, 
   CardHeader, 
   CardTitle 
@@ -26,21 +26,16 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { 
   ArrowLeft, 
   Store, 
   User, 
   Calendar, 
   Edit,
   Download,
+  Save,
 } from 'lucide-react';
 import { InformacoesGerais } from './InformacoesGerais';
 import { PontuacaoPorSecao } from './PontuacaoPorSecao';
@@ -71,10 +66,24 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [gerente, setGerente] = useState(auditoria.gerente || '');
-  const [supervisor, setSupervisor] = useState(auditoria.usuario?.nome || '');
   const [dialogOpen, setDialogOpen] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
+  
+  // Create a form with react-hook-form
+  const form = useForm({
+    defaultValues: {
+      gerente: auditoria.gerente || '',
+      supervisor: auditoria.supervisor || ''
+    }
+  });
+  
+  // Update form values when auditoria changes
+  React.useEffect(() => {
+    form.reset({
+      gerente: auditoria.gerente || '',
+      supervisor: auditoria.supervisor || ''
+    });
+  }, [auditoria, form]);
 
   // Calculate section scores from audit responses
   const calcularPontuacaoPorSecao = () => {
@@ -98,8 +107,9 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
       
       let pontuacao = 0;
       respostasSecao.forEach(resposta => {
-        if (resposta.resposta === 'sim') pontuacao += 1;
-        else if (resposta.resposta === 'nao') pontuacao -= 1;
+        if (resposta.resposta === 'Sim') pontuacao += 1;
+        else if (resposta.resposta === 'Não') pontuacao -= 1;
+        else if (resposta.resposta === 'Regular') pontuacao += 0.5;
         // 'N/A' doesn't affect score
       });
       
@@ -120,7 +130,7 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
     if (!auditoria.respostas || !perguntas) return [];
     
     return auditoria.respostas
-      .filter(resposta => resposta.resposta === 'nao')
+      .filter(resposta => resposta.resposta === 'Não')
       .map(resposta => {
         const pergunta = perguntas.find(p => p.id === resposta.pergunta_id);
         const secao = secoes?.find(s => s.id === pergunta?.secao_id);
@@ -128,21 +138,21 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
           id: resposta.id,
           pergunta_texto: pergunta?.texto || 'Pergunta não encontrada',
           secao_nome: secao?.nome || 'Seção não encontrada',
-          observacao: resposta.resposta === 'nao' ? 'Item não conforme' : ''
+          observacao: 'Item não conforme'
         };
       });
   };
 
   // Update manager and supervisor information
-  const atualizarInformacoes = async () => {
+  const atualizarInformacoes = async (values: { gerente: string; supervisor: string }) => {
     if (!auditoria) return;
     
     try {
       const { error } = await supabase
         .from('auditorias')
         .update({
-          gerente: gerente,
-          supervisor: supervisor
+          gerente: values.gerente,
+          supervisor: values.supervisor
         })
         .eq('id', auditoria.id);
       
@@ -208,8 +218,8 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
         <div className="flex space-x-2">
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">
-                <Edit className="mr-2 h-4 w-4" />
+              <Button variant="outline" className="gap-2">
+                <Edit className="h-4 w-4" />
                 Editar Informações
               </Button>
             </DialogTrigger>
@@ -220,32 +230,46 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
                   Atualize os dados do gerente e supervisor desta auditoria.
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="gerente">Nome do Gerente</Label>
-                  <Input
-                    id="gerente"
-                    value={gerente}
-                    onChange={(e) => setGerente(e.target.value)}
-                    placeholder="Digite o nome do gerente"
+              
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(atualizarInformacoes)} className="space-y-4 py-4">
+                  <FormField
+                    control={form.control}
+                    name="supervisor"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Supervisor(a)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nome do supervisor" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="supervisor">Nome do Supervisor</Label>
-                  <Input
-                    id="supervisor"
-                    value={supervisor}
-                    onChange={(e) => setSupervisor(e.target.value)}
-                    placeholder="Digite o nome do supervisor"
+                  
+                  <FormField
+                    control={form.control}
+                    name="gerente"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Gerente da Loja</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nome do gerente" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
                   />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={atualizarInformacoes}>Salvar</Button>
-              </DialogFooter>
+                  
+                  <DialogFooter className="pt-4">
+                    <Button variant="outline" type="button" onClick={() => setDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit">
+                      <Save className="mr-2 h-4 w-4" />
+                      Salvar
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
             </DialogContent>
           </Dialog>
           
