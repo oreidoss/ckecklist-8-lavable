@@ -41,7 +41,24 @@ export const UsuariosCard: React.FC<UsuariosCardProps> = ({
     if (usuario.role) return usuario.role;
     if (usuario.email.includes('supervisor')) return 'supervisor';
     if (usuario.email.includes('gerente')) return 'gerente';
+    if (usuario.email.includes('admin')) return 'admin';
     return undefined;
+  };
+
+  // Função para exibir a badge correta conforme a função do usuário
+  const renderRoleBadge = (role?: string) => {
+    if (!role) return <span className="text-muted-foreground text-sm">Não definida</span>;
+    
+    switch (role) {
+      case 'admin':
+        return <Badge variant="destructive" className="bg-purple-600">Administrador</Badge>;
+      case 'gerente':
+        return <Badge variant="default">Gerente</Badge>;
+      case 'supervisor':
+        return <Badge variant="secondary">Supervisora</Badge>;
+      default:
+        return <span className="text-muted-foreground text-sm">Não definida</span>;
+    }
   };
 
   return (
@@ -51,7 +68,7 @@ export const UsuariosCard: React.FC<UsuariosCardProps> = ({
           <div>
             <CardTitle>Usuários Cadastrados</CardTitle>
             <CardDescription>
-              Lista de gerentes e supervisores disponíveis para auditoria
+              Lista de gerentes, supervisores e administradores disponíveis para auditoria
             </CardDescription>
           </div>
           <Button variant="outline" size="sm" asChild>
@@ -85,13 +102,7 @@ export const UsuariosCard: React.FC<UsuariosCardProps> = ({
                       <TableCell className="font-medium">{usuario.nome}</TableCell>
                       <TableCell>{usuario.email}</TableCell>
                       <TableCell>
-                        {role ? (
-                          <Badge variant={role === 'gerente' ? 'default' : 'secondary'}>
-                            {role === 'gerente' ? 'Gerente' : 'Supervisora'}
-                          </Badge>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">Não definida</span>
-                        )}
+                        {renderRoleBadge(role)}
                       </TableCell>
                     </TableRow>
                   );

@@ -50,3 +50,6 @@ export const pontuacaoMap = {
   "Regular": 0.5,
   "Não se aplica": 0
 };
+
+// Role types for user management
+export type UserRole = "supervisor" | "gerente" | "admin" | "";

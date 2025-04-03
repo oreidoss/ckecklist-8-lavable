@@ -30,6 +30,11 @@ export class UsuarioService extends BaseService {
     const usuarios = this.getUsuarios().filter(u => u.id !== id);
     this.setItem(this.STORAGE_KEY, usuarios);
   }
+  
+  isAdmin(id: number): boolean {
+    const usuario = this.getUsuarios().find(u => u.id === id);
+    return usuario?.role === 'admin';
+  }
 }
 
 export const usuarioService = new UsuarioService();

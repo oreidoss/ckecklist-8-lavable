@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -49,7 +50,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageTitle } from "@/components/PageTitle";
 import { db, Usuario } from "@/lib/db";
 import { useToast } from '@/hooks/use-toast';
-import { Edit, Plus, Trash2, User, UserPlus } from 'lucide-react';
+import { Edit, Plus, Trash2, User, UserPlus, ShieldCheck } from 'lucide-react';
 
 interface UsuarioComFuncao extends Usuario {
   role?: string;
@@ -104,7 +105,8 @@ const AdminUsuarios: React.FC = () => {
     
     const usuarioData = {
       nome: novoUsuario.nome,
-      email: novoUsuario.email
+      email: novoUsuario.email,
+      role: novoUsuario.role
     };
     
     const adicionado = db.addUsuario(usuarioData);
@@ -156,8 +158,7 @@ const AdminUsuarios: React.FC = () => {
       return;
     }
     
-    const { role, ...usuarioSemRole } = usuarioParaEditar;
-    db.updateUsuario(usuarioSemRole);
+    db.updateUsuario(usuarioParaEditar);
     
     setUsuarios(usuarios.map(usuario => 
       usuario.id === usuarioParaEditar.id ? usuarioParaEditar : usuario
@@ -191,6 +192,22 @@ const AdminUsuarios: React.FC = () => {
       title: "Usuário excluído",
       description: "O usuário foi excluído com sucesso."
     });
+  };
+
+  // Função para exibir a badge correta conforme a função do usuário
+  const renderRoleBadge = (role?: string) => {
+    if (!role) return <span className="text-muted-foreground text-sm">Não definida</span>;
+    
+    switch (role) {
+      case 'admin':
+        return <Badge variant="destructive" className="bg-purple-600">Administrador</Badge>;
+      case 'gerente':
+        return <Badge variant="default">Gerente</Badge>;
+      case 'supervisor':
+        return <Badge variant="secondary">Supervisora</Badge>;
+      default:
+        return <span className="text-muted-foreground text-sm">Não definida</span>;
+    }
   };
   
   return (
@@ -256,6 +273,7 @@ const AdminUsuarios: React.FC = () => {
                     <SelectItem value="none">Sem função específica</SelectItem>
                     <SelectItem value="supervisor">Supervisora</SelectItem>
                     <SelectItem value="gerente">Gerente</SelectItem>
+                    <SelectItem value="admin">Administrador</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -296,13 +314,7 @@ const AdminUsuarios: React.FC = () => {
                     <TableCell className="font-medium">{usuario.nome}</TableCell>
                     <TableCell>{usuario.email}</TableCell>
                     <TableCell>
-                      {usuario.role ? (
-                        <Badge variant={usuario.role === 'gerente' ? 'default' : 'secondary'}>
-                          {usuario.role === 'gerente' ? 'Gerente' : 'Supervisora'}
-                        </Badge>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">Não definida</span>
-                      )}
+                      {renderRoleBadge(usuario.role)}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
@@ -372,6 +384,7 @@ const AdminUsuarios: React.FC = () => {
                                       <SelectItem value="none">Sem função específica</SelectItem>
                                       <SelectItem value="supervisor">Supervisora</SelectItem>
                                       <SelectItem value="gerente">Gerente</SelectItem>
+                                      <SelectItem value="admin">Administrador</SelectItem>
                                     </SelectContent>
                                   </Select>
                                 </div>
