@@ -7,7 +7,8 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer 
+  ResponsiveContainer,
+  Legend
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { Database } from '@/integrations/supabase/types';
@@ -29,6 +30,13 @@ export const DesempenhoLojasChart: React.FC<DesempenhoLojasChartProps> = ({
     navigate(`/relatorio/loja/${lojaId}`);
   };
   
+  // Função para personalizar a aparência das barras com base na pontuação
+  const getBarColor = (pontuacao: number) => {
+    if (pontuacao > 5) return 'hsl(var(--success))';
+    if (pontuacao > 0) return 'hsl(var(--warning))';
+    return 'hsl(var(--destructive))';
+  };
+  
   return (
     <div className="h-[300px]">
       {dadosGrafico.length > 0 ? (
@@ -37,7 +45,12 @@ export const DesempenhoLojasChart: React.FC<DesempenhoLojasChartProps> = ({
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="nome" />
             <YAxis domain={[-5, 10]} />
-            <Tooltip formatter={(value) => [`${value} pontos`, 'Pontuação']} />
+            <Tooltip 
+              formatter={(value) => [`${value} pontos`, 'Pontuação']}
+              contentStyle={{ backgroundColor: 'hsl(var(--background))', borderColor: 'hsl(var(--border))' }}
+              labelStyle={{ color: 'hsl(var(--foreground))' }}
+            />
+            <Legend align="center" verticalAlign="bottom" />
             <Bar 
               dataKey="pontuacao" 
               fill="hsl(var(--primary))" 
@@ -50,6 +63,7 @@ export const DesempenhoLojasChart: React.FC<DesempenhoLojasChartProps> = ({
                 }
               }}
               style={{ cursor: 'pointer' }}
+              isAnimationActive={false} // Desativar animação para melhor exportação para PDF
             />
           </BarChart>
         </ResponsiveContainer>
