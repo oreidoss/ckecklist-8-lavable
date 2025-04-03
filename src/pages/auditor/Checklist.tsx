@@ -453,13 +453,14 @@ const Checklist: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <div className="flex-1">
                     <Select 
-                      value={supervisor} 
+                      value={supervisor || "no-supervisor"} 
                       onValueChange={(value) => setSupervisor(value)}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Selecione um supervisor" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="no-supervisor">Selecione um supervisor</SelectItem>
                         {usuarios?.map((usuario) => (
                           <SelectItem key={usuario.id} value={usuario.nome}>
                             {usuario.nome}
@@ -511,13 +512,14 @@ const Checklist: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <div className="flex-1">
                     <Select 
-                      value={gerente} 
+                      value={gerente || "no-gerente"} 
                       onValueChange={(value) => setGerente(value)}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Selecione um gerente" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="no-gerente">Selecione um gerente</SelectItem>
                         {usuarios?.map((usuario) => (
                           <SelectItem key={usuario.id} value={usuario.nome}>
                             {usuario.nome}

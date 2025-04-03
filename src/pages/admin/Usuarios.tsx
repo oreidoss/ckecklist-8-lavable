@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -52,7 +51,6 @@ import { db, Usuario } from "@/lib/db";
 import { useToast } from '@/hooks/use-toast';
 import { Edit, Plus, Trash2, User, UserPlus } from 'lucide-react';
 
-// Extend Usuario type to include role
 interface UsuarioComFuncao extends Usuario {
   role?: string;
 }
@@ -64,11 +62,7 @@ const AdminUsuarios: React.FC = () => {
   const { toast } = useToast();
   
   useEffect(() => {
-    // Carregar usuários do banco de dados
     const usuariosDB = db.getUsuarios();
-    
-    // Verificar se existem funções nos usuários do banco de dados
-    // Isso é uma simulação, já que o DB mock provavelmente não suporta a coluna role
     setUsuarios(usuariosDB.map(usuario => ({
       ...usuario,
       role: usuario.role || ''
@@ -99,7 +93,6 @@ const AdminUsuarios: React.FC = () => {
       return;
     }
     
-    // Verificar se já existe um usuário com o mesmo email
     if (usuarios.some(usuario => usuario.email.toLowerCase() === novoUsuario.email.toLowerCase())) {
       toast({
         title: "Email duplicado",
@@ -109,7 +102,6 @@ const AdminUsuarios: React.FC = () => {
       return;
     }
     
-    // Adicionar usuário com função
     const usuarioData = {
       nome: novoUsuario.nome,
       email: novoUsuario.email
@@ -117,7 +109,6 @@ const AdminUsuarios: React.FC = () => {
     
     const adicionado = db.addUsuario(usuarioData);
     
-    // Adicionar a função (role) ao usuário para nossa visualização
     const usuarioComFuncao = {
       ...adicionado,
       role: novoUsuario.role
@@ -153,7 +144,6 @@ const AdminUsuarios: React.FC = () => {
       return;
     }
     
-    // Verificar se já existe outro usuário com o mesmo email (exceto o próprio)
     if (usuarios.some(usuario => 
       usuario.email.toLowerCase() === usuarioParaEditar.email.toLowerCase() && 
       usuario.id !== usuarioParaEditar.id)
@@ -166,12 +156,9 @@ const AdminUsuarios: React.FC = () => {
       return;
     }
     
-    // Atualizar o usuário no DB (apenas com nome e email, já que o DB mock provavelmente
-    // não suporta a coluna role)
     const { role, ...usuarioSemRole } = usuarioParaEditar;
     db.updateUsuario(usuarioSemRole);
     
-    // Atualizar no state mantendo a função (role)
     setUsuarios(usuarios.map(usuario => 
       usuario.id === usuarioParaEditar.id ? usuarioParaEditar : usuario
     ));
@@ -185,7 +172,6 @@ const AdminUsuarios: React.FC = () => {
   };
   
   const handleExcluirUsuario = (id: number) => {
-    // Verificar se há auditorias associadas a este usuário
     const auditorias = db.getAuditorias();
     const temAuditorias = auditorias.some(auditoria => auditoria.usuario_id === id);
     
@@ -267,7 +253,7 @@ const AdminUsuarios: React.FC = () => {
                     <SelectValue placeholder="Selecione uma função" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sem função específica</SelectItem>
+                    <SelectItem value="none">Sem função específica</SelectItem>
                     <SelectItem value="supervisor">Supervisora</SelectItem>
                     <SelectItem value="gerente">Gerente</SelectItem>
                   </SelectContent>
@@ -373,17 +359,17 @@ const AdminUsuarios: React.FC = () => {
                                     Função
                                   </Label>
                                   <Select 
-                                    value={usuarioParaEditar.role || ''} 
+                                    value={usuarioParaEditar.role || 'none'} 
                                     onValueChange={(value) => setUsuarioParaEditar({ 
                                       ...usuarioParaEditar, 
-                                      role: value 
+                                      role: value === 'none' ? '' : value 
                                     })}
                                   >
                                     <SelectTrigger className="col-span-3">
                                       <SelectValue placeholder="Selecione uma função" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="">Sem função específica</SelectItem>
+                                      <SelectItem value="none">Sem função específica</SelectItem>
                                       <SelectItem value="supervisor">Supervisora</SelectItem>
                                       <SelectItem value="gerente">Gerente</SelectItem>
                                     </SelectContent>

@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose 
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
@@ -119,13 +120,14 @@ export const EditInformacoesDialog: React.FC<EditInformacoesDialogProps> = ({
                   <FormLabel>Supervisor(a)</FormLabel>
                   <FormControl>
                     <Select 
-                      value={field.value} 
+                      value={field.value || "no-supervisor"} 
                       onValueChange={field.onChange}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione um supervisor" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="no-supervisor">Selecione um supervisor</SelectItem>
                         {supervisorOptions?.map((usuario) => (
                           <SelectItem key={usuario.id} value={usuario.nome}>
                             {usuario.nome}
@@ -146,13 +148,14 @@ export const EditInformacoesDialog: React.FC<EditInformacoesDialogProps> = ({
                   <FormLabel>Gerente da Loja</FormLabel>
                   <FormControl>
                     <Select 
-                      value={field.value} 
+                      value={field.value || "no-gerente"} 
                       onValueChange={field.onChange}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione um gerente" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="no-gerente">Selecione um gerente</SelectItem>
                         {gerenteOptions?.map((usuario) => (
                           <SelectItem key={usuario.id} value={usuario.nome}>
                             {usuario.nome}

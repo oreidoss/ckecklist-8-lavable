@@ -58,7 +58,7 @@ export const HistoricoAuditoriasCard: React.FC<HistoricoAuditoriasCardProps> = (
             <SelectContent>
               <SelectItem value="todas-lojas">Todas as lojas</SelectItem>
               {lojas.map((loja) => (
-                <SelectItem key={loja.id} value={loja.id}>
+                <SelectItem key={loja.id} value={loja.id.toString()}>
                   {loja.numero} - {loja.nome}
                 </SelectItem>
               ))}
