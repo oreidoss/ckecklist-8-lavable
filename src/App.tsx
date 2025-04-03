@@ -7,6 +7,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { db } from "./lib/db";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+
+// Login Page
+import Login from "./pages/Login";
 
 // Páginas do Auditor
 import AuditorHome from "./pages/auditor/Home";
@@ -33,29 +38,35 @@ const App = () => {
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <TooltipProvider>
-            <Layout>
+          <AuthProvider>
+            <TooltipProvider>
               <Routes>
-                {/* Rotas do Auditor */}
-                <Route path="/" element={<AuditorHome />} />
-                <Route path="/checklist/:auditoriaId" element={<Checklist />} />
-                <Route path="/relatorio/:auditoriaId" element={<Relatorio />} />
-                <Route path="/relatorio/loja/:lojaId" element={<Relatorio />} />
+                {/* Public route for login */}
+                <Route path="/login" element={<Login />} />
                 
-                {/* Rotas do Admin */}
-                <Route path="/admin" element={<AdminLojas />} />
-                <Route path="/admin/secoes" element={<AdminSecoes />} />
-                <Route path="/admin/perguntas" element={<AdminPerguntas />} />
-                <Route path="/admin/usuarios" element={<AdminUsuarios />} />
-                <Route path="/admin/relatorios" element={<AdminRelatorios />} />
+                {/* Protected routes inside Layout */}
+                <Route element={<Layout />}>
+                  {/* Rotas do Auditor */}
+                  <Route path="/" element={<ProtectedRoute element={<AuditorHome />} />} />
+                  <Route path="/checklist/:auditoriaId" element={<ProtectedRoute element={<Checklist />} />} />
+                  <Route path="/relatorio/:auditoriaId" element={<ProtectedRoute element={<Relatorio />} />} />
+                  <Route path="/relatorio/loja/:lojaId" element={<ProtectedRoute element={<Relatorio />} />} />
+                  
+                  {/* Rotas do Admin - requireAdmin=true */}
+                  <Route path="/admin" element={<ProtectedRoute element={<AdminLojas />} requireAdmin={true} />} />
+                  <Route path="/admin/secoes" element={<ProtectedRoute element={<AdminSecoes />} requireAdmin={true} />} />
+                  <Route path="/admin/perguntas" element={<ProtectedRoute element={<AdminPerguntas />} requireAdmin={true} />} />
+                  <Route path="/admin/usuarios" element={<ProtectedRoute element={<AdminUsuarios />} requireAdmin={true} />} />
+                  <Route path="/admin/relatorios" element={<ProtectedRoute element={<AdminRelatorios />} requireAdmin={true} />} />
+                </Route>
                 
                 {/* Outras rotas */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </Layout>
-            <Toaster />
-            <Sonner />
-          </TooltipProvider>
+              <Toaster />
+              <Sonner />
+            </TooltipProvider>
+          </AuthProvider>
         </BrowserRouter>
       </QueryClientProvider>
     </React.StrictMode>

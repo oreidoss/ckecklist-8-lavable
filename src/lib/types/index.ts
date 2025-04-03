@@ -22,6 +22,7 @@ export interface Usuario {
   nome: string;
   email: string;
   role?: string;
+  senha?: string;
 }
 
 export interface Auditoria {

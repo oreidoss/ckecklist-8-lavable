@@ -59,7 +59,7 @@ interface UsuarioComFuncao extends Usuario {
 const AdminUsuarios: React.FC = () => {
   const [usuarios, setUsuarios] = useState<UsuarioComFuncao[]>([]);
   const [usuarioParaEditar, setUsuarioParaEditar] = useState<UsuarioComFuncao | null>(null);
-  const [novoUsuario, setNovoUsuario] = useState({ nome: '', email: '', role: '' });
+  const [novoUsuario, setNovoUsuario] = useState({ nome: '', email: '', role: '', senha: '' });
   const { toast } = useToast();
   
   useEffect(() => {
@@ -76,10 +76,10 @@ const AdminUsuarios: React.FC = () => {
   };
   
   const handleAdicionarUsuario = () => {
-    if (!novoUsuario.nome || !novoUsuario.email) {
+    if (!novoUsuario.nome || !novoUsuario.email || !novoUsuario.senha) {
       toast({
         title: "Campos obrigatórios",
-        description: "Preencha o nome e o email do usuário.",
+        description: "Preencha o nome, email e senha do usuário.",
         variant: "destructive"
       });
       return;
@@ -106,7 +106,8 @@ const AdminUsuarios: React.FC = () => {
     const usuarioData = {
       nome: novoUsuario.nome,
       email: novoUsuario.email,
-      role: novoUsuario.role
+      role: novoUsuario.role,
+      senha: novoUsuario.senha
     };
     
     const adicionado = db.addUsuario(usuarioData);
@@ -117,7 +118,7 @@ const AdminUsuarios: React.FC = () => {
     };
     
     setUsuarios([...usuarios, usuarioComFuncao]);
-    setNovoUsuario({ nome: '', email: '', role: '' });
+    setNovoUsuario({ nome: '', email: '', role: '', senha: '' });
     
     toast({
       title: "Usuário adicionado",
@@ -259,6 +260,19 @@ const AdminUsuarios: React.FC = () => {
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="senha" className="text-right">
+                  Senha
+                </Label>
+                <Input
+                  id="senha"
+                  type="password"
+                  value={novoUsuario.senha}
+                  onChange={(e) => setNovoUsuario({ ...novoUsuario, senha: e.target.value })}
+                  className="col-span-3"
+                  placeholder="********"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="role" className="text-right">
                   Função
                 </Label>
@@ -364,6 +378,22 @@ const AdminUsuarios: React.FC = () => {
                                       email: e.target.value 
                                     })}
                                     className="col-span-3"
+                                  />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                  <Label htmlFor="edit-senha" className="text-right">
+                                    Senha
+                                  </Label>
+                                  <Input
+                                    id="edit-senha"
+                                    type="password"
+                                    value={usuarioParaEditar.senha || ''}
+                                    onChange={(e) => setUsuarioParaEditar({ 
+                                      ...usuarioParaEditar, 
+                                      senha: e.target.value 
+                                    })}
+                                    className="col-span-3"
+                                    placeholder="Deixe em branco para manter a senha atual"
                                   />
                                 </div>
                                 <div className="grid grid-cols-4 items-center gap-4">

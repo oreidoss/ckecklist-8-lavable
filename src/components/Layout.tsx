@@ -8,8 +8,11 @@ import {
   Layers, 
   HelpCircle, 
   Users,
-  BarChart
+  BarChart,
+  LogOut
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from "@/components/ui/button";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -20,6 +23,7 @@ export function Layout({ children }: LayoutProps) {
   const currentPath = location.pathname;
   const isAdmin = currentPath.startsWith('/admin');
   const value = isAdmin ? 'admin' : 'auditor';
+  const { user, isAdmin: userIsAdmin, logout } = useAuth();
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -30,16 +34,34 @@ export function Layout({ children }: LayoutProps) {
             <span className="font-bold text-xl">Audit Flow Compass</span>
           </Link>
           
-          <Tabs value={value} className="w-auto">
-            <TabsList>
-              <TabsTrigger value="auditor" asChild>
-                <Link to="/">Área do Auditor</Link>
-              </TabsTrigger>
-              <TabsTrigger value="admin" asChild>
-                <Link to="/admin">Área do Admin</Link>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex items-center space-x-4">
+            {userIsAdmin && (
+              <Tabs value={value} className="w-auto">
+                <TabsList>
+                  <TabsTrigger value="auditor" asChild>
+                    <Link to="/">Área do Auditor</Link>
+                  </TabsTrigger>
+                  <TabsTrigger value="admin" asChild>
+                    <Link to="/admin">Área do Admin</Link>
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            )}
+            
+            {user && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium">Olá, {user.nome}</span>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={logout}
+                  title="Sair"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
       

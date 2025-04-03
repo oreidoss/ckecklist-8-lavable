@@ -4,6 +4,7 @@ import { BaseService } from './baseService';
 
 export class UsuarioService extends BaseService {
   private readonly STORAGE_KEY = 'usuarios';
+  private readonly AUTH_KEY = 'currentUser';
 
   getUsuarios(): Usuario[] {
     return this.getItem<Usuario>(this.STORAGE_KEY);
@@ -34,6 +35,32 @@ export class UsuarioService extends BaseService {
   isAdmin(id: number): boolean {
     const usuario = this.getUsuarios().find(u => u.id === id);
     return usuario?.role === 'admin';
+  }
+
+  // Login method
+  login(nome: string, senha: string): Usuario | null {
+    const usuarios = this.getUsuarios();
+    const usuario = usuarios.find(u => u.nome === nome && u.senha === senha);
+    
+    if (usuario) {
+      // Store the authenticated user (without senha)
+      const { senha: _, ...userWithoutSenha } = usuario;
+      localStorage.setItem(this.AUTH_KEY, JSON.stringify(userWithoutSenha));
+      return usuario;
+    }
+    
+    return null;
+  }
+
+  // Get current authenticated user
+  getCurrentUser(): Usuario | null {
+    const userJson = localStorage.getItem(this.AUTH_KEY);
+    return userJson ? JSON.parse(userJson) : null;
+  }
+
+  // Logout method
+  logout(): void {
+    localStorage.removeItem(this.AUTH_KEY);
   }
 }
 
