@@ -135,7 +135,7 @@ const Home: React.FC = () => {
                     )}
                     <div className="flex items-center text-gray-600 text-sm md:text-base">
                       <User className="h-4 w-4 md:h-5 md:w-5 mr-2 text-gray-500" />
-                      Supervisor(a): {latestAudit.usuario?.nome || 'Não definido'}
+                      Supervisor(a): {latestAudit.supervisor || 'Não definido'}
                     </div>
                     <div className="flex items-center text-gray-600 text-sm md:text-base">
                       <User className="h-4 w-4 md:h-5 md:w-5 mr-2 text-gray-500" />

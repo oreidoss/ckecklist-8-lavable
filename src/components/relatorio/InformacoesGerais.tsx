@@ -9,13 +9,19 @@ import {
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';
-import { Store, Calendar, User } from 'lucide-react';
+import { Store, Calendar, User, Target } from 'lucide-react';
 
 interface InformacoesGeraisProps {
   auditoria: any;
 }
 
 export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria }) => {
+  // Calculate total questions
+  const totalPerguntas = auditoria.respostas?.length || 0;
+  
+  // Calculate goal (total questions + 1)
+  const meta = totalPerguntas + 1;
+  
   return (
     <Card>
       <CardHeader>
@@ -27,7 +33,7 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
           <div className="text-sm text-muted-foreground">Loja</div>
           <div className="flex items-center text-lg font-bold">
             <Store className="h-5 w-5 mr-2 text-primary" />
-            {auditoria.loja ? `${auditoria.loja.numero} - ${auditoria.loja.nome}` : 'N/A'}
+            {auditoria.loja ? auditoria.loja.nome : 'N/A'}
           </div>
         </div>
         
@@ -51,10 +57,21 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
         
         <div className="space-y-2">
           <div className="text-sm text-muted-foreground">Pontuação Total</div>
-          <div className={`text-xl font-bold ${auditoria.pontuacao_total && auditoria.pontuacao_total > 0 ? 'text-green-500' : 'text-red-500'}`}>
-            {auditoria.pontuacao_total !== null && auditoria.pontuacao_total !== undefined 
-              ? `${auditoria.pontuacao_total.toFixed(1)} pontos` 
-              : '0 pontos'}
+          <div className="flex items-center justify-between">
+            <div className={`text-xl font-bold ${auditoria.pontuacao_total && auditoria.pontuacao_total > 0 ? 'text-green-500' : 'text-red-500'}`}>
+              {auditoria.pontuacao_total !== null && auditoria.pontuacao_total !== undefined 
+                ? `${auditoria.pontuacao_total.toFixed(1)} pontos` 
+                : '0 pontos'}
+            </div>
+            <div className="flex items-center bg-blue-50 px-3 py-1 rounded-md border border-blue-200">
+              <Target className="h-4 w-4 mr-1 text-blue-500" />
+              <span className="text-sm font-medium text-blue-700">
+                Meta: {meta} pontos
+              </span>
+            </div>
+          </div>
+          <div className="bg-gray-50 p-2 rounded-md text-sm border">
+            <span className="font-medium text-gray-700">Total de Perguntas:</span> {totalPerguntas}
           </div>
         </div>
         
