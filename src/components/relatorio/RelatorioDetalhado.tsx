@@ -27,6 +27,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import {
   ArrowLeft, 
@@ -41,6 +48,7 @@ import { InformacoesGerais } from './InformacoesGerais';
 import { PontuacaoPorSecao } from './PontuacaoPorSecao';
 import { PontosAtencao } from './PontosAtencao';
 import { AnaliseGeral } from './AnaliseGeral';
+import { useQuery } from '@tanstack/react-query';
 
 // PDF export options
 const options = {
@@ -68,6 +76,20 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
+  
+  // Fetch available users for select dropdowns
+  const { data: usuarios, isLoading: loadingUsuarios } = useQuery({
+    queryKey: ['usuarios'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .order('nome');
+      
+      if (error) throw error;
+      return data || [];
+    }
+  });
   
   // Create a form with react-hook-form
   const form = useForm({
@@ -240,7 +262,21 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
                       <FormItem>
                         <FormLabel>Supervisor(a)</FormLabel>
                         <FormControl>
-                          <Input placeholder="Nome do supervisor" {...field} />
+                          <Select 
+                            value={field.value} 
+                            onValueChange={field.onChange}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione um supervisor" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {usuarios?.map((usuario) => (
+                                <SelectItem key={usuario.id} value={usuario.nome}>
+                                  {usuario.nome}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </FormControl>
                       </FormItem>
                     )}
@@ -253,7 +289,21 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
                       <FormItem>
                         <FormLabel>Gerente da Loja</FormLabel>
                         <FormControl>
-                          <Input placeholder="Nome do gerente" {...field} />
+                          <Select 
+                            value={field.value} 
+                            onValueChange={field.onChange}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione um gerente" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {usuarios?.map((usuario) => (
+                                <SelectItem key={usuario.id} value={usuario.nome}>
+                                  {usuario.nome}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </FormControl>
                       </FormItem>
                     )}

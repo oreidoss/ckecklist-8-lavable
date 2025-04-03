@@ -8,6 +8,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, Store, List, ChevronLeft, Save, Home, ArrowRight, Check, ArrowLeftCircle, ArrowRightCircle, Edit, UserRound } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
 import { Progress } from "@/components/ui/progress";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Loja = Database['public']['Tables']['lojas']['Row'];
 type Usuario = Database['public']['Tables']['usuarios']['Row'];
@@ -49,6 +56,19 @@ const Checklist: React.FC = () => {
     const now = new Date();
     setCurrentDate(now.toLocaleDateString('pt-BR'));
   }, []);
+  
+  const { data: usuarios, isLoading: loadingUsuarios } = useQuery({
+    queryKey: ['usuarios'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .order('nome');
+      
+      if (error) throw error;
+      return data || [];
+    }
+  });
   
   const { data: auditoria, isLoading: loadingAuditoria, refetch: refetchAuditoria } = useQuery({
     queryKey: ['auditoria', auditoriaId],
@@ -313,6 +333,16 @@ const Checklist: React.FC = () => {
     }
   };
   
+  const handleSelectSupervisor = (value: string) => {
+    setSupervisor(value);
+    handleSaveSupervisor();
+  };
+  
+  const handleSelectGerente = (value: string) => {
+    setGerente(value);
+    handleSaveGerente();
+  };
+  
   const getPerguntasBySecao = (secaoId: string) => {
     return perguntas?.filter(pergunta => pergunta.secao_id === secaoId) || [];
   };
@@ -381,7 +411,7 @@ const Checklist: React.FC = () => {
     }
   };
   
-  if (loadingAuditoria || loadingSecoes || loadingPerguntas || loadingRespostas) {
+  if (loadingAuditoria || loadingUsuarios) {
     return <div className="flex justify-center items-center h-96">Carregando...</div>;
   }
   
@@ -421,13 +451,23 @@ const Checklist: React.FC = () => {
             <div className="relative">
               {isEditingSupervisor ? (
                 <div className="flex items-center gap-2">
-                  <Input 
-                    type="text" 
-                    value={supervisor} 
-                    onChange={(e) => setSupervisor(e.target.value)}
-                    className="w-full p-3 border rounded-md"
-                    placeholder="Nome do supervisor(a)"
-                  />
+                  <div className="flex-1">
+                    <Select 
+                      value={supervisor} 
+                      onValueChange={(value) => setSupervisor(value)}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Selecione um supervisor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {usuarios?.map((usuario) => (
+                          <SelectItem key={usuario.id} value={usuario.nome}>
+                            {usuario.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <Button 
                     onClick={handleSaveSupervisor}
                     variant="outline" 
@@ -469,13 +509,23 @@ const Checklist: React.FC = () => {
             <div className="relative">
               {isEditingGerente ? (
                 <div className="flex items-center gap-2">
-                  <Input 
-                    type="text" 
-                    value={gerente} 
-                    onChange={(e) => setGerente(e.target.value)}
-                    className="w-full p-3 border rounded-md"
-                    placeholder="Nome do gerente"
-                  />
+                  <div className="flex-1">
+                    <Select 
+                      value={gerente} 
+                      onValueChange={(value) => setGerente(value)}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Selecione um gerente" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {usuarios?.map((usuario) => (
+                          <SelectItem key={usuario.id} value={usuario.nome}>
+                            {usuario.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <Button 
                     onClick={handleSaveGerente}
                     variant="outline" 
