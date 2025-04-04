@@ -3,7 +3,6 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  ClipboardCheck, 
   Store, 
   Layers, 
   HelpCircle, 
@@ -38,8 +37,12 @@ export function Layout({ children }: LayoutProps) {
       <header className="border-b py-3 px-4 sm:px-6 bg-white shadow-sm">
         <div className="container flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
-            <ClipboardCheck className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl">Audit Flow</span>
+            <img 
+              src="/lovable-uploads/1a7a1eb0-0f52-443d-8508-441a6cca0dce.png" 
+              alt="Checklist 9.0 Logo" 
+              className="h-8 w-auto" 
+            />
+            <span className="font-bold text-xl">Checklist 9.0</span>
           </Link>
           
           <div className="flex items-center space-x-2 md:space-x-4">
@@ -180,7 +183,7 @@ export function Layout({ children }: LayoutProps) {
       
       <footer className="py-3 px-4 sm:px-6 border-t text-center text-xs sm:text-sm text-muted-foreground">
         <div className="container">
-          &copy; {new Date().getFullYear()} Audit Flow Compass - Todos os direitos reservados
+          &copy; {new Date().getFullYear()} Checklist 9.0 - Todos os direitos reservados
         </div>
       </footer>
     </div>

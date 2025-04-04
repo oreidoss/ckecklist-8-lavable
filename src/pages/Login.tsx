@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { usuarioService } from "@/lib/services/usuarioService";
-import { ClipboardCheck } from "lucide-react";
 import { 
   Dialog, 
   DialogContent, 
@@ -164,9 +163,13 @@ const Login = () => {
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-2 sm:mb-4">
-            <ClipboardCheck className="h-10 w-10 sm:h-12 sm:w-12 text-primary" />
+            <img 
+              src="/lovable-uploads/1a7a1eb0-0f52-443d-8508-441a6cca0dce.png" 
+              alt="Checklist 9.0 Logo" 
+              className="h-16 w-auto"
+            />
           </div>
-          <CardTitle className="text-xl sm:text-2xl">Audit Flow Compass</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl">Checklist 9.0</CardTitle>
           <CardDescription className="text-sm sm:text-base">
             Entre com suas credenciais para acessar o sistema
           </CardDescription>

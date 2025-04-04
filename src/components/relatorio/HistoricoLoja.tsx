@@ -30,7 +30,7 @@ import { AnaliseTendencias } from './AnaliseTendencias';
 // PDF export options
 const options = {
   margin: 1,
-  filename: 'historico-loja.pdf',
+  filename: 'historico-loja-checklist90.pdf',
   image: { type: 'jpeg', quality: 0.98 },
   html2canvas: { scale: 2 },
   jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' }
