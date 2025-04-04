@@ -106,12 +106,30 @@ const Relatorio: React.FC = () => {
 
   // Report for a specific audit
   if (auditoria && secoes && perguntas) {
+    // Get all audits for this store to show historical data
+    const { data: auditorias = [] } = useQuery({
+      queryKey: ['auditorias-loja', auditoria.loja_id],
+      queryFn: async () => {
+        const { data, error } = await supabase
+          .from('auditorias')
+          .select('*, respostas(*)')
+          .eq('loja_id', auditoria.loja_id)
+          .order('data', { ascending: false });
+        
+        if (error) throw error;
+        return data;
+      },
+      initialData: [],
+    });
+
     return (
       <RelatorioDetalhado 
         auditoria={auditoria} 
-        secoes={secoes} 
-        perguntas={perguntas}
-        refetchAuditoria={refetchAuditoria}
+        loja={auditoria.loja} 
+        respostas={auditoria.respostas || []} 
+        perguntas={perguntas} 
+        secoes={secoes}
+        auditorias={auditorias}
       />
     );
   }

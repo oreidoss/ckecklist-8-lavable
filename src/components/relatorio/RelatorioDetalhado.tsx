@@ -29,6 +29,42 @@ const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
   secoes,
   auditorias,
 }) => {
+  // Prepare data for AnaliseGeral component
+  const pontuacaoTotal = auditoria.pontuacao_total || 0;
+  
+  // Prepare data for PontuacaoPorSecao component
+  const pontuacoesPorSecao = secoes.map(secao => {
+    const perguntasSecao = perguntas.filter(p => p.secao_id === secao.id);
+    const respostasSecao = respostas.filter(r => 
+      perguntasSecao.some(p => p.id === r.pergunta_id)
+    );
+    
+    const pontuacao = respostasSecao.reduce((acc, r) => acc + (r.pontuacao_obtida || 0), 0);
+    
+    return {
+      id: secao.id,
+      nome: secao.nome,
+      pontuacao,
+      total: perguntasSecao.length,
+      percentual: perguntasSecao.length > 0 ? (pontuacao / perguntasSecao.length) * 100 : 0
+    };
+  });
+  
+  // Prepare data for PontosAtencao component
+  const itensCriticos = respostas
+    .filter(r => r.pontuacao_obtida !== undefined && r.pontuacao_obtida <= 0)
+    .map(r => {
+      const pergunta = perguntas.find(p => p.id === r.pergunta_id);
+      const secao = secoes.find(s => pergunta && s.id === pergunta.secao_id);
+      
+      return {
+        id: r.id,
+        pergunta_texto: pergunta ? pergunta.texto : 'Pergunta não encontrada',
+        secao_nome: secao ? secao.nome : 'Seção não encontrada',
+        observacao: r.observacao || 'Sem observação'
+      };
+    });
+
   return (
     <div className="space-y-4">
       <Card>
@@ -36,33 +72,37 @@ const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
       </Card>
 
       <Card>
-        <InfoLoja loja={loja} />
+        <InfoLoja loja={loja} auditorias={auditorias} />
       </Card>
 
       <Card>
-        <AnaliseGeral respostas={respostas} perguntas={perguntas} />
+        <AnaliseGeral 
+          pontuacaoTotal={pontuacaoTotal} 
+          pontuacoesPorSecao={pontuacoesPorSecao} 
+          itensCriticos={itensCriticos} 
+        />
       </Card>
 
       <Card>
-        <PontuacaoPorSecao respostas={respostas} perguntas={perguntas} secoes={secoes} />
+        <PontuacaoPorSecao pontuacoesPorSecao={pontuacoesPorSecao} />
       </Card>
 
       <Card>
-        <PontosAtencao respostas={respostas} perguntas={perguntas} />
+        <PontosAtencao itensCriticos={itensCriticos} />
       </Card>
       
       <AnaliseIA respostas={respostas} perguntas={perguntas} />
 
       <Card>
-        <HistoricoAuditorias auditorias={auditorias} lojaId={loja.id} />
+        <HistoricoAuditorias auditorias={auditorias} />
       </Card>
 
       <Card>
-        <HistoricoLoja loja={loja} auditorias={auditorias} />
+        <HistoricoLoja auditoriasPorLoja={{ loja, auditorias }} perguntas={perguntas} />
       </Card>
 
       <Card>
-        <AnaliseTendencias auditorias={auditorias} lojaId={loja.id} />
+        <AnaliseTendencias auditorias={auditorias} perguntas={perguntas} />
       </Card>
     </div>
   );
