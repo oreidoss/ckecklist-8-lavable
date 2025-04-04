@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import RelatorioDetalhado from '@/components/relatorio/RelatorioDetalhado';
 import { HistoricoLoja } from '@/components/relatorio/HistoricoLoja';
-import { Auditoria } from '@/lib/types'; // Import the Auditoria type
+import { Auditoria, Resposta } from '@/lib/types';
 
 const Relatorio: React.FC = () => {
   const { auditoriaId, lojaId } = useParams();
@@ -117,7 +116,7 @@ const Relatorio: React.FC = () => {
       initialData: [],
     });
 
-    const typedRespostas = auditoria.respostas ? 
+    const typedRespostas: Resposta[] = auditoria.respostas ? 
       auditoria.respostas.map(r => ({
         ...r,
         id: r.id.toString(),
@@ -128,23 +127,23 @@ const Relatorio: React.FC = () => {
         observacao: r.observacao || undefined
       })) : [];
 
-    const typedAuditoria = {
+    const typedAuditoria: Auditoria = {
       ...auditoria,
       id: auditoria.id.toString(),
       loja_id: auditoria.loja_id.toString(),
       usuario_id: auditoria.usuario_id.toString(),
       status: auditoria.status || 'em_andamento',
       pontuacao_total: Number(auditoria.pontuacao_total || 0)
-    } as Auditoria;
+    };
 
-    const typedAuditorias = auditorias.map(a => ({
+    const typedAuditorias: Auditoria[] = auditorias.map(a => ({
       ...a,
       id: a.id.toString(),
       loja_id: a.loja_id.toString(),
       usuario_id: a.usuario_id?.toString() || '',
       status: a.status || 'em_andamento',
       pontuacao_total: Number(a.pontuacao_total || 0)
-    })) as Auditoria[];
+    }));
 
     return (
       <RelatorioDetalhado 
