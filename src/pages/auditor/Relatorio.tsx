@@ -132,7 +132,7 @@ const Relatorio: React.FC = () => {
         pergunta_id: r.pergunta_id?.toString() || '',
         resposta: r.resposta || '',
         pontuacao_obtida: Number(r.pontuacao_obtida || 0),
-        observacao: r.observacao || ''  // Add observacao property with default value
+        observacao: r.observacao || undefined  // Using undefined if not present for optional property
       })) : [];
 
     return (
