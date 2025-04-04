@@ -85,7 +85,7 @@ const Home: React.FC = () => {
         toast({
           title: "Atenção",
           description: "Não foram encontrados usuários com função de supervisor ou gerente. Considere criar usuários com estas funções na área de Administração de Usuários.",
-          variant: "warning",
+          variant: "destructive", // Changed from "warning" to "destructive" as the available options are "default" or "destructive"
           duration: 6000
         });
       } else {
