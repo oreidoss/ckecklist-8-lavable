@@ -46,7 +46,7 @@ export interface Resposta {
   pergunta_id: string;
   resposta: string;
   pontuacao_obtida: number;
-  observacao?: string; // Added observacao as optional property
+  observacao?: string;
 }
 
 export interface RespostaFormData {
