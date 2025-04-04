@@ -55,29 +55,44 @@ export const exportToPdf = (
     @page { margin: 0.5cm; size: A4; }
     body { font-family: 'Helvetica', 'Arial', sans-serif; color: #000; background: #fff; }
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-    .pdf-header { text-align: center; margin-bottom: 20px; }
-    .pdf-logo { font-size: 24px; font-weight: bold; }
+    .pdf-header { text-align: center; margin-bottom: 15px; }
+    .pdf-logo { font-size: 20px; font-weight: bold; }
     .pdf-container { width: 100%; background: #fff; color: #000; }
     .pdf-extracted-content { width: 100%; display: block; }
     
-    table { width: 100%; border-collapse: collapse; margin: 15px 0; page-break-inside: auto; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    /* Condensed spacing for cards and sections */
+    .card { margin-bottom: 10px !important; padding: 10px !important; }
+    .card-header { padding: 10px !important; padding-bottom: 5px !important; }
+    .card-content { padding: 10px !important; }
+    h1, h2, h3 { margin-top: 10px !important; margin-bottom: 5px !important; }
+    p { margin-top: 3px !important; margin-bottom: 3px !important; }
+    
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; page-break-inside: auto; }
+    th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
     th { background-color: #f2f2f2; }
-    .section-title { margin-top: 20px; font-size: 16px; font-weight: bold; }
+    .section-title { margin-top: 15px; font-size: 16px; font-weight: bold; }
     .negative-score { color: red; }
+    
+    /* Remove excess white space */
+    .space-y-6 { margin-top: 0 !important; }
+    .space-y-6 > * { margin-top: 10px !important; margin-bottom: 0 !important; }
+    .space-y-4 > * { margin-top: 8px !important; margin-bottom: 0 !important; }
     
     /* Ensure all content is visible */
     * { overflow: visible !important; position: static !important; }
-    .card { break-inside: avoid; margin-bottom: 15px; page-break-inside: avoid; background: #fff; }
+    .card { break-inside: avoid; margin-bottom: 10px; page-break-inside: avoid; background: #fff; }
     
     /* Ensure proper rendering of charts and graphs */
     svg, canvas { max-width: 100%; height: auto; }
     
-    /* Add space between sections */
-    .print-item { margin-bottom: 1cm; page-break-inside: avoid; }
+    /* Compact the print items */
+    .print-item { margin-bottom: 10px !important; page-break-inside: avoid; }
     
     /* Make sure text is black for better printing */
     p, h1, h2, h3, h4, h5, h6, span, div { color: #000 !important; }
+    
+    /* Fix the footer position */
+    .pdf-footer { margin-top: 10px !important; }
   `;
   element.appendChild(style);
   
@@ -86,8 +101,42 @@ export const exportToPdf = (
   element.style.backgroundColor = '#ffffff';
   element.style.color = '#000000';
   element.style.position = 'relative';
-  element.style.padding = '1cm';
+  element.style.padding = '0.5cm';
   element.style.boxSizing = 'border-box';
+  
+  // Process all Cards to make them more compact
+  const cards = element.querySelectorAll('.card');
+  cards.forEach(card => {
+    const htmlCard = card as HTMLElement;
+    htmlCard.style.marginBottom = '10px';
+    htmlCard.style.padding = '10px';
+    
+    // Make card headers more compact
+    const cardHeader = htmlCard.querySelector('.card-header');
+    if (cardHeader) {
+      (cardHeader as HTMLElement).style.padding = '10px';
+      (cardHeader as HTMLElement).style.paddingBottom = '5px';
+    }
+    
+    // Make card content more compact
+    const cardContent = htmlCard.querySelector('.card-content');
+    if (cardContent) {
+      (cardContent as HTMLElement).style.padding = '10px';
+    }
+  });
+  
+  // Remove large gaps between sections
+  const spacedElements = element.querySelectorAll('.space-y-6, .space-y-4');
+  spacedElements.forEach(el => {
+    (el as HTMLElement).style.gap = '10px';
+    (el as HTMLElement).style.marginTop = '0';
+    
+    // Also process child elements to reduce spacing
+    Array.from(el.children).forEach((child, index) => {
+      (child as HTMLElement).style.marginTop = index === 0 ? '0' : '10px';
+      (child as HTMLElement).style.marginBottom = '0';
+    });
+  });
   
   // Ensure the content flows properly
   Array.from(element.querySelectorAll('*')).forEach(el => {
