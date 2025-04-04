@@ -1,12 +1,10 @@
-
 import React from 'react';
-import { ArrowLeftCircle, ArrowRightCircle, FileText } from 'lucide-react';
+import { ArrowLeftCircle, ArrowRightCircle, FileText, Save } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
 import { Pergunta, Secao } from '@/lib/types';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Input } from "@/components/ui/input";
-import { Save } from "lucide-react";
 import ChecklistQuestion, { RespostaValor } from './ChecklistQuestion';
 
 interface SectionContentProps {
@@ -60,61 +58,47 @@ const SectionContent: React.FC<SectionContentProps> = ({
   
   if (!activeSecaoObj) return null;
   
-  // Get the last question ID for the section
   const lastPerguntaId = perguntasSecaoAtiva.length > 0 
     ? perguntasSecaoAtiva[perguntasSecaoAtiva.length - 1].id 
     : '';
     
-  // Get any existing observation for this section
   const sectionObservacao = observacoes[lastPerguntaId] || 
     (respostasExistentes?.find(r => r.pergunta_id === lastPerguntaId)?.observacao || '');
 
   return (
-    <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm w-full max-w-full mx-auto">
-      <h2 className="text-xl sm:text-2xl font-bold mb-2">{activeSecaoObj.nome}</h2>
-      <div className="text-sm text-gray-600 mb-4">
+    <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm">
+      <h2 className="text-lg font-bold mb-2">{activeSecaoObj.nome}</h2>
+      <div className="text-xs text-gray-600 mb-2">
         Seção {secaoIndex + 1} de {totalSecoes}
       </div>
       
-      <div className="mb-4 sm:mb-6">
-        <Progress value={(secaoIndex + 1) / totalSecoes * 100} className="h-2" />
-      </div>
+      <Progress value={(secaoIndex + 1) / totalSecoes * 100} className="h-1 mb-3" />
       
-      <div className="space-y-6">
-        {perguntasSecaoAtiva.map((pergunta, index) => {
-          const isLastPergunta = isLastPerguntaInSection(pergunta.id);
-          const anexoUrl = respostasExistentes?.find(r => r.pergunta_id === pergunta.id)?.anexo_url || '';
-          
-          return (
-            <ChecklistQuestion
-              key={pergunta.id}
-              pergunta={pergunta}
-              index={index}
-              resposta={respostas[pergunta.id]}
-              isLastPergunta={isLastPergunta}
-              anexoUrl={fileUrls[pergunta.id] || anexoUrl}
-              uploading={uploading[pergunta.id] || false}
-              handleResposta={handleResposta}
-              handleFileUpload={handleFileUpload}
-            />
-          );
-        })}
+      <div className="space-y-2">
+        {perguntasSecaoAtiva.map((pergunta) => (
+          <ChecklistQuestion
+            key={pergunta.id}
+            pergunta={pergunta}
+            resposta={respostas[pergunta.id]}
+            handleResposta={handleResposta}
+          />
+        ))}
         
-        {/* Section Observation Field - Added at the end of the section */}
-        <div className="border rounded-lg p-4 sm:p-6 w-full max-w-full bg-gray-50">
-          <h3 className="text-base sm:text-lg font-medium mb-4">Observações da Seção</h3>
-          <div className="flex gap-2">
+        <div className="border rounded-lg p-2 bg-gray-50">
+          <h3 className="text-sm font-medium mb-2">Observações</h3>
+          <div className="flex gap-1">
             <Input
               type="text"
-              placeholder="Adicione uma observação para esta seção"
-              className="flex-1"
+              placeholder="Adicione uma observação"
+              className="flex-1 text-sm h-8"
               value={sectionObservacao}
               onChange={(e) => handleObservacaoChange(lastPerguntaId, e.target.value)}
             />
             <Button 
               variant="outline" 
+              size="sm"
               onClick={() => handleSaveObservacao(lastPerguntaId)}
-              className="bg-green-50 hover:bg-green-100 text-green-600 border-green-200"
+              className="bg-green-50 hover:bg-green-100 text-green-600"
             >
               <Save className="h-4 w-4" />
             </Button>
@@ -122,96 +106,54 @@ const SectionContent: React.FC<SectionContentProps> = ({
         </div>
       </div>
       
-      {isMobile ? (
-        <div className="mt-6 flex flex-col gap-3">
-          <div className="flex justify-between">
-            <Button
-              variant="outline"
-              onClick={goToPreviousSection}
-              disabled={isFirstSection}
-              className="flex-1 mr-2"
-              size="sm"
-            >
-              <ArrowLeftCircle className="mr-1 h-4 w-4" />
-              Anterior
-            </Button>
-            
-            <Button
-              variant="outline"
-              onClick={goToNextSection}
-              disabled={isLastSection}
-              className="flex-1 ml-2"
-              size="sm"
-            >
-              Próxima
-              <ArrowRightCircle className="ml-1 h-4 w-4" />
-            </Button>
-          </div>
-          
-          <div className="flex gap-2">
-            <Button
-              variant="default"
-              className="bg-[#00bfa5] hover:bg-[#00a896] flex-1"
-              onClick={saveAndNavigateHome}
-              disabled={isSaving}
-            >
-              Salvar e Voltar
-            </Button>
-            
-            <Button
-              variant="outline"
-              className="border-[#00bfa5] text-[#00bfa5] flex-1"
-              onClick={navigateToReport}
-              disabled={isSaving}
-            >
-              <FileText className="mr-1 h-4 w-4" />
-              Ver Relatório
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="mt-10 flex justify-between">
+      <div className="mt-3 flex flex-col sm:flex-row justify-between gap-2">
+        <div className="flex gap-2">
           <Button
             variant="outline"
+            size="sm"
             onClick={goToPreviousSection}
             disabled={isFirstSection}
-            className="flex items-center"
+            className="flex-1"
           >
-            <ArrowLeftCircle className="mr-2 h-5 w-5" />
-            Seção Anterior
+            <ArrowLeftCircle className="mr-1 h-4 w-4" />
+            Anterior
           </Button>
-          
-          <div className="flex gap-2">
-            <Button
-              variant="default"
-              className="bg-[#00bfa5] hover:bg-[#00a896] px-6 py-2 h-12"
-              onClick={saveAndNavigateHome}
-              disabled={isSaving}
-            >
-              Salvar e Voltar
-            </Button>
-            
-            <Button
-              variant="outline"
-              className="border-[#00bfa5] text-[#00bfa5] px-6 py-2 h-12"
-              onClick={navigateToReport}
-              disabled={isSaving}
-            >
-              Ver Relatório
-            </Button>
-          </div>
           
           <Button
             variant="outline"
+            size="sm"
             onClick={goToNextSection}
             disabled={isLastSection}
-            className="flex items-center"
+            className="flex-1"
           >
-            Próxima Seção
-            <ArrowRightCircle className="ml-2 h-5 w-5" />
+            Próxima
+            <ArrowRightCircle className="ml-1 h-4 w-4" />
           </Button>
         </div>
-      )}
+        
+        <div className="flex gap-2">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={saveAndNavigateHome}
+            disabled={isSaving}
+            className="flex-1"
+          >
+            Salvar
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={navigateToReport}
+            disabled={isSaving}
+            className="flex-1"
+          >
+            <FileText className="mr-1 h-4 w-4" />
+            Relatório
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
