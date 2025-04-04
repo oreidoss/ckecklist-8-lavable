@@ -2,7 +2,6 @@
 #root {
   width: 100%;
   margin: 0 auto;
-  text-align: center;
 }
 
 .logo {
@@ -44,12 +43,14 @@
 /* Mobile responsiveness enhancements */
 @media (max-width: 640px) {
   .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    width: 100%;
+    max-width: 100%;
   }
   
   .card, .card-content {
-    padding: 1em;
+    padding: 0.75em;
   }
   
   h1, h2, h3 {
@@ -60,6 +61,11 @@
     display: block;
     overflow-x: auto;
     white-space: nowrap;
+  }
+  
+  .full-width-mobile {
+    width: 100% !important;
+    min-width: 100% !important;
   }
 }
 
@@ -76,5 +82,19 @@
   select, 
   textarea {
     font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+  
+  /* Fix horizontal overflow */
+  body, html {
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
+  }
+  
+  /* Adjust card paddings */
+  .card {
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
   }
 }

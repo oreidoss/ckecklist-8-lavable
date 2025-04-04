@@ -109,6 +109,47 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-x-hidden;
+    width: 100%;
+  }
+  
+  html {
+    @apply overflow-x-hidden;
+    width: 100%;
+  }
+  
+  /* Ajustes para telas menores */
+  @media (max-width: 640px) {
+    .container {
+      @apply px-2;
+    }
+    
+    .card {
+      @apply px-3 py-4;
+    }
+  }
+  
+  /* Melhora clickables em mobile */
+  @media (max-width: 640px) {
+    button, a, [role="button"] {
+      @apply min-h-10;
+    }
+  }
+}
+
+/* Estilos para Sheet em mobile */
+.sheet-content-mobile {
+  width: 90vw !important;
+  max-width: 90vw !important;
+}
+
+/* Corrige a visualização da tabela em dispositivos móveis */
+@media (max-width: 768px) {
+  table {
+    @apply w-full block overflow-x-auto whitespace-nowrap;
+  }
+  
+  .responsive-card {
+    @apply px-2 py-3 mb-2;
   }
 }

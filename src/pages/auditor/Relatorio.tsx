@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import RelatorioDetalhado from '@/components/relatorio/RelatorioDetalhado';
 import { HistoricoLoja } from '@/components/relatorio/HistoricoLoja';
 import { Auditoria, Resposta } from '@/lib/types';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const Relatorio: React.FC = () => {
   const { auditoriaId, lojaId } = useParams();
@@ -153,23 +154,27 @@ const Relatorio: React.FC = () => {
     }));
 
     return (
-      <RelatorioDetalhado 
-        auditoria={typedAuditoria} 
-        loja={auditoria.loja} 
-        respostas={typedRespostas} 
-        perguntas={perguntas} 
-        secoes={secoes}
-        auditorias={typedAuditorias}
-      />
+      <ScrollArea className="h-[calc(100vh-10rem)] w-full px-1">
+        <RelatorioDetalhado 
+          auditoria={typedAuditoria} 
+          loja={auditoria.loja} 
+          respostas={typedRespostas} 
+          perguntas={perguntas} 
+          secoes={secoes}
+          auditorias={typedAuditorias}
+        />
+      </ScrollArea>
     );
   }
 
   if (auditoriasPorLoja && perguntas) {
     return (
-      <HistoricoLoja 
-        auditoriasPorLoja={auditoriasPorLoja}
-        perguntas={perguntas}
-      />
+      <ScrollArea className="h-[calc(100vh-10rem)] w-full px-1">
+        <HistoricoLoja 
+          auditoriasPorLoja={auditoriasPorLoja}
+          perguntas={perguntas}
+        />
+      </ScrollArea>
     );
   }
 
