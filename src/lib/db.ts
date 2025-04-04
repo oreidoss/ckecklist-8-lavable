@@ -7,6 +7,7 @@ import { lojaService } from './services/lojaService';
 import { secaoService } from './services/secaoService';
 import { perguntaService } from './services/perguntaService';
 import { usuarioService } from './services/usuarioService';
+import { authService } from './services/authService';
 import { auditoriaService } from './services/auditoriaService';
 import { respostaService } from './services/respostaService';
 import { analiseService } from './services/analiseService';
@@ -41,6 +42,13 @@ class DatabaseService {
   updateUsuario = usuarioService.updateUsuario.bind(usuarioService);
   deleteUsuario = usuarioService.deleteUsuario.bind(usuarioService);
 
+  // Auth methods (now from authService but maintaining backward compatibility)
+  login = authService.login.bind(authService);
+  logout = authService.logout.bind(authService);
+  getCurrentUser = authService.getCurrentUser.bind(authService);
+  verificarCredenciais = authService.verificarCredenciais.bind(authService);
+  isAdmin = authService.isAdmin.bind(authService);
+
   // Auditoria methods
   getAuditorias = auditoriaService.getAuditorias.bind(auditoriaService);
   getAuditoria = auditoriaService.getAuditoria.bind(auditoriaService);
@@ -70,6 +78,7 @@ export {
   secaoService,
   perguntaService,
   usuarioService,
+  authService,
   auditoriaService,
   respostaService,
   analiseService,
