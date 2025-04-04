@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { RefreshCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Usuario } from '@/lib/types';
 
 const AdminSecoes: React.FC = () => {
   const { toast } = useToast();
@@ -96,7 +97,12 @@ const AdminSecoes: React.FC = () => {
         });
         throw error;
       }
-      return data || [];
+      
+      // Transform string IDs to number IDs to match the Usuario interface
+      return (data || []).map(user => ({
+        ...user,
+        id: typeof user.id === 'string' ? parseInt(user.id, 10) : user.id
+      })) as Usuario[];
     },
   });
   
