@@ -1,7 +1,7 @@
 
-// Atualizar a interface de Usuário para incluir senha
+// Atualizar a interface de Usuário para incluir senha e usar string para o ID
 export interface Usuario {
-  id: number;
+  id: string;
   nome: string;
   email: string;
   role?: string;

@@ -1,209 +1,156 @@
 
-import React, { useEffect, useState } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Bot, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Resposta, pontuacaoMap } from "@/lib/types";
+import { AlertTriangle, Info } from "lucide-react";
 
 interface AnaliseIAProps {
-  pontuacaoTotal: number;
-  pontuacoesPorSecao: any[];
-  itensCriticos: any[];
-  itensAtencao: any[];
-  lojaNome: string;
-  lojaNumero: string;
-  setAnaliseCompleta?: (completa: boolean) => void;
+  respostas: Resposta[];
+  pontosCriticos: { pergunta: string; pontuacao: number }[];
+  pontosAtencao: { pergunta: string; pontuacao: number }[];
 }
 
-export const AnaliseIA: React.FC<AnaliseIAProps> = ({
-  pontuacaoTotal,
-  pontuacoesPorSecao,
-  itensCriticos,
-  itensAtencao,
-  lojaNome,
-  lojaNumero,
-  setAnaliseCompleta
-}) => {
-  const [analise, setAnalise] = useState<string>('');
-  const [recomendacoes, setRecomendacoes] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const gerarAnaliseIA = async () => {
-    setIsLoading(true);
-    setError(null);
+export function AnaliseIA({ respostas, pontosCriticos, pontosAtencao }: AnaliseIAProps) {
+  // Gerar uma análise baseada nos pontos críticos e de atenção
+  const gerarAnaliseIA = () => {
+    const totalRespostas = respostas.length;
+    const respostasNegativas = respostas.filter(r => r.pontuacao_obtida < 0).length;
+    const percentualNegativo = totalRespostas > 0 ? (respostasNegativas / totalRespostas) * 100 : 0;
     
-    try {
-      // Preparar os dados para enviar para a IA
-      const dadosParaAnalise = {
-        lojaNome,
-        lojaNumero,
-        pontuacaoTotal,
-        pontuacoesPorSecao: pontuacoesPorSecao.map(s => ({
-          nome: s.nome,
-          pontuacao: s.pontuacao,
-          percentual: s.percentual
-        })),
-        itensCriticos: itensCriticos.map(item => ({
-          secao: item.secao_nome,
-          problema: item.pergunta_texto,
-          pontuacao: -1
-        })),
-        itensAtencao: itensAtencao.map(item => ({
-          secao: item.secao_nome,
-          problema: item.pergunta_texto,
-          pontuacao: 0.5
-        }))
-      };
-
-      // Em vez de chamar uma API externa de IA, vamos simular a análise com base nas pontuações
-      // Em um ambiente real, você substituiria esta parte por uma chamada para um serviço de IA
-      
-      // Simulando processamento da IA
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Análise baseada na pontuação
-      let analiseTexto = '';
-      let recomendacoesLista: string[] = [];
-      
-      if (pontuacaoTotal > 5) {
-        analiseTexto = `A loja ${lojaNumero} - ${lojaNome} apresenta um bom desempenho geral, com uma pontuação de ${pontuacaoTotal.toFixed(1)} pontos. No entanto, foram identificados ${itensCriticos.length} itens críticos (pontuação -1) e ${itensAtencao.length} itens que requerem atenção.`;
-        
-        if (itensCriticos.length > 0) {
-          analiseTexto += ` Os principais pontos críticos estão nas seções: ${[...new Set(itensCriticos.slice(0, 3).map(i => i.secao_nome))].join(', ')}.`;
-          
-          // Agrupar recomendações por seção
-          const secoesCriticas = [...new Set(itensCriticos.map(i => i.secao_nome))];
-          secoesCriticas.forEach(secao => {
-            const problemasSecao = itensCriticos.filter(i => i.secao_nome === secao);
-            recomendacoesLista.push(`Na seção ${secao}, priorize a correção dos seguintes problemas: ${problemasSecao.slice(0, 2).map(p => p.pergunta_texto).join('; ')}${problemasSecao.length > 2 ? ' e outros.' : '.'}`);
-          });
-        }
-      } else if (pontuacaoTotal > 0) {
-        analiseTexto = `A loja ${lojaNumero} - ${lojaNome} apresenta um desempenho satisfatório, com pontuação de ${pontuacaoTotal.toFixed(1)} pontos, porém existem várias áreas que requerem atenção imediata. Foram identificados ${itensCriticos.length} itens críticos (pontuação -1) e ${itensAtencao.length} itens que requerem atenção.`;
-        
-        // Adicionar recomendações por seções problemáticas
-        const secoesCriticas = [...new Set(itensCriticos.map(i => i.secao_nome))];
-        secoesCriticas.forEach(secao => {
-          recomendacoesLista.push(`Implemente um plano de ação urgente para a seção ${secao}, focando nos itens não conformes.`);
-        });
-        
-        recomendacoesLista.push(`Realize treinamento com a equipe sobre os procedimentos operacionais, especialmente nas áreas de ${secoesCriticas.slice(0, 3).join(', ')}.`);
-      } else {
-        analiseTexto = `A loja ${lojaNumero} - ${lojaNome} apresenta um desempenho crítico, com pontuação de ${pontuacaoTotal.toFixed(1)} pontos. A situação demanda intervenção imediata. Foram identificados ${itensCriticos.length} itens críticos (pontuação -1) que estão impactando severamente o desempenho.`;
-        
-        recomendacoesLista.push(`Acione imediatamente a supervisão regional para desenvolver um plano de recuperação emergencial.`);
-        recomendacoesLista.push(`Designe uma equipe especializada para focar exclusivamente na correção dos itens críticos.`);
-        recomendacoesLista.push(`Estabeleça metas diárias de progresso e realize verificações frequentes.`);
-        recomendacoesLista.push(`Providencie treinamento intensivo e acompanhamento presencial para a equipe.`);
-      }
-      
-      // Adicionar recomendações gerais
-      if (pontuacoesPorSecao.some(s => s.pontuacao < 0)) {
-        const secoesNegativas = pontuacoesPorSecao.filter(s => s.pontuacao < 0).map(s => s.nome);
-        recomendacoesLista.push(`Crie um cronograma detalhado para acompanhar a implementação das melhorias nas seções: ${secoesNegativas.join(', ')}.`);
-      }
-      
-      setAnalise(analiseTexto);
-      setRecomendacoes(recomendacoesLista);
-
-      if (setAnaliseCompleta) {
-        setAnaliseCompleta(true);
-      }
-    } catch (err) {
-      setError('Não foi possível gerar a análise de IA. Por favor, tente novamente.');
-      console.error('Erro ao gerar análise de IA:', err);
-    } finally {
-      setIsLoading(false);
+    let situacaoGeral = "satisfatória";
+    if (percentualNegativo > 30) {
+      situacaoGeral = "crítica";
+    } else if (percentualNegativo > 15) {
+      situacaoGeral = "preocupante";
+    }
+    
+    let recomendacao = "";
+    
+    if (pontosCriticos.length > 0) {
+      recomendacao += "Recomendações para pontos críticos:\n";
+      pontosCriticos.forEach(ponto => {
+        const acao = getAcaoRecomendada(ponto.pergunta);
+        recomendacao += `- ${ponto.pergunta}: ${acao}\n`;
+      });
+    }
+    
+    if (pontosAtencao.length > 0) {
+      recomendacao += "\nRecomendações para pontos de atenção:\n";
+      pontosAtencao.forEach(ponto => {
+        const acao = getAcaoRecomendada(ponto.pergunta, false);
+        recomendacao += `- ${ponto.pergunta}: ${acao}\n`;
+      });
+    }
+    
+    const conclusao = gerarConclusao(situacaoGeral, pontosCriticos.length, pontosAtencao.length);
+    
+    return {
+      situacaoGeral,
+      recomendacao,
+      conclusao
+    };
+  };
+  
+  // Função para gerar uma ação recomendada com base na pergunta
+  const getAcaoRecomendada = (pergunta: string, isCritico: boolean = true) => {
+    const acoesCriticas = [
+      "Implementar ação corretiva imediata",
+      "Revisar processo com urgência",
+      "Treinar equipe sobre este ponto específico",
+      "Estabelecer verificação diária deste item",
+      "Criar procedimento de verificação dupla"
+    ];
+    
+    const acoesAtencao = [
+      "Monitorar regularmente",
+      "Incluir em auditorias semanais",
+      "Conscientizar a equipe sobre este ponto",
+      "Revisar processo nas próximas semanas",
+      "Estabelecer meta de melhoria gradual"
+    ];
+    
+    // Gera um índice pseudo-aleatório mas consistente baseado na pergunta
+    const hashCode = pergunta.split("").reduce((acc, char) => {
+      return acc + char.charCodeAt(0);
+    }, 0);
+    
+    const opcoes = isCritico ? acoesCriticas : acoesAtencao;
+    const indice = hashCode % opcoes.length;
+    
+    return opcoes[indice];
+  };
+  
+  // Gerar conclusão personalizada
+  const gerarConclusao = (situacao: string, numCriticos: number, numAtencao: number) => {
+    if (numCriticos === 0 && numAtencao === 0) {
+      return "A auditoria não identificou pontos críticos ou de atenção. Recomenda-se manter os bons procedimentos e continuar com as práticas atuais.";
+    }
+    
+    if (situacao === "crítica") {
+      return `A situação é crítica com ${numCriticos} pontos críticos identificados. Recomenda-se uma intervenção imediata e revisão completa dos processos.`;
+    } else if (situacao === "preocupante") {
+      return `A situação é preocupante com ${numCriticos} pontos críticos e ${numAtencao} pontos de atenção. Recomenda-se atenção especial aos pontos críticos e estabelecer um plano de ação para os próximos 30 dias.`;
+    } else {
+      return `A situação geral é satisfatória, mas foram identificados ${numCriticos} pontos críticos e ${numAtencao} pontos de atenção que devem ser acompanhados. Recomenda-se incluir estes pontos no plano de melhoria contínua.`;
     }
   };
-
-  // Gerar análise automaticamente na primeira vez
-  useEffect(() => {
-    if (itensCriticos.length > 0 || itensAtencao.length > 0) {
-      gerarAnaliseIA();
-    } else {
-      // Se não houver itens para analisar, definir uma mensagem padrão
-      setAnalise(`A loja ${lojaNumero} - ${lojaNome} não apresenta pontos críticos ou itens que requeiram atenção imediata. Continue com o bom trabalho e foque na manutenção dos padrões atuais.`);
-      setRecomendacoes(['Mantenha os procedimentos operacionais atuais', 'Implemente um programa de reconhecimento para a equipe', 'Compartilhe as boas práticas dessa unidade com outras lojas']);
-      
-      if (setAnaliseCompleta) {
-        setAnaliseCompleta(true);
-      }
-    }
-  }, []);
-
+  
+  const analise = gerarAnaliseIA();
+  
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div>
-          <CardTitle className="text-xl">Análise Inteligente</CardTitle>
-          <CardDescription>
-            Avaliação e recomendações baseadas em inteligência artificial
-          </CardDescription>
-        </div>
-        <Button 
-          variant="outline" 
-          size="icon" 
-          onClick={gerarAnaliseIA} 
-          disabled={isLoading}
-        >
-          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-        </Button>
+    <Card className="mb-6">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center text-xl">
+          <Info className="mr-2 h-5 w-5" />
+          Análise de IA
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertTitle>Erro</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        
         <div className="space-y-4">
-          {isLoading ? (
-            <>
-              <div className="flex items-center space-x-4 mb-4">
-                <Bot className="h-8 w-8 text-primary/80" />
-                <div>
-                  <h3 className="text-lg font-medium">Gerando análise inteligente</h3>
-                  <p className="text-muted-foreground text-sm">Processando os dados da auditoria...</p>
-                </div>
+          <div>
+            <h3 className="font-medium mb-1">Situação Geral:</h3>
+            <p className={`${
+              analise.situacaoGeral === "crítica" 
+                ? "text-red-500" 
+                : analise.situacaoGeral === "preocupante" 
+                  ? "text-amber-500" 
+                  : "text-green-500"
+            }`}>
+              A auditoria apresenta uma situação {analise.situacaoGeral}.
+            </p>
+          </div>
+          
+          {(pontosCriticos.length > 0 || pontosAtencao.length > 0) && (
+            <div>
+              <h3 className="font-medium mb-1">Recomendações:</h3>
+              <div className="pl-4 space-y-1 text-sm">
+                {pontosCriticos.map((ponto, index) => (
+                  <div key={`critico-${index}`} className="flex items-start gap-2 text-red-500">
+                    <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <p>
+                      <span className="font-medium">{ponto.pergunta}:</span> {getAcaoRecomendada(ponto.pergunta)}
+                    </p>
+                  </div>
+                ))}
+                
+                {pontosAtencao.map((ponto, index) => (
+                  <div key={`atencao-${index}`} className="flex items-start gap-2 text-amber-500">
+                    <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <p>
+                      <span className="font-medium">{ponto.pergunta}:</span> {getAcaoRecomendada(ponto.pergunta, false)}
+                    </p>
+                  </div>
+                ))}
               </div>
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-[80%]" />
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="bg-primary/5 p-4 rounded-lg border">
-                <h3 className="text-lg font-medium mb-2 flex items-center">
-                  <Bot className="h-5 w-5 mr-2 text-primary" />
-                  Análise da Situação
-                </h3>
-                <p className="text-muted-foreground">{analise}</p>
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-medium mb-2">Recomendações</h3>
-                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                  {recomendacoes.map((recomendacao, index) => (
-                    <li key={index}>{recomendacao}</li>
-                  ))}
-                </ul>
-              </div>
-            </>
+            </div>
           )}
+          
+          <div>
+            <h3 className="font-medium mb-1">Conclusão:</h3>
+            <p className="text-sm">{analise.conclusao}</p>
+          </div>
         </div>
       </CardContent>
     </Card>
   );
-};
+}

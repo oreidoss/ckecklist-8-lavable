@@ -20,11 +20,7 @@ export class UsuarioService extends BaseService {
         return this.getItem<Usuario>(this.STORAGE_KEY);
       }
       
-      // Converte os IDs de string para número
-      return (data || []).map(user => ({
-        ...user,
-        id: typeof user.id === 'string' ? parseInt(user.id, 10) : user.id
-      })) as Usuario[];
+      return data as Usuario[];
     } catch (e) {
       console.error("Erro ao buscar usuários:", e);
       // Fallback para localStorage
@@ -46,11 +42,7 @@ export class UsuarioService extends BaseService {
         throw error;
       }
       
-      // Converte o ID de string para número se necessário
-      const novoUsuario = {
-        ...data,
-        id: typeof data.id === 'string' ? parseInt(data.id, 10) : data.id
-      } as Usuario;
+      const novoUsuario = data as Usuario;
       
       console.log("Usuário adicionado com sucesso no Supabase:", novoUsuario);
       return novoUsuario;
@@ -58,7 +50,7 @@ export class UsuarioService extends BaseService {
       console.error("Erro ao adicionar usuário, usando fallback localStorage:", e);
       // Fallback para o localStorage em caso de erro
       const usuarios = this.getItem<Usuario>(this.STORAGE_KEY);
-      const id = this.getMaxId(usuarios);
+      const id = this.getMaxId(usuarios).toString(); // Convert to string
       const novoUsuario = { ...usuario, id } as Usuario;
       this.setItem(this.STORAGE_KEY, [...usuarios, novoUsuario]);
       return novoUsuario;
@@ -70,7 +62,12 @@ export class UsuarioService extends BaseService {
       // Atualiza usuário no Supabase
       const { error } = await supabase
         .from('usuarios')
-        .update(usuario)
+        .update({
+          nome: usuario.nome,
+          email: usuario.email,
+          senha: usuario.senha,
+          role: usuario.role
+        })
         .eq('id', usuario.id);
       
       if (error) {
@@ -91,7 +88,7 @@ export class UsuarioService extends BaseService {
     }
   }
 
-  async deleteUsuario(id: number): Promise<void> {
+  async deleteUsuario(id: string): Promise<void> {
     try {
       // Deleta usuário no Supabase
       const { error } = await supabase
@@ -113,7 +110,7 @@ export class UsuarioService extends BaseService {
     }
   }
   
-  isAdmin(id: number): boolean {
+  isAdmin(id: string): boolean {
     const usuarios = this.getItem<Usuario>(this.STORAGE_KEY);
     const usuario = usuarios.find(u => u.id === id);
     return usuario?.role === 'admin';
@@ -148,11 +145,7 @@ export class UsuarioService extends BaseService {
         return null;
       }
       
-      // Converte o ID de string para número
-      const usuarioConvertido = {
-        ...usuario,
-        id: typeof usuario.id === 'string' ? parseInt(usuario.id, 10) : usuario.id
-      } as Usuario;
+      const usuarioConvertido = usuario as Usuario;
       
       // Remove a senha antes de armazenar no localStorage
       const { senha: _, ...userWithoutSenha } = usuarioConvertido;
@@ -219,7 +212,7 @@ export class UsuarioService extends BaseService {
       }
       
       // Verifica se encontrou algum usuário com a senha correta
-      return data.some(u => u.senha === senha);
+      return data && data.some(u => u.senha === senha);
     } catch (e) {
       console.error("Erro ao verificar credenciais, usando fallback localStorage:", e);
       

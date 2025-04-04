@@ -30,15 +30,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [navigate]);
 
   const login = async (nome: string, senha: string): Promise<boolean> => {
-    const loggedInUser = usuarioService.login(nome, senha);
-    
-    if (loggedInUser) {
-      setUser(loggedInUser);
-      setIsAdmin(loggedInUser.role === 'admin');
-      return true;
+    try {
+      const loggedInUser = await usuarioService.login(nome, senha);
+      
+      if (loggedInUser) {
+        setUser(loggedInUser);
+        setIsAdmin(loggedInUser.role === 'admin');
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error("Error during login:", error);
+      return false;
     }
-    
-    return false;
   };
 
   const logout = () => {

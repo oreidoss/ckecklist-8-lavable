@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,11 +39,12 @@ const Login = () => {
     }
     
     // Debug users on mount
-    const usuarios = usuarioService.getUsuarios();
-    console.log("Usuários disponíveis ao carregar página de login:", usuarios);
+    usuarioService.getUsuarios().then(usuarios => {
+      console.log("Usuários disponíveis ao carregar página de login:", usuarios);
+    });
   }, [navigate]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
@@ -61,30 +61,40 @@ const Login = () => {
 
     console.log(`Tentando login com: nome="${nome}", senha="${senha}"`);
     
-    // Let's debug the current users in the system
-    const usuarios = usuarioService.getUsuarios();
-    console.log("Usuários disponíveis no sistema:", usuarios);
-    
-    // Try to login
-    const user = usuarioService.login(nome, senha);
-    
-    if (user) {
+    try {
+      // Let's debug the current users in the system
+      const usuarios = await usuarioService.getUsuarios();
+      console.log("Usuários disponíveis no sistema:", usuarios);
+      
+      // Try to login
+      const user = await usuarioService.login(nome, senha);
+      
+      if (user) {
+        toast({
+          title: "Login bem-sucedido",
+          description: `Bem-vindo, ${user.nome}!`
+        });
+        navigate('/');
+      } else {
+        toast({
+          title: "Falha no login",
+          description: "Nome de usuário ou senha incorretos",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Erro durante o login:", error);
       toast({
-        title: "Login bem-sucedido",
-        description: `Bem-vindo, ${user.nome}!`
-      });
-      navigate('/');
-    } else {
-      toast({
-        title: "Falha no login",
-        description: "Nome de usuário ou senha incorretos",
+        title: "Erro no login",
+        description: "Ocorreu um erro ao tentar fazer login",
         variant: "destructive"
       });
+    } finally {
       setLoading(false);
     }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setRegistering(true);
     
@@ -111,49 +121,62 @@ const Login = () => {
       return;
     }
     
-    // Check if user already exists
-    const usuarios = usuarioService.getUsuarios();
-    if (usuarios.some(u => u.nome.toLowerCase() === newNome.toLowerCase() || 
-                          (u.email && u.email.toLowerCase() === newEmail.toLowerCase()))) {
-      toast({
-        title: "Usuário já existe",
-        description: "Este nome de usuário ou email já está em uso",
-        variant: "destructive"
-      });
-      setRegistering(false);
-      return;
-    }
-    
-    console.log("Registrando novo usuário:", newNome, newEmail);
-    
-    // Add new user
-    const newUser = usuarioService.addUsuario({
-      nome: newNome,
-      email: newEmail,
-      senha: newSenha,
-      role: 'user' // Default role
-    });
-    
-    if (newUser) {
-      toast({
-        title: "Cadastro bem-sucedido",
-        description: "Você já pode fazer login com suas credenciais"
+    try {
+      // Check if user already exists
+      const usuarios = await usuarioService.getUsuarios();
+      const userExists = usuarios.some(u => 
+        u.nome.toLowerCase() === newNome.toLowerCase() || 
+        (u.email && u.email.toLowerCase() === newEmail.toLowerCase())
+      );
+      
+      if (userExists) {
+        toast({
+          title: "Usuário já existe",
+          description: "Este nome de usuário ou email já está em uso",
+          variant: "destructive"
+        });
+        setRegistering(false);
+        return;
+      }
+      
+      console.log("Registrando novo usuário:", newNome, newEmail);
+      
+      // Add new user
+      const newUser = await usuarioService.addUsuario({
+        nome: newNome,
+        email: newEmail,
+        senha: newSenha,
+        role: 'user' // Default role
       });
       
-      // Automatically fill login form with new credentials
-      setNome(newNome);
-      setSenha(newSenha);
-      
-      setNewNome('');
-      setNewEmail('');
-      setNewSenha('');
-      setRegistering(false);
-    } else {
+      if (newUser) {
+        toast({
+          title: "Cadastro bem-sucedido",
+          description: "Você já pode fazer login com suas credenciais"
+        });
+        
+        // Automatically fill login form with new credentials
+        setNome(newNome);
+        setSenha(newSenha);
+        
+        setNewNome('');
+        setNewEmail('');
+        setNewSenha('');
+      } else {
+        toast({
+          title: "Erro no cadastro",
+          description: "Não foi possível completar o cadastro",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Erro durante o cadastro:", error);
       toast({
         title: "Erro no cadastro",
-        description: "Não foi possível completar o cadastro",
+        description: "Ocorreu um erro ao tentar cadastrar",
         variant: "destructive"
       });
+    } finally {
       setRegistering(false);
     }
   };
