@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -40,22 +41,41 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { PageTitle } from "@/components/PageTitle";
-import { db, Loja } from "@/lib/db";
+import { Loja } from "@/lib/types";
+import { lojaService } from "@/lib/services/lojaService";
 import { useToast } from '@/hooks/use-toast';
 import { Edit, Plus, Store, Trash2 } from 'lucide-react';
+import { EmptyUsuarios } from '@/components/admin/usuarios/EmptyUsuarios';
 
 const AdminLojas: React.FC = () => {
   const [lojas, setLojas] = useState<Loja[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [lojaParaEditar, setLojaParaEditar] = useState<Loja | null>(null);
   const [novaLoja, setNovaLoja] = useState({ numero: '', nome: '' });
   const { toast } = useToast();
   
+  const fetchLojas = async () => {
+    setIsLoading(true);
+    try {
+      const fetchedLojas = await lojaService.getLojas();
+      setLojas(fetchedLojas);
+    } catch (error) {
+      console.error("Error fetching lojas:", error);
+      toast({
+        title: "Erro ao carregar lojas",
+        description: "Não foi possível carregar as lojas do sistema.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   useEffect(() => {
-    // Carregar lojas do banco de dados
-    setLojas(db.getLojas());
+    fetchLojas();
   }, []);
   
-  const handleAdicionarLoja = () => {
+  const handleAdicionarLoja = async () => {
     if (!novaLoja.numero || !novaLoja.nome) {
       toast({
         title: "Campos obrigatórios",
@@ -75,17 +95,26 @@ const AdminLojas: React.FC = () => {
       return;
     }
     
-    const adicionada = db.addLoja(novaLoja);
-    setLojas([...lojas, adicionada]);
-    setNovaLoja({ numero: '', nome: '' });
-    
-    toast({
-      title: "Loja adicionada",
-      description: `Loja ${adicionada.nome} foi adicionada com sucesso.`
-    });
+    try {
+      const adicionada = await lojaService.addLoja(novaLoja);
+      setLojas([...lojas, adicionada]);
+      setNovaLoja({ numero: '', nome: '' });
+      
+      toast({
+        title: "Loja adicionada",
+        description: `Loja ${adicionada.nome} foi adicionada com sucesso.`
+      });
+    } catch (error) {
+      console.error("Error adding loja:", error);
+      toast({
+        title: "Erro ao adicionar loja",
+        description: "Não foi possível adicionar a loja.",
+        variant: "destructive"
+      });
+    }
   };
   
-  const handleAtualizarLoja = () => {
+  const handleAtualizarLoja = async () => {
     if (!lojaParaEditar) return;
     
     if (!lojaParaEditar.numero || !lojaParaEditar.nome) {
@@ -107,37 +136,42 @@ const AdminLojas: React.FC = () => {
       return;
     }
     
-    db.updateLoja(lojaParaEditar);
-    setLojas(lojas.map(loja => loja.id === lojaParaEditar.id ? lojaParaEditar : loja));
-    setLojaParaEditar(null);
-    
-    toast({
-      title: "Loja atualizada",
-      description: `Loja ${lojaParaEditar.nome} foi atualizada com sucesso.`
-    });
-  };
-  
-  const handleExcluirLoja = (id: string) => {
-    // Verificar se há auditorias associadas a esta loja
-    const auditorias = db.getAuditorias();
-    const temAuditorias = auditorias.some(auditoria => auditoria.loja_id === id);
-    
-    if (temAuditorias) {
+    try {
+      await lojaService.updateLoja(lojaParaEditar);
+      setLojas(lojas.map(loja => loja.id === lojaParaEditar.id ? lojaParaEditar : loja));
+      setLojaParaEditar(null);
+      
       toast({
-        title: "Não é possível excluir",
-        description: "Esta loja possui auditorias associadas. Exclua as auditorias primeiro.",
+        title: "Loja atualizada",
+        description: `Loja ${lojaParaEditar.nome} foi atualizada com sucesso.`
+      });
+    } catch (error) {
+      console.error("Error updating loja:", error);
+      toast({
+        title: "Erro ao atualizar loja",
+        description: "Não foi possível atualizar a loja.",
         variant: "destructive"
       });
-      return;
     }
-    
-    db.deleteLoja(id);
-    setLojas(lojas.filter(loja => loja.id !== id));
-    
-    toast({
-      title: "Loja excluída",
-      description: "A loja foi excluída com sucesso."
-    });
+  };
+  
+  const handleExcluirLoja = async (id: string) => {
+    try {
+      await lojaService.deleteLoja(id);
+      setLojas(lojas.filter(loja => loja.id !== id));
+      
+      toast({
+        title: "Loja excluída",
+        description: "A loja foi excluída com sucesso."
+      });
+    } catch (error) {
+      console.error("Error deleting loja:", error);
+      toast({
+        title: "Erro ao excluir loja",
+        description: "Não foi possível excluir a loja.",
+        variant: "destructive"
+      });
+    }
   };
   
   return (
@@ -208,7 +242,11 @@ const AdminLojas: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {lojas.length > 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center py-6">
+              <div className="animate-pulse">Carregando lojas...</div>
+            </div>
+          ) : lojas.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>

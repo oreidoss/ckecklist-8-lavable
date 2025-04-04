@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Card, 
   CardContent, 
@@ -19,22 +18,44 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Store, Link } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
-
-type Loja = {
-  id: string;
-  numero: string;
-  nome: string;
-};
+import { lojaService } from '@/lib/services/lojaService';
+import { Loja } from '@/lib/types';
 
 interface LojasCardProps {
-  lojas: Loja[];
+  lojas?: Loja[];
   isLoading?: boolean;
 }
 
 export const LojasCard: React.FC<LojasCardProps> = ({ 
-  lojas,
-  isLoading = false
+  lojas: initialLojas,
+  isLoading: initialLoading = false
 }) => {
+  const [lojas, setLojas] = useState<Loja[]>(initialLojas || []);
+  const [isLoading, setIsLoading] = useState<boolean>(initialLoading);
+  
+  useEffect(() => {
+    // If lojas were passed as props, use them
+    if (initialLojas) {
+      setLojas(initialLojas);
+      return;
+    }
+    
+    // Otherwise, fetch them from the service
+    const fetchLojas = async () => {
+      setIsLoading(true);
+      try {
+        const fetchedLojas = await lojaService.getLojas();
+        setLojas(fetchedLojas);
+      } catch (error) {
+        console.error("Error fetching lojas:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchLojas();
+  }, [initialLojas]);
+
   return (
     <Card>
       <CardHeader>
