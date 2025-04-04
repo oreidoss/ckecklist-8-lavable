@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,9 @@ import useUserSelectors from '@/components/checklist/UserSelectors';
 import ChecklistHeader from '@/components/checklist/ChecklistHeader';
 import SectionNavigation from '@/components/checklist/SectionNavigation';
 import SectionContent from '@/components/checklist/SectionContent';
+import SectionNavigationButtons from '@/components/checklist/SectionNavigationButtons';
+import ChecklistActions from '@/components/checklist/ChecklistActions';
+import SectionWarning from '@/components/checklist/SectionWarning';
 
 const Checklist: React.FC = () => {
   const { auditoriaId } = useParams<{ auditoriaId: string }>();
@@ -159,11 +161,6 @@ const Checklist: React.FC = () => {
       }
     }
   };
-
-  const navigateToReport = () => {
-    if (!auditoriaId) return;
-    navigate(`/relatorio/${auditoriaId}`);
-  };
   
   const isLastPerguntaInSection = (perguntaId: string) => {
     if (!perguntas) return false;
@@ -172,6 +169,14 @@ const Checklist: React.FC = () => {
     const lastPergunta = perguntasDestaSecao[perguntasDestaSecao.length - 1];
     
     return lastPergunta && lastPergunta.id === perguntaId;
+  };
+
+  const hasUnansweredQuestions = () => {
+    if (!activeSecao || !perguntas) return false;
+    
+    const perguntasSecaoAtiva = perguntas.filter(p => p.secao_id === activeSecao);
+    const requiredQuestions = perguntasSecaoAtiva.slice(0, -2);
+    return requiredQuestions.some(pergunta => !respostas[pergunta.id]);
   };
 
   if (isLoading) {
@@ -216,29 +221,46 @@ const Checklist: React.FC = () => {
       </div>
       
       {activeSecaoObj && (
-        <SectionContent
-          activeSecaoObj={activeSecaoObj}
-          secaoIndex={secaoIndex}
-          totalSecoes={totalSecoes}
-          perguntasSecaoAtiva={perguntasSecaoAtiva}
-          respostas={respostas}
-          observacoes={observacoes}
-          fileUrls={fileUrls}
-          uploading={uploading}
-          respostasExistentes={respostasExistentes}
-          isFirstSection={isFirstSection}
-          isLastSection={isLastSection}
-          goToPreviousSection={goToPreviousSection}
-          goToNextSection={goToNextSection}
-          handleResposta={handleRespostaWrapped}
-          handleObservacaoChange={handleObservacaoChange}
-          handleSaveObservacao={handleSaveObservacaoWrapped}
-          handleFileUpload={handleFileUploadWrapped}
-          isLastPerguntaInSection={isLastPerguntaInSection}
-          saveAndNavigateHome={saveAndNavigateHome}
-          navigateToReport={navigateToReport}
-          isSaving={isSaving}
-        />
+        <div className="bg-white rounded-lg p-2 shadow-sm">
+          <h2 className="text-sm font-bold mb-1">{activeSecaoObj.nome}</h2>
+          <div className="text-[10px] text-gray-600 mb-1">
+            Seção {secaoIndex + 1} de {totalSecoes}
+          </div>
+          
+          {hasUnansweredQuestions() && <SectionWarning />}
+          
+          <div className="space-y-1">
+            <SectionContent
+              perguntasSecaoAtiva={perguntasSecaoAtiva}
+              respostas={respostas}
+              observacoes={observacoes}
+              fileUrls={fileUrls}
+              uploading={uploading}
+              respostasExistentes={respostasExistentes}
+              handleResposta={handleRespostaWrapped}
+              handleObservacaoChange={handleObservacaoChange}
+              handleSaveObservacao={handleSaveObservacaoWrapped}
+              handleFileUpload={handleFileUploadWrapped}
+              isLastPerguntaInSection={isLastPerguntaInSection}
+            />
+          </div>
+          
+          <div className="mt-2 flex flex-col sm:flex-row justify-between gap-1">
+            <SectionNavigationButtons 
+              isFirstSection={isFirstSection}
+              isLastSection={isLastSection}
+              handlePreviousSection={goToPreviousSection}
+              handleNextSection={goToNextSection}
+              hasUnansweredQuestions={hasUnansweredQuestions}
+            />
+            
+            <ChecklistActions 
+              auditoriaId={auditoriaId}
+              saveAndNavigateHome={saveAndNavigateHome}
+              isSaving={isSaving}
+            />
+          </div>
+        </div>
       )}
       
       <div className="mt-6 text-center">
