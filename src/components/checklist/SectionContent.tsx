@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ArrowLeftCircle, ArrowRightCircle, FileText, Save } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -66,31 +67,32 @@ const SectionContent: React.FC<SectionContentProps> = ({
     (respostasExistentes?.find(r => r.pergunta_id === lastPerguntaId)?.observacao || '');
 
   return (
-    <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm">
-      <h2 className="text-lg font-bold mb-2">{activeSecaoObj.nome}</h2>
-      <div className="text-xs text-gray-600 mb-2">
+    <div className="bg-white rounded-lg p-2 shadow-sm">
+      <h2 className="text-sm font-bold mb-1">{activeSecaoObj.nome}</h2>
+      <div className="text-[10px] text-gray-600 mb-1">
         Seção {secaoIndex + 1} de {totalSecoes}
       </div>
       
-      <Progress value={(secaoIndex + 1) / totalSecoes * 100} className="h-1 mb-3" />
+      <Progress value={(secaoIndex + 1) / totalSecoes * 100} className="h-1 mb-2" />
       
-      <div className="space-y-2">
-        {perguntasSecaoAtiva.map((pergunta) => (
+      <div className="space-y-1">
+        {perguntasSecaoAtiva.map((pergunta, index) => (
           <ChecklistQuestion
             key={pergunta.id}
             pergunta={pergunta}
+            index={index}
             resposta={respostas[pergunta.id]}
             handleResposta={handleResposta}
           />
         ))}
         
-        <div className="border rounded-lg p-2 bg-gray-50">
-          <h3 className="text-sm font-medium mb-2">Observações</h3>
+        <div className="border rounded-lg p-1 bg-gray-50">
+          <h3 className="text-xs font-medium mb-1">Observações</h3>
           <div className="flex gap-1">
             <Input
               type="text"
               placeholder="Adicione uma observação"
-              className="flex-1 text-sm h-8"
+              className="flex-1 text-xs h-7"
               value={sectionObservacao}
               onChange={(e) => handleObservacaoChange(lastPerguntaId, e.target.value)}
             />
@@ -98,24 +100,24 @@ const SectionContent: React.FC<SectionContentProps> = ({
               variant="outline" 
               size="sm"
               onClick={() => handleSaveObservacao(lastPerguntaId)}
-              className="bg-green-50 hover:bg-green-100 text-green-600"
+              className="bg-green-50 hover:bg-green-100 text-green-600 h-7 px-2"
             >
-              <Save className="h-4 w-4" />
+              <Save className="h-3 w-3" />
             </Button>
           </div>
         </div>
       </div>
       
-      <div className="mt-3 flex flex-col sm:flex-row justify-between gap-2">
-        <div className="flex gap-2">
+      <div className="mt-2 flex flex-col sm:flex-row justify-between gap-1">
+        <div className="flex gap-1">
           <Button
             variant="outline"
             size="sm"
             onClick={goToPreviousSection}
             disabled={isFirstSection}
-            className="flex-1"
+            className="flex-1 text-xs h-8"
           >
-            <ArrowLeftCircle className="mr-1 h-4 w-4" />
+            <ArrowLeftCircle className="mr-1 h-3 w-3" />
             Anterior
           </Button>
           
@@ -124,20 +126,20 @@ const SectionContent: React.FC<SectionContentProps> = ({
             size="sm"
             onClick={goToNextSection}
             disabled={isLastSection}
-            className="flex-1"
+            className="flex-1 text-xs h-8"
           >
             Próxima
-            <ArrowRightCircle className="ml-1 h-4 w-4" />
+            <ArrowRightCircle className="ml-1 h-3 w-3" />
           </Button>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-1">
           <Button
             variant="default"
             size="sm"
             onClick={saveAndNavigateHome}
             disabled={isSaving}
-            className="flex-1"
+            className="flex-1 text-xs h-8"
           >
             Salvar
           </Button>
@@ -147,9 +149,9 @@ const SectionContent: React.FC<SectionContentProps> = ({
             size="sm"
             onClick={navigateToReport}
             disabled={isSaving}
-            className="flex-1"
+            className="flex-1 text-xs h-8"
           >
-            <FileText className="mr-1 h-4 w-4" />
+            <FileText className="mr-1 h-3 w-3" />
             Relatório
           </Button>
         </div>
