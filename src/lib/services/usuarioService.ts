@@ -1,3 +1,4 @@
+
 import { Usuario } from '../types';
 import { BaseService } from './baseService';
 import { supabase } from '@/integrations/supabase/client';
@@ -133,6 +134,7 @@ export class UsuarioService extends BaseService {
     try {
       console.log("Attempting login with:", loginId);
       
+      // Use let instead of const for data that needs to be reassigned later
       let { data, error } = await supabase
         .from('usuarios')
         .select('*')

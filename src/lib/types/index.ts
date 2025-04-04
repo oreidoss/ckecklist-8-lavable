@@ -35,6 +35,8 @@ export interface Auditoria {
   pontuacao_total: number;
   gerente?: string;
   supervisor?: string;
+  loja?: Loja; // Added loja reference
+  usuario?: Usuario; // Added usuario reference
 }
 
 export interface Resposta {
