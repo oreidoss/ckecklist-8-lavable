@@ -20,7 +20,7 @@ export function useRelatoriosData() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('auditorias')
-        .select('*, loja:lojas(*), usuario:usuarios(*)')
+        .select('*, loja:lojas(*), usuario:usuarios(*), respostas(*)')
         .order('data', { ascending: false });
       
       if (error) throw error;
@@ -69,11 +69,40 @@ export function useRelatoriosData() {
   const calcularEstatisticas = () => {
     if (!auditorias) return { total: 0, lojasAuditadas: 0, aprovadas: 0, melhorias: 0, criticas: 0, media: 0 };
     
+    // Contagem de lojas exclusivas que foram auditadas
     const lojasAuditadas = new Set(auditorias.map(a => a.loja_id)).size;
-    const aprovadas = auditorias.filter(a => a.pontuacao_total && a.pontuacao_total > 5).length;
-    const melhorias = auditorias.filter(a => a.pontuacao_total && a.pontuacao_total > 0 && a.pontuacao_total <= 5).length;
-    const criticas = auditorias.filter(a => !a.pontuacao_total || a.pontuacao_total <= 0).length;
     
+    // Análise das auditorias com base na pontuação
+    // Consideramos a auditoria mais recente de cada loja para categorização
+    const lojasUnicas = [...new Set(auditorias.map(a => a.loja_id))];
+    
+    let aprovadas = 0;
+    let melhorias = 0;
+    let criticas = 0;
+    
+    // Para cada loja, pegar a auditoria mais recente
+    lojasUnicas.forEach(lojaId => {
+      const auditoriasLoja = auditorias.filter(a => a.loja_id === lojaId);
+      if (auditoriasLoja.length === 0) return;
+      
+      // Ordenar por data, mais recente primeiro
+      auditoriasLoja.sort((a, b) => 
+        new Date(b.data || '').getTime() - new Date(a.data || '').getTime()
+      );
+      
+      const auditoriaRecente = auditoriasLoja[0];
+      
+      // Categorizar com base na pontuação mais recente
+      if (auditoriaRecente.pontuacao_total && auditoriaRecente.pontuacao_total > 5) {
+        aprovadas++;
+      } else if (auditoriaRecente.pontuacao_total && auditoriaRecente.pontuacao_total > 0) {
+        melhorias++;
+      } else {
+        criticas++;
+      }
+    });
+    
+    // Cálculo da média geral de pontuação
     let mediaPontuacao = 0;
     if (auditorias.length > 0) {
       const somaPontuacoes = auditorias.reduce((acc, curr) => acc + (curr.pontuacao_total || 0), 0);

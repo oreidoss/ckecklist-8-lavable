@@ -167,20 +167,37 @@ export const ResumoGeral: React.FC<ResumoGeralProps> = ({
               <div className="space-y-3 mt-3">
                 <h4 className="font-medium">Áreas que precisam de atenção:</h4>
                 <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                    <span className="text-sm">
-                      {estatisticas.criticas > 0 
-                        ? `${estatisticas.criticas} ${estatisticas.criticas === 1 ? 'loja precisa' : 'lojas precisam'} de intervenção urgente`
-                        : 'Nenhuma loja em situação crítica'}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                    <span className="text-sm">
-                      {estatisticas.melhorias} {estatisticas.melhorias === 1 ? 'loja requer' : 'lojas requerem'} melhorias pontuais
-                    </span>
-                  </div>
+                  {estatisticas.criticas > 0 ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                      <span className="text-sm">
+                        {estatisticas.criticas} {estatisticas.criticas === 1 ? 'loja precisa' : 'lojas precisam'} de intervenção urgente
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2 text-green-600">
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      <span className="text-sm">
+                        Nenhuma loja em situação crítica
+                      </span>
+                    </div>
+                  )}
+                  
+                  {estatisticas.melhorias > 0 ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                      <span className="text-sm">
+                        {estatisticas.melhorias} {estatisticas.melhorias === 1 ? 'loja requer' : 'lojas requerem'} melhorias pontuais
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2 text-green-600">
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      <span className="text-sm">
+                        Nenhuma loja requer melhorias pontuais
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -189,7 +206,7 @@ export const ResumoGeral: React.FC<ResumoGeralProps> = ({
                 <p>
                   {estatisticas.criticas > 0 
                     ? 'Focar em treinamentos e intervenções nas lojas identificadas em situação crítica.'
-                    : estatisticas.melhorias > estatisticas.aprovadas
+                    : estatisticas.melhorias > 0
                     ? 'Implementar melhorias de padronização nas lojas que necessitam de ajustes.'
                     : 'Manter o padrão de qualidade e identificar melhores práticas para replicar nas demais lojas.'}
                 </p>
