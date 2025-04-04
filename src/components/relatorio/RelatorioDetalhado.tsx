@@ -1,15 +1,16 @@
+
 import React from 'react';
 import { Auditoria, Loja, Pergunta, Resposta, Secao } from '@/lib/types';
 import { Card } from '@/components/ui/card';
-import AnaliseGeral from './AnaliseGeral';
-import PontuacaoPorSecao from './PontuacaoPorSecao';
-import PontosAtencao from './PontosAtencao';
-import InformacoesGerais from './InformacoesGerais';
-import InfoLoja from './InfoLoja';
-import HistoricoAuditorias from './HistoricoAuditorias';
-import HistoricoLoja from './HistoricoLoja';
+import { AnaliseGeral } from './AnaliseGeral';
+import { PontuacaoPorSecao } from './PontuacaoPorSecao';
+import { PontosAtencao } from './PontosAtencao';
+import { InformacoesGerais } from './InformacoesGerais';
+import { InfoLoja } from './InfoLoja';
+import { HistoricoAuditorias } from './HistoricoAuditorias';
+import { HistoricoLoja } from './HistoricoLoja';
 import AnaliseIA from './AnaliseIA';
-import AnaliseTendencias from './AnaliseTendencias';
+import { AnaliseTendencias } from './AnaliseTendencias';
 
 interface RelatorioDetalhadoProps {
   auditoria: Auditoria;
