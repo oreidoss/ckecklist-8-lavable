@@ -124,15 +124,35 @@
       @apply px-2;
     }
     
-    .card {
+    .card, .card-content {
       @apply px-3 py-4;
+    }
+    
+    h1, h2, h3 {
+      @apply break-words;
+    }
+    
+    table {
+      @apply block overflow-x-auto whitespace-nowrap;
+    }
+    
+    .full-width-mobile {
+      @apply w-full min-w-full;
     }
   }
   
   /* Melhora clickables em mobile */
   @media (max-width: 640px) {
-    button, a, [role="button"] {
+    button, 
+    a, 
+    [role="button"] {
       @apply min-h-10;
+    }
+    
+    input, 
+    select, 
+    textarea {
+      @apply text-base; /* Prevents iOS zoom on focus */
     }
   }
 }
@@ -152,4 +172,41 @@
   .responsive-card {
     @apply px-2 py-3 mb-2;
   }
+  
+  /* Ajusta o tamanho dos botões em mobile */
+  .btn-mobile {
+    @apply h-10 px-3 py-2 text-sm;
+  }
+  
+  /* Ajusta o layout de grid para mobile */
+  .grid-mobile {
+    @apply grid-cols-1 gap-2;
+  }
+}
+
+/* Melhora no espaçamento para dispositivos móveis */
+@media (max-width: 640px) {
+  .card {
+    @apply rounded-md border shadow-sm;
+  }
+  
+  .card-header {
+    @apply p-3;
+  }
+  
+  .card-content {
+    @apply p-3 pt-0;
+  }
+}
+
+/* Remove o scroll horizontal com !important */
+body, html {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+  position: relative !important;
+}
+
+/* Conserta problema de overflow-x em tables */
+.table-container {
+  @apply w-full max-w-full overflow-x-auto pb-2;
 }

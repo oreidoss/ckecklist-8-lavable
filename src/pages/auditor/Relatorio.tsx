@@ -132,7 +132,7 @@ const Relatorio: React.FC = () => {
         pergunta_id: r.pergunta_id?.toString() || '',
         resposta: r.resposta || '',
         pontuacao_obtida: Number(r.pontuacao_obtida || 0),
-        observacao: r.observacao || undefined
+        observacao: r.observacao || ''  // Fornecendo um valor padrão para observacao
       })) : [];
 
     const typedAuditoria: Auditoria = {
