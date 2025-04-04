@@ -30,6 +30,7 @@ export const useSectionNavigation = ({
     
     secoes.forEach(secao => {
       const secaoPerguntas = perguntas.filter(p => p.secao_id === secao.id);
+      // Consideramos apenas as perguntas obrigatórias (exceto as duas últimas, que são para observações e anexos)
       const requiredPerguntas = secaoPerguntas.slice(0, -2);
       
       if (requiredPerguntas.length > 0 && 
@@ -61,16 +62,21 @@ export const useSectionNavigation = ({
     }
   }, [secoes, activeSecao]);
   
+  // Novo comportamento: permite navegar se o usuário confirmar, mesmo com perguntas incompletas
   const handleSetActiveSecao = useCallback((secaoId: string) => {
+    // Se não tiver seção ativa ou estiver na mesma seção, simplesmente ativa
     if (!activeSecao || secaoId === activeSecao) {
       setActiveSecao(secaoId);
       return;
     }
     
+    // Verifica se há perguntas não respondidas na seção atual
     const perguntasAtivas = getPerguntasBySecao(activeSecao);
+    // Consideramos apenas perguntas obrigatórias (exceto as duas últimas, que são observações e anexos)
     const requiredPerguntas = perguntasAtivas.slice(0, -2);
     const hasUnanswered = requiredPerguntas.some(p => !respostas[p.id]);
     
+    // Se houver perguntas não respondidas, mostra alerta mas permite continuar
     if (hasUnanswered) {
       toast({
         title: "Perguntas não respondidas",
@@ -80,6 +86,7 @@ export const useSectionNavigation = ({
       return;
     }
     
+    // Se todas as perguntas foram respondidas, muda de seção
     setActiveSecao(secaoId);
     window.scrollTo(0, 0);
   }, [activeSecao, getPerguntasBySecao, respostas, toast]);

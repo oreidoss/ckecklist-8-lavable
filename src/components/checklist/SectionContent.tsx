@@ -85,9 +85,9 @@ const SectionContent: React.FC<SectionContentProps> = ({
     fileInputRef.current?.click();
   };
 
-  // Check if all required questions are answered
+  // Verifica se todas as perguntas obrigatórias foram respondidas
   const hasUnansweredQuestions = () => {
-    // The last two elements are not required (observation and attachment)
+    // As duas últimas perguntas não são obrigatórias (observação e anexo)
     const requiredQuestions = perguntasSecaoAtiva.slice(0, -2);
     return requiredQuestions.some(pergunta => !respostas[pergunta.id]);
   };

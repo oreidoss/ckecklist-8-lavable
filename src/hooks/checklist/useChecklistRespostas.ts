@@ -5,7 +5,7 @@ import { Pergunta } from '@/lib/types';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 
 /**
- * Hook to manage checklist responses
+ * Hook para gerenciar as respostas do checklist
  */
 export const useChecklistRespostas = (
   auditoriaId: string | undefined, 
@@ -82,6 +82,7 @@ export const useChecklistRespostas = (
       }
       
       if (perguntas?.length) {
+        // Atualiza corretamente o progresso com base em todas as respostas existentes
         const novasRespostas = {
           ...respostasExistentes.reduce((acc, r) => {
             if (r.pergunta_id && r.resposta) {
