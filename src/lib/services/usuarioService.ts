@@ -149,7 +149,7 @@ export class UsuarioService extends BaseService {
       console.log("Attempting login with:", loginId);
       
       // Search for user in Supabase by name or email
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('usuarios')
         .select('*')
         .or(`nome.eq.${loginId},email.eq.${loginId}`);
@@ -176,6 +176,7 @@ export class UsuarioService extends BaseService {
         }
         
         console.log("Found user by exact name match:", exactData);
+        // Use the exactData instead of reassigning data
         data = exactData;
       }
       

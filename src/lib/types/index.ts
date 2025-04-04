@@ -1,5 +1,6 @@
 
-// Basic types
+// Define all types used in the application
+
 export interface Loja {
   id: string;
   nome: string;
@@ -22,7 +23,7 @@ export interface Usuario {
   nome: string;
   email: string;
   senha?: string;
-  role?: string;
+  role?: 'admin' | 'user';
 }
 
 export interface Auditoria {
@@ -30,10 +31,10 @@ export interface Auditoria {
   data: string;
   loja_id: string;
   usuario_id: string;
+  status: 'em_andamento' | 'concluida' | 'cancelada';
+  pontuacao_total: number;
   gerente?: string;
   supervisor?: string;
-  status?: string;
-  pontuacao_total: number;
 }
 
 export interface Resposta {
@@ -42,47 +43,14 @@ export interface Resposta {
   pergunta_id: string;
   resposta: string;
   pontuacao_obtida: number;
-  observacao?: string; // Optional observation field
-}
-
-// Form types
-export interface SecaoFormData {
-  nome: string;
-}
-
-export interface PerguntaFormData {
-  texto: string;
-  secao_id: string;
-}
-
-export interface LojaFormData {
-  nome: string;
-  numero: string;
-}
-
-export interface UsuarioFormData {
-  nome: string;
-  email: string;
-  senha: string;
-  role?: string;
-}
-
-export interface LoginFormData {
-  nome: string;
-  senha: string;
-}
-
-export interface AuditoriaFormData {
-  loja_id: string;
-  data: string;
-  gerente?: string;
-  supervisor?: string;
+  observacao?: string; // Added observacao as optional property
 }
 
 export interface RespostaFormData {
-  auditoria_id: string;
   pergunta_id: string;
   resposta: string;
   pontuacao_obtida: number;
-  observacao?: string; // Optional observation field
+  observacao?: string; // Added observacao as optional property
 }
+
+// Add any other required types below
