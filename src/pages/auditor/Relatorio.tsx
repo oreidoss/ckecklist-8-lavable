@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -15,7 +14,6 @@ const Relatorio: React.FC = () => {
   const navigate = useNavigate();
   const reportRef = useRef<HTMLDivElement>(null);
   
-  // Always fetch secoes and perguntas regardless of other conditions
   const { data: secoes } = useQuery({
     queryKey: ['secoes'],
     queryFn: async () => {
@@ -40,7 +38,6 @@ const Relatorio: React.FC = () => {
     }
   });
   
-  // Fetch auditoria if auditoriaId is provided
   const { 
     data: auditoria, 
     isLoading: loadingAuditoria,
@@ -62,7 +59,6 @@ const Relatorio: React.FC = () => {
     enabled: !!auditoriaId
   });
 
-  // Fetch all usuarios for the edit dialog
   const { data: usuarios = [] } = useQuery({
     queryKey: ['usuarios'],
     queryFn: async () => {
@@ -75,7 +71,6 @@ const Relatorio: React.FC = () => {
     }
   });
 
-  // Fetch auditorias for a loja if lojaId is provided
   const {
     data: auditoriasPorLoja,
     isLoading: loadingAuditoriasPorLoja
@@ -105,7 +100,6 @@ const Relatorio: React.FC = () => {
     enabled: !!lojaId && !auditoriaId
   });
 
-  // Fetch auditorias for auditoria's loja (only if auditoria exists)
   const { data: auditorias = [] } = useQuery({
     queryKey: ['auditorias-loja', auditoria?.loja_id],
     queryFn: async () => {
@@ -123,7 +117,6 @@ const Relatorio: React.FC = () => {
     enabled: !!auditoria?.loja_id
   });
 
-  // Function to export the report to PDF
   const handleExportPDF = () => {
     if (reportRef.current) {
       exportToPdf(reportRef, undefined, "O relatório completo foi exportado com sucesso!");
@@ -155,7 +148,8 @@ const Relatorio: React.FC = () => {
         pergunta_id: r.pergunta_id?.toString() || '',
         resposta: r.resposta || '',
         pontuacao_obtida: Number(r.pontuacao_obtida || 0),
-        observacao: r.observacao || ''
+        observacao: r.observacao || '',
+        anexo_url: r.anexo_url || ''
       })) : [];
 
     const typedAuditoria: Auditoria = {

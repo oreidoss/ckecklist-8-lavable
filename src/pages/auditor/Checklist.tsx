@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft, Store, List, ChevronLeft, Save, Home, ArrowRight, Check, ArrowLeftCircle, ArrowRightCircle, Edit, UserRound } from 'lucide-react';
+import { ArrowLeft, Store, List, ChevronLeft, Save, Home, ArrowRight, Check, ArrowLeftCircle, ArrowRightCircle, Edit, UserRound, Upload } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
 import { Progress } from "@/components/ui/progress";
 import { 
@@ -51,6 +51,10 @@ const Checklist: React.FC = () => {
   const [isEditingGerente, setIsEditingGerente] = useState(false);
   const [supervisor, setSupervisor] = useState('');
   const [gerente, setGerente] = useState('');
+  
+  const [observacoes, setObservacoes] = useState<Record<string, string>>({});
+  const [uploading, setUploading] = useState<Record<string, boolean>>({});
+  const [fileUrls, setFileUrls] = useState<Record<string, string>>({});
   
   useEffect(() => {
     const now = new Date();
@@ -184,6 +188,8 @@ const Checklist: React.FC = () => {
     }));
     
     const pontuacao = pontuacaoMap[resposta];
+    const observacao = observacoes[perguntaId] || '';
+    const anexo_url = fileUrls[perguntaId] || '';
     
     const respostaExistente = respostasExistentes?.find(r => r.pergunta_id === perguntaId);
     
@@ -193,7 +199,9 @@ const Checklist: React.FC = () => {
           .from('respostas')
           .update({
             resposta: resposta,
-            pontuacao_obtida: pontuacao
+            pontuacao_obtida: pontuacao,
+            observacao: observacao,
+            anexo_url: anexo_url
           })
           .eq('id', respostaExistente.id);
         
@@ -213,7 +221,9 @@ const Checklist: React.FC = () => {
             auditoria_id: auditoriaId,
             pergunta_id: perguntaId,
             resposta: resposta,
-            pontuacao_obtida: pontuacao
+            pontuacao_obtida: pontuacao,
+            observacao: observacao,
+            anexo_url: anexo_url
           });
         
         if (error) {
@@ -272,6 +282,97 @@ const Checklist: React.FC = () => {
       toast({
         title: "Erro",
         description: "Ocorreu um erro ao processar a resposta.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const handleFileUpload = async (perguntaId: string, file: File) => {
+    if (!auditoriaId || !file) return;
+    
+    setUploading(prev => ({ ...prev, [perguntaId]: true }));
+    
+    try {
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${auditoriaId}/${perguntaId}.${fileExt}`;
+      
+      const { error: uploadError, data } = await supabase.storage
+        .from('auditoria-anexos')
+        .upload(filePath, file, { upsert: true });
+      
+      if (uploadError) {
+        throw uploadError;
+      }
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('auditoria-anexos')
+        .getPublicUrl(filePath);
+      
+      setFileUrls(prev => ({ 
+        ...prev, 
+        [perguntaId]: publicUrl 
+      }));
+      
+      const respostaExistente = respostasExistentes?.find(r => r.pergunta_id === perguntaId);
+      
+      if (respostaExistente) {
+        const { error } = await supabase
+          .from('respostas')
+          .update({
+            anexo_url: publicUrl
+          })
+          .eq('id', respostaExistente.id);
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Arquivo enviado",
+          description: "O arquivo foi enviado com sucesso."
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao fazer upload do arquivo:", error);
+      toast({
+        title: "Erro no upload",
+        description: "Não foi possível fazer o upload do arquivo.",
+        variant: "destructive"
+      });
+    } finally {
+      setUploading(prev => ({ ...prev, [perguntaId]: false }));
+    }
+  };
+  
+  const handleObservacaoChange = (perguntaId: string, value: string) => {
+    setObservacoes(prev => ({ ...prev, [perguntaId]: value }));
+  };
+  
+  const handleSaveObservacao = async (perguntaId: string) => {
+    if (!auditoriaId) return;
+    
+    const observacao = observacoes[perguntaId] || '';
+    const respostaExistente = respostasExistentes?.find(r => r.pergunta_id === perguntaId);
+    
+    try {
+      if (respostaExistente) {
+        const { error } = await supabase
+          .from('respostas')
+          .update({
+            observacao: observacao
+          })
+          .eq('id', respostaExistente.id);
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Observação salva",
+          description: "A observação foi salva com sucesso."
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao salvar observação:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar a observação.",
         variant: "destructive"
       });
     }
@@ -424,6 +525,15 @@ const Checklist: React.FC = () => {
   
   const isActiveSecaoCompleta = completedSections.includes(activeSecao || '');
   
+  const isLastPerguntaInSection = (perguntaId: string) => {
+    if (!perguntas) return false;
+    
+    const perguntasDestaSecao = perguntas.filter(p => p.secao_id === activeSecao);
+    const lastPergunta = perguntasDestaSecao[perguntasDestaSecao.length - 1];
+    
+    return lastPergunta && lastPergunta.id === perguntaId;
+  };
+
   return (
     <div className="pb-12 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
@@ -601,42 +711,120 @@ const Checklist: React.FC = () => {
           </div>
           
           <div className="space-y-8">
-            {perguntasSecaoAtiva.map((pergunta, index) => (
-              <div key={pergunta.id} className="border rounded-lg p-6">
-                <h3 className="text-lg font-medium mb-6">{pergunta.texto}</h3>
-                
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <Button
-                    variant="outline"
-                    className={`h-12 ${respostas[pergunta.id] === 'Sim' ? 'bg-green-500 hover:bg-green-600 text-white' : ''}`}
-                    onClick={() => handleResposta(pergunta.id, 'Sim')}
-                  >
-                    Sim
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className={`h-12 ${respostas[pergunta.id] === 'Não' ? 'bg-red-500 hover:bg-red-600 text-white' : ''}`}
-                    onClick={() => handleResposta(pergunta.id, 'Não')}
-                  >
-                    Não
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className={`h-12 ${respostas[pergunta.id] === 'Regular' ? 'bg-yellow-500 hover:bg-yellow-600 text-white' : ''}`}
-                    onClick={() => handleResposta(pergunta.id, 'Regular')}
-                  >
-                    Regular
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className={`h-12 ${respostas[pergunta.id] === 'N/A' ? 'bg-gray-500 hover:bg-gray-600 text-white' : ''}`}
-                    onClick={() => handleResposta(pergunta.id, 'N/A')}
-                  >
-                    N/A
-                  </Button>
+            {perguntasSecaoAtiva.map((pergunta, index) => {
+              const isLastPergunta = isLastPerguntaInSection(pergunta.id);
+              const anexoUrl = respostasExistentes?.find(r => r.pergunta_id === pergunta.id)?.anexo_url || '';
+              const observacao = respostasExistentes?.find(r => r.pergunta_id === pergunta.id)?.observacao || '';
+              
+              return (
+                <div key={pergunta.id} className="border rounded-lg p-6">
+                  <h3 className="text-lg font-medium mb-6">{pergunta.texto}</h3>
+                  
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <Button
+                      variant="outline"
+                      className={`h-12 ${respostas[pergunta.id] === 'Sim' ? 'bg-green-500 hover:bg-green-600 text-white' : ''}`}
+                      onClick={() => handleResposta(pergunta.id, 'Sim')}
+                    >
+                      Sim
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className={`h-12 ${respostas[pergunta.id] === 'Não' ? 'bg-red-500 hover:bg-red-600 text-white' : ''}`}
+                      onClick={() => handleResposta(pergunta.id, 'Não')}
+                    >
+                      Não
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className={`h-12 ${respostas[pergunta.id] === 'Regular' ? 'bg-yellow-500 hover:bg-yellow-600 text-white' : ''}`}
+                      onClick={() => handleResposta(pergunta.id, 'Regular')}
+                    >
+                      Regular
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className={`h-12 ${respostas[pergunta.id] === 'N/A' ? 'bg-gray-500 hover:bg-gray-600 text-white' : ''}`}
+                      onClick={() => handleResposta(pergunta.id, 'N/A')}
+                    >
+                      N/A
+                    </Button>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <label htmlFor={`observacao-${pergunta.id}`} className="block text-sm font-medium text-gray-700 mb-1">
+                      Observação
+                    </label>
+                    <div className="flex gap-2">
+                      <Input
+                        id={`observacao-${pergunta.id}`}
+                        type="text"
+                        placeholder="Adicione uma observação se necessário"
+                        className="flex-1"
+                        value={observacoes[pergunta.id] || observacao}
+                        onChange={(e) => handleObservacaoChange(pergunta.id, e.target.value)}
+                      />
+                      <Button 
+                        variant="outline" 
+                        onClick={() => handleSaveObservacao(pergunta.id)}
+                        className="bg-green-50 hover:bg-green-100 text-green-600 border-green-200"
+                      >
+                        <Save className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {isLastPergunta && (
+                    <div className="mt-4">
+                      <label htmlFor={`file-${pergunta.id}`} className="block text-sm font-medium text-gray-700 mb-1">
+                        Anexar Foto/Arquivo
+                      </label>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          <Input
+                            id={`file-${pergunta.id}`}
+                            type="file"
+                            accept="image/*,.pdf,.doc,.docx"
+                            className="flex-1"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleFileUpload(pergunta.id, file);
+                              }
+                            }}
+                            disabled={uploading[pergunta.id]}
+                          />
+                          <Button 
+                            variant="outline"
+                            disabled={uploading[pergunta.id]} 
+                            className={`min-w-[40px] ${uploading[pergunta.id] ? 'animate-pulse' : ''}`}
+                          >
+                            <Upload className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        
+                        {anexoUrl && (
+                          <div className="p-2 bg-gray-50 border rounded flex justify-between items-center">
+                            <a 
+                              href={anexoUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline text-sm"
+                            >
+                              Ver anexo
+                            </a>
+                          </div>
+                        )}
+                        
+                        {uploading[pergunta.id] && (
+                          <div className="text-sm text-gray-500">Enviando arquivo...</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           
           <div className="mt-10 flex justify-between">

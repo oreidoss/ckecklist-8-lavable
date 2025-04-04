@@ -47,6 +47,7 @@ export interface Resposta {
   resposta: string;
   pontuacao_obtida: number;
   observacao?: string;
+  anexo_url?: string; // Added anexo_url field for file/photo references
 }
 
 export interface RespostaFormData {
@@ -54,6 +55,7 @@ export interface RespostaFormData {
   resposta: string;
   pontuacao_obtida: number;
   observacao?: string; // Added observacao as optional property
+  anexo_url?: string; // Added anexo_url field for file uploads
 }
 
 // Add any other required types below

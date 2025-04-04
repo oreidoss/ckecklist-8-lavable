@@ -103,22 +103,28 @@ export type Database = {
       }
       respostas: {
         Row: {
+          anexo_url: string | null
           auditoria_id: string | null
           id: string
+          observacao: string | null
           pergunta_id: string | null
           pontuacao_obtida: number | null
           resposta: string | null
         }
         Insert: {
+          anexo_url?: string | null
           auditoria_id?: string | null
           id?: string
+          observacao?: string | null
           pergunta_id?: string | null
           pontuacao_obtida?: number | null
           resposta?: string | null
         }
         Update: {
+          anexo_url?: string | null
           auditoria_id?: string | null
           id?: string
+          observacao?: string | null
           pergunta_id?: string | null
           pontuacao_obtida?: number | null
           resposta?: string | null
