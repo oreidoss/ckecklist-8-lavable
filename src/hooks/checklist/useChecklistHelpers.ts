@@ -12,6 +12,7 @@ export const useChecklistHelpers = (
     if (!activeSecao || !perguntas) return false;
     
     const perguntasSecaoAtiva = perguntas.filter(p => p.secao_id === activeSecao);
+    // Consider all but the last two questions as required
     const requiredQuestions = perguntasSecaoAtiva.slice(0, -2);
     return requiredQuestions.some(pergunta => !respostas[pergunta.id]);
   }, [activeSecao, perguntas, respostas]);

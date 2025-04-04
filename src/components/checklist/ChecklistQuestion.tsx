@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Pergunta } from '@/lib/types';
@@ -43,14 +43,14 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
     }
   };
   
-  // Se o resposta do pai mudar, atualize o estado local
-  React.useEffect(() => {
+  // Update local state when parent prop changes
+  useEffect(() => {
     setLocalResposta(resposta);
   }, [resposta]);
   
   const handleClick = (valor: RespostaValor) => {
-    setLocalResposta(valor); // Atualize o estado local imediatamente
-    handleResposta(pergunta.id, valor); // Chame a função do pai para persistir a resposta
+    setLocalResposta(valor); // Update local state immediately for UI feedback
+    handleResposta(pergunta.id, valor); // Call parent function to persist the response
   };
   
   return (
