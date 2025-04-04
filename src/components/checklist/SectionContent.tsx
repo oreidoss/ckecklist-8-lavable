@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Pergunta, Secao } from '@/lib/types';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Input } from "@/components/ui/input";
+import { Save } from "lucide-react";
 import ChecklistQuestion, { RespostaValor } from './ChecklistQuestion';
 
 interface SectionContentProps {
@@ -57,6 +59,15 @@ const SectionContent: React.FC<SectionContentProps> = ({
   const isMobile = useIsMobile();
   
   if (!activeSecaoObj) return null;
+  
+  // Get the last question ID for the section
+  const lastPerguntaId = perguntasSecaoAtiva.length > 0 
+    ? perguntasSecaoAtiva[perguntasSecaoAtiva.length - 1].id 
+    : '';
+    
+  // Get any existing observation for this section
+  const sectionObservacao = observacoes[lastPerguntaId] || 
+    (respostasExistentes?.find(r => r.pergunta_id === lastPerguntaId)?.observacao || '');
 
   return (
     <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm w-full max-w-full mx-auto">
@@ -73,7 +84,6 @@ const SectionContent: React.FC<SectionContentProps> = ({
         {perguntasSecaoAtiva.map((pergunta, index) => {
           const isLastPergunta = isLastPerguntaInSection(pergunta.id);
           const anexoUrl = respostasExistentes?.find(r => r.pergunta_id === pergunta.id)?.anexo_url || '';
-          const observacao = respostasExistentes?.find(r => r.pergunta_id === pergunta.id)?.observacao || '';
           
           return (
             <ChecklistQuestion
@@ -82,16 +92,34 @@ const SectionContent: React.FC<SectionContentProps> = ({
               index={index}
               resposta={respostas[pergunta.id]}
               isLastPergunta={isLastPergunta}
-              observacao={observacoes[pergunta.id] || observacao}
               anexoUrl={fileUrls[pergunta.id] || anexoUrl}
               uploading={uploading[pergunta.id] || false}
               handleResposta={handleResposta}
-              handleObservacaoChange={handleObservacaoChange}
-              handleSaveObservacao={handleSaveObservacao}
               handleFileUpload={handleFileUpload}
             />
           );
         })}
+        
+        {/* Section Observation Field - Added at the end of the section */}
+        <div className="border rounded-lg p-4 sm:p-6 w-full max-w-full bg-gray-50">
+          <h3 className="text-base sm:text-lg font-medium mb-4">Observações da Seção</h3>
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              placeholder="Adicione uma observação para esta seção"
+              className="flex-1"
+              value={sectionObservacao}
+              onChange={(e) => handleObservacaoChange(lastPerguntaId, e.target.value)}
+            />
+            <Button 
+              variant="outline" 
+              onClick={() => handleSaveObservacao(lastPerguntaId)}
+              className="bg-green-50 hover:bg-green-100 text-green-600 border-green-200"
+            >
+              <Save className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </div>
       
       {isMobile ? (

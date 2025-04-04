@@ -13,12 +13,9 @@ interface ChecklistQuestionProps {
   index: number;
   resposta: RespostaValor | undefined;
   isLastPergunta: boolean;
-  observacao: string;
   anexoUrl: string;
   uploading: boolean;
   handleResposta: (perguntaId: string, resposta: RespostaValor) => void;
-  handleObservacaoChange: (perguntaId: string, value: string) => void;
-  handleSaveObservacao: (perguntaId: string) => void;
   handleFileUpload: (perguntaId: string, file: File) => void;
 }
 
@@ -27,12 +24,9 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
   index,
   resposta,
   isLastPergunta,
-  observacao,
   anexoUrl,
   uploading,
   handleResposta,
-  handleObservacaoChange,
-  handleSaveObservacao,
   handleFileUpload
 }) => {
   const isMobile = useIsMobile();
@@ -70,29 +64,6 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
         >
           N/A
         </Button>
-      </div>
-      
-      <div className="mt-3 sm:mt-4">
-        <label htmlFor={`observacao-${pergunta.id}`} className="block text-sm font-medium text-gray-700 mb-1">
-          Observação
-        </label>
-        <div className="flex gap-2">
-          <Input
-            id={`observacao-${pergunta.id}`}
-            type="text"
-            placeholder="Adicione uma observação se necessário"
-            className="flex-1"
-            value={observacao}
-            onChange={(e) => handleObservacaoChange(pergunta.id, e.target.value)}
-          />
-          <Button 
-            variant="outline" 
-            onClick={() => handleSaveObservacao(pergunta.id)}
-            className="bg-green-50 hover:bg-green-100 text-green-600 border-green-200"
-          >
-            <Save className="h-4 w-4" />
-          </Button>
-        </div>
       </div>
       
       {isLastPergunta && (
