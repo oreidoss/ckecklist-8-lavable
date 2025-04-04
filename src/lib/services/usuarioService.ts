@@ -1,4 +1,3 @@
-
 import { Usuario } from '../types';
 import { BaseService } from './baseService';
 
@@ -7,7 +6,7 @@ export class UsuarioService extends BaseService {
   private readonly AUTH_KEY = 'currentUser';
 
   getUsuarios(): Usuario[] {
-    const usuarios = this.getItem<Usuario[]>(this.STORAGE_KEY) || [];
+    const usuarios = this.getItem<Usuario>(this.STORAGE_KEY) || [];
     return usuarios;
   }
 
