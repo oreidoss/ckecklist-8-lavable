@@ -186,16 +186,14 @@ const Relatorio: React.FC = () => {
         />
         
         <div ref={reportRef} className="pdf-container">
-          <ScrollArea className="h-[calc(100vh-10rem)] w-full px-1">
-            <RelatorioDetalhado 
-              auditoria={typedAuditoria} 
-              loja={auditoria.loja} 
-              respostas={typedRespostas} 
-              perguntas={perguntas} 
-              secoes={secoes}
-              auditorias={typedAuditorias}
-            />
-          </ScrollArea>
+          <RelatorioDetalhado 
+            auditoria={typedAuditoria} 
+            loja={auditoria.loja} 
+            respostas={typedRespostas} 
+            perguntas={perguntas} 
+            secoes={secoes}
+            auditorias={typedAuditorias}
+          />
         </div>
       </div>
     );

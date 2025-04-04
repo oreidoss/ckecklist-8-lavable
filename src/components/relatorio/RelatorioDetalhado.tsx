@@ -67,7 +67,7 @@ const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
     });
 
   return (
-    <div className="space-y-4 print-container">
+    <div className="space-y-6 pdf-container">
       <Card className="print-item">
         <InformacoesGerais auditoria={auditoria} />
       </Card>
@@ -92,9 +92,9 @@ const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
         <PontosAtencao itensCriticos={itensCriticos} />
       </Card>
       
-      <div className="print-item">
+      <Card className="print-item">
         <AnaliseIA respostas={respostas} perguntas={perguntas} />
-      </div>
+      </Card>
 
       <Card className="print-item">
         <HistoricoAuditorias auditorias={auditorias} />
@@ -107,6 +107,10 @@ const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
       <Card className="print-item">
         <AnaliseTendencias auditorias={auditorias} perguntas={perguntas} />
       </Card>
+      
+      <div className="pdf-footer text-center text-sm text-gray-500 mt-8 mb-4">
+        © 2025 Checklist 9.0 - Todos os direitos reservados
+      </div>
     </div>
   );
 };

@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -214,23 +215,29 @@ body, html {
 @media print {
   body {
     -webkit-print-color-adjust: exact !important;
-    color-adjust: exact !important;
     print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    background: #ffffff !important;
+    color: #000000 !important;
   }
   
   .print-container {
     width: 100% !important;
     overflow: visible !important;
+    background: #ffffff !important;
+    color: #000000 !important;
   }
   
   .print-item {
-    break-inside: avoid;
-    page-break-inside: avoid;
-    margin-bottom: 1cm;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 1cm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
   }
   
   /* Hide UI elements during printing */
-  button, [role="tooltip"], .hover-card {
+  button, [role="tooltip"], .hover-card, nav, header, footer {
     display: none !important;
   }
   
@@ -239,15 +246,58 @@ body, html {
     max-width: 100% !important;
     height: auto !important;
   }
+  
+  /* Make sure text is black */
+  p, h1, h2, h3, h4, h5, h6, span, div, table, th, td {
+    color: #000000 !important;
+  }
+  
+  /* Force background colors */
+  .card, .card-content, .card-header {
+    background-color: #ffffff !important;
+  }
 }
 
 /* General PDF container class */
 .pdf-container {
   width: 100%;
+  position: relative;
+  background-color: #ffffff;
+}
+
+/* PDF content specific styles */
+.pdf-content {
+  padding: 1cm;
+  background-color: #ffffff;
+  color: #000000;
+}
+
+/* Clear Radix ScrollArea for PDF */
+.pdf-container [data-radix-scroll-area-viewport] {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  overflow: visible !important;
 }
 
 /* Styling for ScrollArea component to ensure proper rendering */
-.scrollbar-content {
-  width: 100%;
-  overflow: visible;
+.scrollbar-content, 
+.scroll-content,
+[data-radix-scroll-area-viewport] > div {
+  width: 100% !important;
+  overflow: visible !important;
+  height: auto !important;
+}
+
+/* Fix for Radix ScrollArea in PDF context */
+[data-radix-scroll-area-viewport] {
+  transform: none !important;
+}
+
+/* PDF footer styles */
+.pdf-footer {
+  margin-top: 1cm;
+  text-align: center;
+  font-size: 10px;
+  color: #666;
 }
