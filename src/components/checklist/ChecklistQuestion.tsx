@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Pergunta } from '@/lib/types';
@@ -20,13 +20,14 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
   handleResposta
 }) => {
   const isMobile = useIsMobile();
+  const [localResposta, setLocalResposta] = useState<RespostaValor | undefined>(resposta);
   
   const getButtonVariant = (valor: RespostaValor) => {
-    return resposta === valor ? "default" : "outline";
+    return (localResposta === valor) ? "default" : "outline";
   };
 
   const getButtonStyle = (valor: RespostaValor): string => {
-    if (resposta !== valor) return "text-gray-700 border-gray-300";
+    if (localResposta !== valor) return "text-gray-700 border-gray-300";
     
     switch (valor) {
       case 'Sim':
@@ -42,6 +43,16 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
     }
   };
   
+  // Se o resposta do pai mudar, atualize o estado local
+  React.useEffect(() => {
+    setLocalResposta(resposta);
+  }, [resposta]);
+  
+  const handleClick = (valor: RespostaValor) => {
+    setLocalResposta(valor); // Atualize o estado local imediatamente
+    handleResposta(pergunta.id, valor); // Chame a função do pai para persistir a resposta
+  };
+  
   return (
     <div className="border rounded-lg p-1 w-full">
       <h3 className="text-xs font-medium mb-1 line-clamp-2">{pergunta.texto}</h3>
@@ -52,8 +63,8 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
             key={valor}
             variant={getButtonVariant(valor)}
             size="sm"
-            className={`text-[10px] p-1 transition-colors duration-200 ${getButtonStyle(valor)} ${resposta === valor ? 'ring-2 ring-offset-1 ring-opacity-50' : ''}`}
-            onClick={() => handleResposta(pergunta.id, valor)}
+            className={`text-[10px] p-1 transition-colors duration-200 ${getButtonStyle(valor)} ${localResposta === valor ? 'ring-2 ring-offset-1 ring-opacity-50' : ''}`}
+            onClick={() => handleClick(valor)}
           >
             {valor}
           </Button>
