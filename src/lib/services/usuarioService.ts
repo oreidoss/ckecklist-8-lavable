@@ -1,4 +1,3 @@
-
 import { Usuario } from '../types';
 import { BaseService } from './baseService';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,51 +8,60 @@ export class UsuarioService extends BaseService {
 
   async getUsuarios(): Promise<Usuario[]> {
     try {
-      // Tenta buscar usuários do Supabase
+      // Try to fetch users from Supabase
       const { data, error } = await supabase
         .from('usuarios')
         .select('*');
       
       if (error) {
-        console.error("Erro ao buscar usuários do Supabase:", error);
-        // Fallback para localStorage se houver erro
+        console.error("Error fetching users from Supabase:", error);
+        // Fallback to localStorage if there's an error
         return this.getItem<Usuario>(this.STORAGE_KEY);
       }
       
+      // Log successful retrieval
+      console.log("Successfully retrieved users from Supabase:", data);
       return data as Usuario[];
     } catch (e) {
-      console.error("Erro ao buscar usuários:", e);
-      // Fallback para localStorage
+      console.error("Error fetching users:", e);
+      // Fallback to localStorage
       return this.getItem<Usuario>(this.STORAGE_KEY);
     }
   }
 
   async addUsuario(usuario: Omit<Usuario, "id">): Promise<Usuario> {
     try {
-      // Adiciona usuário no Supabase
+      console.log("Attempting to add user to Supabase:", usuario);
+      
+      // Add user to Supabase
       const { data, error } = await supabase
         .from('usuarios')
-        .insert([usuario])
+        .insert([{
+          nome: usuario.nome,
+          email: usuario.email,
+          senha: usuario.senha,
+          role: usuario.role || 'user'
+        }])
         .select()
         .single();
       
       if (error) {
-        console.error("Erro ao adicionar usuário no Supabase:", error);
+        console.error("Error adding user to Supabase:", error);
         throw error;
       }
       
-      const novoUsuario = data as Usuario;
+      const newUser = data as Usuario;
       
-      console.log("Usuário adicionado com sucesso no Supabase:", novoUsuario);
-      return novoUsuario;
+      console.log("User successfully added to Supabase:", newUser);
+      return newUser;
     } catch (e) {
-      console.error("Erro ao adicionar usuário, usando fallback localStorage:", e);
-      // Fallback para o localStorage em caso de erro
-      const usuarios = this.getItem<Usuario>(this.STORAGE_KEY);
-      const id = this.getMaxId(usuarios).toString(); // Convert to string
-      const novoUsuario = { ...usuario, id } as Usuario;
-      this.setItem(this.STORAGE_KEY, [...usuarios, novoUsuario]);
-      return novoUsuario;
+      console.error("Error adding user, using localStorage fallback:", e);
+      // Fallback to localStorage in case of error
+      const users = this.getItem<Usuario>(this.STORAGE_KEY);
+      const id = this.getMaxId(users).toString(); // Convert to string
+      const newUser = { ...usuario, id } as Usuario;
+      this.setItem(this.STORAGE_KEY, [...users, newUser]);
+      return newUser;
     }
   }
 
@@ -71,19 +79,19 @@ export class UsuarioService extends BaseService {
         .eq('id', usuario.id);
       
       if (error) {
-        console.error("Erro ao atualizar usuário no Supabase:", error);
+        console.error("Error updating user in Supabase:", error);
         throw error;
       }
       
-      console.log("Usuário atualizado com sucesso no Supabase:", usuario);
+      console.log("User updated successfully in Supabase:", usuario);
     } catch (e) {
-      console.error("Erro ao atualizar usuário, usando fallback localStorage:", e);
-      // Fallback para o localStorage em caso de erro
-      const usuarios = this.getItem<Usuario>(this.STORAGE_KEY);
-      const index = usuarios.findIndex(u => u.id === usuario.id);
+      console.error("Error updating user, using fallback localStorage:", e);
+      // Fallback to localStorage
+      const users = this.getItem<Usuario>(this.STORAGE_KEY);
+      const index = users.findIndex(u => u.id === usuario.id);
       if (index >= 0) {
-        usuarios[index] = usuario;
-        this.setItem(this.STORAGE_KEY, usuarios);
+        users[index] = usuario;
+        this.setItem(this.STORAGE_KEY, users);
       }
     }
   }
@@ -97,16 +105,16 @@ export class UsuarioService extends BaseService {
         .eq('id', id);
       
       if (error) {
-        console.error("Erro ao deletar usuário no Supabase:", error);
+        console.error("Error deleting user from Supabase:", error);
         throw error;
       }
       
-      console.log("Usuário deletado com sucesso no Supabase, ID:", id);
+      console.log("User deleted successfully from Supabase, ID:", id);
     } catch (e) {
-      console.error("Erro ao deletar usuário, usando fallback localStorage:", e);
-      // Fallback para o localStorage em caso de erro
-      const usuarios = this.getItem<Usuario>(this.STORAGE_KEY).filter(u => u.id !== id);
-      this.setItem(this.STORAGE_KEY, usuarios);
+      console.error("Error deleting user, using fallback localStorage:", e);
+      // Fallback to localStorage
+      const users = this.getItem<Usuario>(this.STORAGE_KEY).filter(u => u.id !== id);
+      this.setItem(this.STORAGE_KEY, users);
     }
   }
   
@@ -118,70 +126,72 @@ export class UsuarioService extends BaseService {
 
   async login(loginId: string, senha: string): Promise<Usuario | null> {
     try {
-      // Busca usuário no Supabase pelo nome ou email
+      console.log("Attempting login with:", loginId);
+      
+      // Search for user in Supabase by name or email
       const { data, error } = await supabase
         .from('usuarios')
         .select('*')
-        .or(`nome.ilike.${loginId},email.ilike.${loginId}`);
+        .or(`nome.eq.${loginId},email.eq.${loginId}`);
       
       if (error) {
-        console.error("Erro ao buscar usuário para login do Supabase:", error);
+        console.error("Error fetching user for login from Supabase:", error);
         throw error;
       }
       
-      console.log("Resultado da busca por usuário:", data);
+      console.log("Login search results:", data);
       
-      // Verifica se encontrou algum usuário
+      // Check if any user was found
       if (!data || data.length === 0) {
-        console.log("Usuário não encontrado no Supabase");
+        console.log("User not found in Supabase");
         return null;
       }
       
-      // Encontra o usuário com credenciais corretas
-      const usuario = data.find(u => u.senha === senha);
+      // Find user with correct credentials
+      const user = data.find(u => u.senha === senha);
       
-      if (!usuario) {
-        console.log("Senha incorreta");
+      if (!user) {
+        console.log("Incorrect password");
         return null;
       }
       
-      const usuarioConvertido = usuario as Usuario;
+      const convertedUser = user as Usuario;
       
-      // Remove a senha antes de armazenar no localStorage
-      const { senha: _, ...userWithoutSenha } = usuarioConvertido;
-      localStorage.setItem(this.AUTH_KEY, JSON.stringify(userWithoutSenha));
+      // Remove password before storing in localStorage
+      const { senha: _, ...userWithoutPassword } = convertedUser;
+      localStorage.setItem(this.AUTH_KEY, JSON.stringify(userWithoutPassword));
       
-      console.log("Login bem-sucedido:", usuarioConvertido.nome);
-      return usuarioConvertido;
+      console.log("Successful login:", convertedUser.nome);
+      return convertedUser;
     } catch (e) {
-      console.error("Erro no login, tentando fallback localStorage:", e);
+      console.error("Login error, trying localStorage fallback:", e);
       
-      // Fallback para localStorage
-      const usuarios = this.getItem<Usuario>(this.STORAGE_KEY);
-      console.log("Tentando login via localStorage para:", loginId);
-      console.log("Usuários disponíveis:", usuarios.length);
+      // Fallback to localStorage
+      const users = this.getItem<Usuario>(this.STORAGE_KEY);
+      console.log("Trying login via localStorage for:", loginId);
+      console.log("Available users:", users.length);
       
-      // Tenta encontrar usuário por nome ou email
-      const usuario = usuarios.find(
+      // Try to find user by name or email
+      const user = users.find(
         u => u.nome.toLowerCase() === loginId.toLowerCase() || 
              (u.email && u.email.toLowerCase() === loginId.toLowerCase())
       );
       
-      if (!usuario) {
-        console.log("Usuário não encontrado");
+      if (!user) {
+        console.log("User not found");
         return null;
       }
       
-      // Verifica a senha
-      if (usuario.senha === senha) {
-        console.log("Senha correta, login bem-sucedido");
-        // Remove a senha antes de armazenar no localStorage
-        const { senha: _, ...userWithoutSenha } = usuario;
-        localStorage.setItem(this.AUTH_KEY, JSON.stringify(userWithoutSenha));
-        return usuario;
+      // Verify password
+      if (user.senha === senha) {
+        console.log("Correct password, login successful");
+        // Remove password before storing in localStorage
+        const { senha: _, ...userWithoutPassword } = user;
+        localStorage.setItem(this.AUTH_KEY, JSON.stringify(userWithoutPassword));
+        return user;
       }
       
-      console.log("Senha incorreta");
+      console.log("Incorrect password");
       return null;
     }
   }
@@ -207,14 +217,14 @@ export class UsuarioService extends BaseService {
         .or(`nome.ilike.${loginId},email.ilike.${loginId}`);
       
       if (error) {
-        console.error("Erro ao verificar credenciais no Supabase:", error);
+        console.error("Error verifying credentials from Supabase:", error);
         throw error;
       }
       
       // Verifica se encontrou algum usuário com a senha correta
       return data && data.some(u => u.senha === senha);
     } catch (e) {
-      console.error("Erro ao verificar credenciais, usando fallback localStorage:", e);
+      console.error("Error verifying credentials, using fallback localStorage:", e);
       
       // Fallback para localStorage
       const usuarios = this.getItem<Usuario>(this.STORAGE_KEY);

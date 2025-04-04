@@ -29,12 +29,12 @@ export const LoginForm = () => {
       return;
     }
 
-    console.log(`Tentando login com: nome="${nome}", senha="${senha}"`);
+    console.log(`Attempting login with: name="${nome}", password="${senha}"`);
     
     try {
-      // Let's debug the current users in the system
+      // Debug available users in the system
       const usuarios = await usuarioService.getUsuarios();
-      console.log("Usuários disponíveis no sistema:", usuarios);
+      console.log("Available users in the system:", usuarios);
       
       // Try to login
       const user = await usuarioService.login(nome, senha);
@@ -53,7 +53,7 @@ export const LoginForm = () => {
         });
       }
     } catch (error) {
-      console.error("Erro durante o login:", error);
+      console.error("Error during login:", error);
       toast({
         title: "Erro no login",
         description: "Ocorreu um erro ao tentar fazer login",

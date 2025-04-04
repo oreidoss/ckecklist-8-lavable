@@ -69,7 +69,7 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
         }
       }
       
-      console.log("Registrando novo usuário:", newNome, newEmail);
+      console.log("Registering new user:", newNome, newEmail);
       
       // Add new user
       const newUser = await usuarioService.addUsuario({
