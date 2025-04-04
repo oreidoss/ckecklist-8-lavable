@@ -71,7 +71,7 @@ export const RegisterForm = ({ onSuccess }: RegisterFormProps) => {
       
       console.log("Registering new user:", newNome, newEmail);
       
-      // Add new user
+      // Add new user - default role as 'user'
       const newUser = await usuarioService.addUsuario({
         nome: newNome,
         email: newEmail,

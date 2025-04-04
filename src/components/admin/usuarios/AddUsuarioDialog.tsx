@@ -74,6 +74,7 @@ export const AddUsuarioDialog: React.FC<AddUsuarioDialogProps> = ({
       return;
     }
     
+    console.log("Adicionando usuário com função:", novoUsuario.role);
     await onAddUsuario(novoUsuario);
     setNovoUsuario({ nome: '', email: '', role: undefined, senha: '' });
     close();
@@ -140,6 +141,7 @@ export const AddUsuarioDialog: React.FC<AddUsuarioDialogProps> = ({
             <Select 
               value={novoUsuario.role} 
               onValueChange={(value) => {
+                console.log("Função selecionada ao adicionar:", value);
                 const role = value === 'none' ? undefined : 
                   (value as 'admin' | 'user' | 'supervisor' | 'gerente' | undefined);
                 setNovoUsuario({ ...novoUsuario, role });

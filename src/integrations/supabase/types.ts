@@ -158,18 +158,21 @@ export type Database = {
       usuarios: {
         Row: {
           email: string
+          funcao: string | null
           id: string
           nome: string
           senha: string | null
         }
         Insert: {
           email: string
+          funcao?: string | null
           id?: string
           nome: string
           senha?: string | null
         }
         Update: {
           email?: string
+          funcao?: string | null
           id?: string
           nome?: string
           senha?: string | null

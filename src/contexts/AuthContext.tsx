@@ -26,6 +26,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (currentUser) {
       setUser(currentUser);
       setIsAdmin(currentUser.role === 'admin');
+      console.log("Current user loaded:", currentUser.nome, "role:", currentUser.role, "isAdmin:", currentUser.role === 'admin');
     } else {
       // Only navigate to login if not already there
       if (window.location.pathname !== '/login') {
@@ -42,6 +43,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (loggedInUser) {
         setUser(loggedInUser);
         setIsAdmin(loggedInUser.role === 'admin');
+        console.log("User logged in:", loggedInUser.nome, "role:", loggedInUser.role, "isAdmin:", loggedInUser.role === 'admin');
         return true;
       }
       

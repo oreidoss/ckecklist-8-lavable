@@ -71,6 +71,7 @@ export const EditUsuarioDialog: React.FC<EditUsuarioDialogProps> = ({
       return;
     }
     
+    console.log("Salvando usuário com função:", usuarioEditado.role);
     await onUpdateUsuario(usuarioEditado);
     close();
   };
@@ -146,6 +147,7 @@ export const EditUsuarioDialog: React.FC<EditUsuarioDialogProps> = ({
             <Select 
               value={usuarioEditado.role || 'none'} 
               onValueChange={(value) => {
+                console.log("Nova função selecionada:", value);
                 const role = value === 'none' ? undefined : 
                   (value as 'admin' | 'user' | 'supervisor' | 'gerente' | undefined);
                 setUsuarioEditado({

@@ -20,9 +20,14 @@ export class UsuarioService extends BaseService {
         return this.getItem<Usuario>(this.STORAGE_KEY);
       }
       
-      // Log successful retrieval
-      console.log("Successfully retrieved users from Supabase:", data);
-      return data as Usuario[];
+      // Map Supabase 'funcao' to 'role' for client-side compatibility
+      const usuarios = data.map(user => ({
+        ...user,
+        role: user.funcao as 'admin' | 'user' | 'supervisor' | 'gerente' | undefined
+      }));
+      
+      console.log("Successfully retrieved users from Supabase:", usuarios);
+      return usuarios as Usuario[];
     } catch (e) {
       console.error("Error fetching users:", e);
       // Fallback to localStorage
@@ -34,14 +39,14 @@ export class UsuarioService extends BaseService {
     try {
       console.log("Attempting to add user to Supabase:", usuario);
       
-      // Add user to Supabase - handle the case where 'role' is not a column
+      // Add user to Supabase - map 'role' to 'funcao' for database
       const { data, error } = await supabase
         .from('usuarios')
         .insert([{
           nome: usuario.nome,
           email: usuario.email,
-          senha: usuario.senha
-          // Don't include role if it's causing issues
+          senha: usuario.senha,
+          funcao: usuario.role // Map role to the funcao field in Supabase
         }])
         .select()
         .single();
@@ -51,12 +56,11 @@ export class UsuarioService extends BaseService {
         throw error;
       }
       
-      const newUser = data as Usuario;
-      
-      // Add role in localStorage even if not in Supabase
-      if (usuario.role) {
-        newUser.role = usuario.role;
-      }
+      // Ensure the returned user has the role property set from the funcao field
+      const newUser = {
+        ...data,
+        role: data.funcao
+      } as Usuario;
       
       console.log("User successfully added to Supabase:", newUser);
       return newUser;
@@ -73,10 +77,13 @@ export class UsuarioService extends BaseService {
 
   async updateUsuario(usuario: Usuario): Promise<void> {
     try {
-      // Update user in Supabase - handle the case where 'role' is not a column
+      console.log("Updating user in Supabase:", usuario);
+      
+      // Map role to funcao for the database update
       const updateData = {
         nome: usuario.nome,
-        email: usuario.email
+        email: usuario.email,
+        funcao: usuario.role // This is the key change - save role as funcao
       };
       
       // Only include senha if it's provided
@@ -96,13 +103,11 @@ export class UsuarioService extends BaseService {
       
       console.log("User updated successfully in Supabase:", usuario);
       
-      // Store role in localStorage if it's not in Supabase
-      if (usuario.role) {
-        const currentUser = this.getCurrentUser();
-        if (currentUser && currentUser.id === usuario.id) {
-          const updatedUser = { ...currentUser, ...usuario };
-          localStorage.setItem(this.AUTH_KEY, JSON.stringify(updatedUser));
-        }
+      // Update current user in localStorage if it's the same user
+      const currentUser = this.getCurrentUser();
+      if (currentUser && currentUser.id === usuario.id) {
+        const updatedUser = { ...currentUser, ...usuario };
+        localStorage.setItem(this.AUTH_KEY, JSON.stringify(updatedUser));
       }
     } catch (e) {
       console.error("Error updating user, using fallback localStorage:", e);
@@ -188,18 +193,17 @@ export class UsuarioService extends BaseService {
         return this.loginWithLocalStorage(loginId, senha);
       }
       
-      const convertedUser = user as Usuario;
-      
-      // Add role if it doesn't exist in the database
-      if (!convertedUser.role) {
-        convertedUser.role = 'user'; // Default role
-      }
+      // Map the Supabase 'funcao' field to the 'role' property used client-side
+      const convertedUser = {
+        ...user,
+        role: user.funcao as 'admin' | 'user' | 'supervisor' | 'gerente' | undefined
+      } as Usuario;
       
       // Remove password before storing in localStorage
       const { senha: _, ...userWithoutPassword } = convertedUser;
       localStorage.setItem(this.AUTH_KEY, JSON.stringify(userWithoutPassword));
       
-      console.log("Successful login:", convertedUser.nome);
+      console.log("Successful login:", convertedUser.nome, "role:", convertedUser.role);
       return convertedUser;
     } catch (e) {
       console.error("Login error, trying localStorage fallback:", e);
