@@ -62,7 +62,6 @@ export const useSectionNavigation = ({
     }
   }, [secoes, activeSecao]);
   
-  // Novo comportamento: permite navegar se o usuário confirmar, mesmo com perguntas incompletas
   const handleSetActiveSecao = useCallback((secaoId: string) => {
     // Se não tiver seção ativa ou estiver na mesma seção, simplesmente ativa
     if (!activeSecao || secaoId === activeSecao) {
@@ -76,13 +75,16 @@ export const useSectionNavigation = ({
     const requiredPerguntas = perguntasAtivas.slice(0, -2);
     const hasUnanswered = requiredPerguntas.some(p => !respostas[p.id]);
     
-    // Se houver perguntas não respondidas, mostra alerta mas permite continuar
+    // Se houver perguntas não respondidas, mostra alerta
     if (hasUnanswered) {
       toast({
         title: "Perguntas não respondidas",
         description: "Por favor, responda todas as perguntas obrigatórias antes de mudar de seção.",
         variant: "destructive"
       });
+      // Apesar do aviso, permitimos a navegação
+      setActiveSecao(secaoId);
+      window.scrollTo(0, 0);
       return;
     }
     

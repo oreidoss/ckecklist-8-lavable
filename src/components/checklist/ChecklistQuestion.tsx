@@ -21,6 +21,24 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
 }) => {
   const isMobile = useIsMobile();
   
+  // Função para determinar o estilo baseado na resposta
+  const getButtonStyle = (valor: string) => {
+    if (resposta !== valor) return '';
+    
+    switch (valor) {
+      case 'Sim':
+        return 'bg-green-500 text-white border-green-500';
+      case 'Não':
+        return 'bg-red-500 text-white border-red-500';
+      case 'Regular':
+        return 'bg-yellow-500 text-white border-yellow-500';
+      case 'N/A':
+        return 'bg-gray-500 text-white border-gray-500';
+      default:
+        return '';
+    }
+  };
+  
   return (
     <div className="border rounded-lg p-1 w-full">
       <h3 className="text-xs font-medium mb-1 line-clamp-2">{pergunta.texto}</h3>
@@ -31,11 +49,7 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
             key={valor}
             variant="outline"
             size="sm"
-            className={`text-[10px] p-1 ${resposta === valor ? 
-              (valor === 'Sim' ? 'bg-green-500' : 
-               valor === 'Não' ? 'bg-red-500' : 
-               valor === 'Regular' ? 'bg-yellow-500' : 
-               'bg-gray-500') + ' text-white' : ''}`}
+            className={`text-[10px] p-1 ${getButtonStyle(valor)}`}
             onClick={() => handleResposta(pergunta.id, valor as RespostaValor)}
           >
             {valor}

@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { FileText } from 'lucide-react';
+import { FileText, Save } from 'lucide-react';
 
 interface ChecklistActionsProps {
   auditoriaId: string | undefined;
@@ -31,6 +31,7 @@ const ChecklistActions: React.FC<ChecklistActionsProps> = ({
         disabled={isSaving}
         className="flex-1 text-xs h-8"
       >
+        <Save className="mr-1 h-3 w-3" />
         Salvar
       </Button>
       

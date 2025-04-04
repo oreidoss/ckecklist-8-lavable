@@ -27,10 +27,9 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
     if (hasUnansweredQuestions()) {
       toast({
         title: "Perguntas não respondidas",
-        description: "Por favor, responda todas as perguntas obrigatórias antes de avançar.",
+        description: "Existem perguntas não respondidas nesta seção. Você ainda pode avançar, mas a seção não será salva como completa.",
         variant: "destructive"
       });
-      return;
     }
     
     handleNextSection();
