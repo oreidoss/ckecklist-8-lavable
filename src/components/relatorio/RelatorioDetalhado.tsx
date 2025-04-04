@@ -67,16 +67,16 @@ const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
     });
 
   return (
-    <div className="space-y-4">
-      <Card>
+    <div className="space-y-4 print-container">
+      <Card className="print-item">
         <InformacoesGerais auditoria={auditoria} />
       </Card>
 
-      <Card>
+      <Card className="print-item">
         <InfoLoja loja={loja} auditorias={auditorias} />
       </Card>
 
-      <Card>
+      <Card className="print-item">
         <AnaliseGeral 
           pontuacaoTotal={pontuacaoTotal} 
           pontuacoesPorSecao={pontuacoesPorSecao} 
@@ -84,25 +84,27 @@ const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
         />
       </Card>
 
-      <Card>
+      <Card className="print-item">
         <PontuacaoPorSecao pontuacoesPorSecao={pontuacoesPorSecao} />
       </Card>
 
-      <Card>
+      <Card className="print-item">
         <PontosAtencao itensCriticos={itensCriticos} />
       </Card>
       
-      <AnaliseIA respostas={respostas} perguntas={perguntas} />
+      <div className="print-item">
+        <AnaliseIA respostas={respostas} perguntas={perguntas} />
+      </div>
 
-      <Card>
+      <Card className="print-item">
         <HistoricoAuditorias auditorias={auditorias} />
       </Card>
 
-      <Card>
+      <Card className="print-item">
         <HistoricoLoja auditoriasPorLoja={{ loja, auditorias }} perguntas={perguntas} />
       </Card>
 
-      <Card>
+      <Card className="print-item">
         <AnaliseTendencias auditorias={auditorias} perguntas={perguntas} />
       </Card>
     </div>

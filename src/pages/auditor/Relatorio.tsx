@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,10 +7,13 @@ import RelatorioDetalhado from '@/components/relatorio/RelatorioDetalhado';
 import { HistoricoLoja } from '@/components/relatorio/HistoricoLoja';
 import { Auditoria, Resposta } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { RelatorioActions } from '@/components/relatorio/RelatorioActions';
+import { exportToPdf } from '@/utils/pdfExport';
 
 const Relatorio: React.FC = () => {
   const { auditoriaId, lojaId } = useParams();
   const navigate = useNavigate();
+  const reportRef = useRef<HTMLDivElement>(null);
   
   // Always fetch secoes and perguntas regardless of other conditions
   const { data: secoes } = useQuery({
@@ -57,6 +60,19 @@ const Relatorio: React.FC = () => {
       return data;
     },
     enabled: !!auditoriaId
+  });
+
+  // Fetch all usuarios for the edit dialog
+  const { data: usuarios = [] } = useQuery({
+    queryKey: ['usuarios'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('*');
+      
+      if (error) throw error;
+      return data;
+    }
   });
 
   // Fetch auditorias for a loja if lojaId is provided
@@ -107,6 +123,13 @@ const Relatorio: React.FC = () => {
     enabled: !!auditoria?.loja_id
   });
 
+  // Function to export the report to PDF
+  const handleExportPDF = () => {
+    if (reportRef.current) {
+      exportToPdf(reportRef, undefined, "O relatório completo foi exportado com sucesso!");
+    }
+  };
+
   if (loadingAuditoria || loadingAuditoriasPorLoja) {
     return <div className="flex justify-center items-center h-96">Carregando...</div>;
   }
@@ -132,7 +155,7 @@ const Relatorio: React.FC = () => {
         pergunta_id: r.pergunta_id?.toString() || '',
         resposta: r.resposta || '',
         pontuacao_obtida: Number(r.pontuacao_obtida || 0),
-        observacao: r.observacao || ''  // Fornecendo um valor padrão para observacao
+        observacao: r.observacao || ''
       })) : [];
 
     const typedAuditoria: Auditoria = {
@@ -154,16 +177,27 @@ const Relatorio: React.FC = () => {
     }));
 
     return (
-      <ScrollArea className="h-[calc(100vh-10rem)] w-full px-1">
-        <RelatorioDetalhado 
+      <div className="relative">
+        <RelatorioActions 
           auditoria={typedAuditoria} 
-          loja={auditoria.loja} 
-          respostas={typedRespostas} 
-          perguntas={perguntas} 
-          secoes={secoes}
-          auditorias={typedAuditorias}
+          usuarios={usuarios} 
+          refetchAuditoria={refetchAuditoria}
+          exportarPDF={handleExportPDF} 
         />
-      </ScrollArea>
+        
+        <div ref={reportRef} className="pdf-container">
+          <ScrollArea className="h-[calc(100vh-10rem)] w-full px-1">
+            <RelatorioDetalhado 
+              auditoria={typedAuditoria} 
+              loja={auditoria.loja} 
+              respostas={typedRespostas} 
+              perguntas={perguntas} 
+              secoes={secoes}
+              auditorias={typedAuditorias}
+            />
+          </ScrollArea>
+        </div>
+      </div>
     );
   }
 
