@@ -26,6 +26,7 @@ export const useChecklistRespostas = (
   const handleResposta = async (perguntaId: string, resposta: RespostaValor, respostasExistentes: any[], perguntas?: Pergunta[]) => {
     if (!auditoriaId) return;
     
+    // Update local state immediately for UI feedback
     setRespostas(prev => ({
       ...prev,
       [perguntaId]: resposta

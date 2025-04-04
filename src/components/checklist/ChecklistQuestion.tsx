@@ -22,6 +22,11 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
   const isMobile = useIsMobile();
   const [localResposta, setLocalResposta] = useState<RespostaValor | undefined>(resposta);
   
+  // Update local state when parent prop changes
+  useEffect(() => {
+    setLocalResposta(resposta);
+  }, [resposta]);
+  
   const getButtonVariant = (valor: RespostaValor) => {
     return (localResposta === valor) ? "default" : "outline";
   };
@@ -43,14 +48,11 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
     }
   };
   
-  // Update local state when parent prop changes
-  useEffect(() => {
-    setLocalResposta(resposta);
-  }, [resposta]);
-  
   const handleClick = (valor: RespostaValor) => {
-    setLocalResposta(valor); // Update local state immediately for UI feedback
-    handleResposta(pergunta.id, valor); // Call parent function to persist the response
+    // Update local state immediately for UI feedback
+    setLocalResposta(valor);
+    // Call parent function to persist the response
+    handleResposta(pergunta.id, valor);
   };
   
   return (

@@ -92,39 +92,38 @@ export const useChecklistPageState = (auditoriaId: string | undefined) => {
     }
   };
   
-  // Process existing responses
+  // Process existing responses - with fixed dependency array
   useEffect(() => {
-    if (respostasExistentes?.length && perguntas?.length) {
-      const respostasMap: Record<string, RespostaValor> = {};
-      respostasExistentes.forEach(resposta => {
-        if (resposta.pergunta_id && resposta.resposta) {
-          respostasMap[resposta.pergunta_id] = resposta.resposta as RespostaValor;
-        }
-      });
-      
-      setRespostas(respostasMap);
-      
-      const progresso = (respostasExistentes.length / perguntas.length) * 100;
-      setProgresso(progresso);
-      
-      const completedSections: string[] = [];
-      
-      if (secoes && perguntas) {
-        secoes.forEach(secao => {
-          const perguntasSecao = perguntas.filter(p => p.secao_id === secao.id);
-          const todasRespondidas = perguntasSecao.every(pergunta => 
-            respostasExistentes.some(resp => resp.pergunta_id === pergunta.id)
-          );
-          
-          if (todasRespondidas && perguntasSecao.length > 0) {
-            completedSections.push(secao.id);
-          }
-        });
-        
-        setCompletedSections(completedSections);
-        updateIncompleteSections();
+    if (!respostasExistentes?.length || !perguntas?.length || !secoes?.length) return;
+    
+    const respostasMap: Record<string, RespostaValor> = {};
+    respostasExistentes.forEach(resposta => {
+      if (resposta.pergunta_id && resposta.resposta) {
+        respostasMap[resposta.pergunta_id] = resposta.resposta as RespostaValor;
       }
-    }
+    });
+    
+    setRespostas(respostasMap);
+    
+    const progresso = (Object.keys(respostasMap).length / perguntas.length) * 100;
+    setProgresso(progresso);
+    
+    const completedSections: string[] = [];
+    
+    secoes.forEach(secao => {
+      const perguntasSecao = perguntas.filter(p => p.secao_id === secao.id);
+      const todasRespondidas = perguntasSecao.every(pergunta => 
+        respostasExistentes.some(resp => resp.pergunta_id === pergunta.id)
+      );
+      
+      if (todasRespondidas && perguntasSecao.length > 0) {
+        completedSections.push(secao.id);
+      }
+    });
+    
+    setCompletedSections(completedSections);
+    updateIncompleteSections();
+    
   }, [respostasExistentes, perguntas, secoes, setRespostas, setProgresso, setCompletedSections, updateIncompleteSections]);
   
   // Set initial active section
