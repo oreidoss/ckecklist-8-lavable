@@ -30,12 +30,19 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
   const { data: usuarios, isLoading: loadingUsuarios } = useQuery({
     queryKey: ['usuarios'],
     queryFn: async () => {
+      // Try to fetch all users, with improved logging for debugging
+      console.log('Fetching usuarios...');
       const { data, error } = await supabase
         .from('usuarios')
         .select('*')
         .order('nome');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching usuarios:', error);
+        throw error;
+      }
+      
+      console.log('Fetched usuarios:', data);
       return data || [];
     }
   });

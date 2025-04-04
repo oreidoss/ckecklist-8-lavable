@@ -10,8 +10,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-  DialogClose 
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
@@ -27,20 +26,37 @@ import { Edit, Save } from 'lucide-react';
 interface EditInformacoesDialogProps {
   auditoria: any;
   usuarios: any[];
-  supervisores?: any[]; // Added this prop
-  gerentes?: any[]; // Added this prop
+  supervisores?: any[];
+  gerentes?: any[];
   refetchAuditoria: () => void;
 }
 
 export const EditInformacoesDialog: React.FC<EditInformacoesDialogProps> = ({
   auditoria,
   usuarios,
-  supervisores = [], // Default to empty array if not provided
-  gerentes = [], // Default to empty array if not provided
+  supervisores: propSupervisores = [],
+  gerentes: propGerentes = [],
   refetchAuditoria
 }) => {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = React.useState(false);
+
+  // Filter users by role or name/email if not provided as props
+  const supervisores = propSupervisores.length > 0 ? propSupervisores : 
+    usuarios.filter(u => 
+      u.role === 'supervisor' || 
+      u.funcao === 'supervisor' || 
+      u.email?.toLowerCase().includes('supervisor') || 
+      u.nome?.toLowerCase().includes('supervisor')
+    );
+  
+  const gerentes = propGerentes.length > 0 ? propGerentes : 
+    usuarios.filter(u => 
+      u.role === 'gerente' || 
+      u.funcao === 'gerente' || 
+      u.email?.toLowerCase().includes('gerente') || 
+      u.nome?.toLowerCase().includes('gerente')
+    );
 
   // Create a form with react-hook-form
   const form = useForm({
@@ -66,8 +82,8 @@ export const EditInformacoesDialog: React.FC<EditInformacoesDialogProps> = ({
       const { error } = await supabase
         .from('auditorias')
         .update({
-          gerente: values.gerente,
-          supervisor: values.supervisor
+          gerente: values.gerente === 'no-gerente' ? null : values.gerente,
+          supervisor: values.supervisor === 'no-supervisor' ? null : values.supervisor
         })
         .eq('id', auditoria.id);
       
@@ -89,10 +105,6 @@ export const EditInformacoesDialog: React.FC<EditInformacoesDialogProps> = ({
       });
     }
   };
-
-  // Use the filtered lists if provided, otherwise use all usuarios
-  const supervisorOptions = supervisores.length > 0 ? supervisores : usuarios;
-  const gerenteOptions = gerentes.length > 0 ? gerentes : usuarios;
 
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -128,11 +140,19 @@ export const EditInformacoesDialog: React.FC<EditInformacoesDialogProps> = ({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="no-supervisor">Selecione um supervisor</SelectItem>
-                        {supervisorOptions?.map((usuario) => (
-                          <SelectItem key={usuario.id} value={usuario.nome}>
-                            {usuario.nome}
-                          </SelectItem>
-                        ))}
+                        {supervisores.length > 0 ? (
+                          supervisores.map((usuario) => (
+                            <SelectItem key={usuario.id} value={usuario.nome}>
+                              {usuario.nome}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          usuarios.map((usuario) => (
+                            <SelectItem key={usuario.id} value={usuario.nome}>
+                              {usuario.nome} {!usuario.role && "(sem função definida)"}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -156,11 +176,19 @@ export const EditInformacoesDialog: React.FC<EditInformacoesDialogProps> = ({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="no-gerente">Selecione um gerente</SelectItem>
-                        {gerenteOptions?.map((usuario) => (
-                          <SelectItem key={usuario.id} value={usuario.nome}>
-                            {usuario.nome}
-                          </SelectItem>
-                        ))}
+                        {gerentes.length > 0 ? (
+                          gerentes.map((usuario) => (
+                            <SelectItem key={usuario.id} value={usuario.nome}>
+                              {usuario.nome}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          usuarios.map((usuario) => (
+                            <SelectItem key={usuario.id} value={usuario.nome}>
+                              {usuario.nome} {!usuario.role && "(sem função definida)"}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </FormControl>

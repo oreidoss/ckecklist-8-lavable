@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 import { LojaCard } from '@/components/auditor/LojaCard';
 import { NewAuditDialog } from '@/components/auditor/NewAuditDialog';
+import { useToast } from '@/hooks/use-toast';
 
 // Types for our Supabase data
 type Loja = Database['public']['Tables']['lojas']['Row'];
@@ -20,11 +21,13 @@ const Home: React.FC = () => {
   const [isCreatingAudit, setIsCreatingAudit] = useState(false);
   const [selectedLoja, setSelectedLoja] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   // Fetch stores with their audits
   const { 
     data: lojas, 
-    isLoading: loadingLojas 
+    isLoading: loadingLojas,
+    refetch: refetchLojas 
   } = useQuery({
     queryKey: ['lojas-with-audits'],
     queryFn: async () => {
@@ -39,7 +42,8 @@ const Home: React.FC = () => {
 
   // Fetch users for new audit
   const { 
-    data: usuarios 
+    data: usuarios,
+    refetch: refetchUsuarios 
   } = useQuery({
     queryKey: ['usuarios'],
     queryFn: async () => {
@@ -48,9 +52,48 @@ const Home: React.FC = () => {
         .select('*');
       
       if (error) throw error;
-      return data as Usuario[];
+      
+      // Convert the role/function from the database to the role property for compatibility
+      const enhancedUsers = data?.map(user => ({
+        ...user,
+        role: user.funcao
+      })) || [];
+      
+      console.log("Usuario data loaded:", enhancedUsers);
+      return enhancedUsers as Usuario[];
     }
   });
+
+  // Check if supervisors/managers exist, if not suggest creating some
+  useEffect(() => {
+    if (usuarios && usuarios.length > 0) {
+      const supervisores = usuarios.filter(u => 
+        u.role === 'supervisor' || 
+        u.funcao === 'supervisor' || 
+        u.email?.toLowerCase().includes('supervisor') || 
+        u.nome?.toLowerCase().includes('supervisor')
+      );
+      
+      const gerentes = usuarios.filter(u => 
+        u.role === 'gerente' || 
+        u.funcao === 'gerente' || 
+        u.email?.toLowerCase().includes('gerente') || 
+        u.nome?.toLowerCase().includes('gerente')
+      );
+
+      if (supervisores.length === 0 && gerentes.length === 0) {
+        toast({
+          title: "Atenção",
+          description: "Não foram encontrados usuários com função de supervisor ou gerente. Considere criar usuários com estas funções na área de Administração de Usuários.",
+          variant: "warning",
+          duration: 6000
+        });
+      } else {
+        console.log("Supervisores encontrados:", supervisores.length);
+        console.log("Gerentes encontrados:", gerentes.length);
+      }
+    }
+  }, [usuarios, toast]);
 
   const openNewAuditDialog = (lojaId: string) => {
     setSelectedLoja(lojaId);

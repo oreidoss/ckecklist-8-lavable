@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -48,23 +48,49 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
   const [selectedSupervisor, setSelectedSupervisor] = useState<string | null>(null);
   const [selectedGerente, setSelectedGerente] = useState<string | null>(null);
 
-  // Filter users by role
-  const supervisores = usuarios?.filter(u => u.role === 'supervisor' || u.email.includes('supervisor')) || [];
-  const gerentes = usuarios?.filter(u => u.role === 'gerente' || u.email.includes('gerente')) || [];
+  // Improved filtering logic to find supervisors and managers
+  const supervisores = usuarios?.filter(u => 
+    u.role === 'supervisor' || 
+    u.funcao === 'supervisor' || 
+    u.email?.toLowerCase().includes('supervisor') || 
+    u.nome?.toLowerCase().includes('supervisor')
+  ) || [];
+  
+  const gerentes = usuarios?.filter(u => 
+    u.role === 'gerente' || 
+    u.funcao === 'gerente' || 
+    u.email?.toLowerCase().includes('gerente') || 
+    u.nome?.toLowerCase().includes('gerente')
+  ) || [];
+
+  // Reset selections when dialog opens
+  useEffect(() => {
+    if (open) {
+      // Auto-select first supervisor if available
+      if (supervisores.length > 0 && !selectedSupervisor) {
+        setSelectedSupervisor(supervisores[0].id);
+      }
+      
+      // Auto-select first gerente if available
+      if (gerentes.length > 0 && !selectedGerente) {
+        setSelectedGerente(gerentes[0].id);
+      }
+    }
+  }, [open, supervisores, gerentes]);
 
   const createNewAudit = async () => {
     if (isCreatingAudit || !selectedLoja) return;
     setIsCreatingAudit(true);
 
     try {
-      const supervisorNome = usuarios?.find(u => u.id === selectedSupervisor)?.nome || null;
-      const gerenteNome = usuarios?.find(u => u.id === selectedGerente)?.nome || null;
+      const supervisorNome = usuarios?.find(u => u.id === selectedSupervisor)?.nome || "Supervisor Padrão";
+      const gerenteNome = usuarios?.find(u => u.id === selectedGerente)?.nome || "Gerente Padrão";
       
       const { data, error } = await supabase
         .from('auditorias')
         .insert({
           loja_id: selectedLoja,
-          usuario_id: selectedSupervisor,
+          usuario_id: selectedSupervisor || null,
           supervisor: supervisorNome,
           gerente: gerenteNome,
           data: new Date().toISOString(),
@@ -93,6 +119,19 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
       setIsCreatingAudit(false);
       onOpenChange(false);
     }
+  };
+
+  const handleCreateAuditAnyway = () => {
+    if (!selectedLoja) return;
+    
+    // Use any supervisor, or a default name if none exists
+    const supervisorId = selectedSupervisor || (usuarios?.length ? usuarios[0].id : null);
+    const supervisorNome = supervisorId ? 
+      (usuarios?.find(u => u.id === supervisorId)?.nome || "Supervisor Padrão") : 
+      "Supervisor Padrão";
+
+    setSelectedSupervisor(supervisorId);
+    createNewAudit();
   };
 
   return (
@@ -125,6 +164,13 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
                         {supervisor.nome}
                       </SelectItem>
                     ))
+                  ) : usuarios?.length ? (
+                    // If no specific supervisors found, show all users as options
+                    usuarios.map(usuario => (
+                      <SelectItem key={usuario.id} value={usuario.id}>
+                        {usuario.nome} {!usuario.role && "(sem função definida)"}
+                      </SelectItem>
+                    ))
                   ) : (
                     <SelectItem value="none" disabled>
                       Nenhum supervisor disponível
@@ -154,6 +200,13 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
                         {gerente.nome}
                       </SelectItem>
                     ))
+                  ) : usuarios?.length ? (
+                    // If no specific gerentes found, show all users as options
+                    usuarios.map(usuario => (
+                      <SelectItem key={usuario.id} value={usuario.id}>
+                        {usuario.nome} {!usuario.role && "(sem função definida)"}
+                      </SelectItem>
+                    ))
                   ) : (
                     <SelectItem value="none" disabled>
                       Nenhum gerente disponível
@@ -165,10 +218,19 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
           </div>
         </div>
         
-        <DialogFooter>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
+          {(supervisores.length === 0 || gerentes.length === 0) && (
+            <Button 
+              onClick={handleCreateAuditAnyway} 
+              disabled={isCreatingAudit}
+              variant="secondary"
+            >
+              {isCreatingAudit ? "Criando..." : "Usar opções padrão"}
+            </Button>
+          )}
           <Button 
             onClick={createNewAudit} 
             disabled={!selectedSupervisor || isCreatingAudit}
