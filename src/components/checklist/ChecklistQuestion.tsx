@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Save, Upload } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Pergunta } from '@/lib/types';
 
 export type RespostaValor = 'Sim' | 'Não' | 'Regular' | 'N/A';
@@ -34,42 +35,44 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
   handleSaveObservacao,
   handleFileUpload
 }) => {
+  const isMobile = useIsMobile();
+  
   return (
-    <div className="border rounded-lg p-6">
-      <h3 className="text-lg font-medium mb-6">{pergunta.texto}</h3>
+    <div className="border rounded-lg p-4 sm:p-6 w-full max-w-full">
+      <h3 className="text-base sm:text-lg font-medium mb-4 sm:mb-6">{pergunta.texto}</h3>
       
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <Button
           variant="outline"
-          className={`h-12 ${resposta === 'Sim' ? 'bg-green-500 hover:bg-green-600 text-white' : ''}`}
+          className={`h-10 sm:h-12 text-sm sm:text-base ${resposta === 'Sim' ? 'bg-green-500 hover:bg-green-600 text-white' : ''}`}
           onClick={() => handleResposta(pergunta.id, 'Sim')}
         >
           Sim
         </Button>
         <Button
           variant="outline"
-          className={`h-12 ${resposta === 'Não' ? 'bg-red-500 hover:bg-red-600 text-white' : ''}`}
+          className={`h-10 sm:h-12 text-sm sm:text-base ${resposta === 'Não' ? 'bg-red-500 hover:bg-red-600 text-white' : ''}`}
           onClick={() => handleResposta(pergunta.id, 'Não')}
         >
           Não
         </Button>
         <Button
           variant="outline"
-          className={`h-12 ${resposta === 'Regular' ? 'bg-yellow-500 hover:bg-yellow-600 text-white' : ''}`}
+          className={`h-10 sm:h-12 text-sm sm:text-base ${resposta === 'Regular' ? 'bg-yellow-500 hover:bg-yellow-600 text-white' : ''}`}
           onClick={() => handleResposta(pergunta.id, 'Regular')}
         >
           Regular
         </Button>
         <Button
           variant="outline"
-          className={`h-12 ${resposta === 'N/A' ? 'bg-gray-500 hover:bg-gray-600 text-white' : ''}`}
+          className={`h-10 sm:h-12 text-sm sm:text-base ${resposta === 'N/A' ? 'bg-gray-500 hover:bg-gray-600 text-white' : ''}`}
           onClick={() => handleResposta(pergunta.id, 'N/A')}
         >
           N/A
         </Button>
       </div>
       
-      <div className="mt-4">
+      <div className="mt-3 sm:mt-4">
         <label htmlFor={`observacao-${pergunta.id}`} className="block text-sm font-medium text-gray-700 mb-1">
           Observação
         </label>
@@ -93,7 +96,7 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
       </div>
       
       {isLastPergunta && (
-        <div className="mt-4">
+        <div className="mt-3 sm:mt-4">
           <label htmlFor={`file-${pergunta.id}`} className="block text-sm font-medium text-gray-700 mb-1">
             Anexar Foto/Arquivo
           </label>
@@ -103,7 +106,7 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
                 id={`file-${pergunta.id}`}
                 type="file"
                 accept="image/*,.pdf,.doc,.docx"
-                className="flex-1"
+                className="flex-1 text-sm"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {

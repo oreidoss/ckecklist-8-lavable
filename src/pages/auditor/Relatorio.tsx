@@ -40,26 +40,30 @@ const Relatorio: React.FC = () => {
     const { typedAuditoria, typedRespostas, typedAuditorias } = processedData;
     
     return (
-      <RelatorioView
-        auditoria={typedAuditoria}
-        loja={auditoria.loja}
-        respostas={typedRespostas}
-        perguntas={perguntas}
-        secoes={secoes}
-        auditorias={typedAuditorias}
-        usuarios={usuarios}
-        refetchAuditoria={refetchAuditoria}
-      />
+      <div className="w-full max-w-full overflow-x-hidden">
+        <RelatorioView
+          auditoria={typedAuditoria}
+          loja={auditoria.loja}
+          respostas={typedRespostas}
+          perguntas={perguntas}
+          secoes={secoes}
+          auditorias={typedAuditorias}
+          usuarios={usuarios}
+          refetchAuditoria={refetchAuditoria}
+        />
+      </div>
     );
   }
   
   // Show loja history if we have that data
   if (auditoriasPorLoja && perguntas) {
     return (
-      <LojaHistoryView
-        auditoriasPorLoja={auditoriasPorLoja}
-        perguntas={perguntas}
-      />
+      <div className="w-full max-w-full overflow-x-hidden">
+        <LojaHistoryView
+          auditoriasPorLoja={auditoriasPorLoja}
+          perguntas={perguntas}
+        />
+      </div>
     );
   }
   

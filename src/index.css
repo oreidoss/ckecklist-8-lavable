@@ -111,11 +111,15 @@
   body {
     @apply bg-background text-foreground overflow-x-hidden;
     width: 100%;
+    max-width: 100vw;
+    position: relative;
   }
   
   html {
     @apply overflow-x-hidden;
     width: 100%;
+    max-width: 100vw;
+    position: relative;
   }
   
   /* Ajustes para telas menores */
@@ -133,7 +137,8 @@
     }
     
     table {
-      @apply block overflow-x-auto whitespace-nowrap;
+      @apply block overflow-x-auto w-full;
+      table-layout: fixed;
     }
     
     .full-width-mobile {
@@ -159,14 +164,15 @@
 
 /* Estilos para Sheet em mobile */
 .sheet-content-mobile {
-  width: 90vw !important;
-  max-width: 90vw !important;
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 /* Corrige a visualização da tabela em dispositivos móveis */
 @media (max-width: 768px) {
   table {
-    @apply w-full block overflow-x-auto whitespace-nowrap;
+    @apply w-full block overflow-x-auto;
+    table-layout: fixed;
   }
   
   .responsive-card {
@@ -187,7 +193,7 @@
 /* Melhora no espaçamento para dispositivos móveis */
 @media (max-width: 640px) {
   .card {
-    @apply rounded-md border shadow-sm;
+    @apply rounded-md border shadow-sm mx-auto w-full;
   }
   
   .card-header {
@@ -196,6 +202,11 @@
   
   .card-content {
     @apply p-3 pt-0;
+  }
+  
+  /* Assegura que todos os contêineres sejam responsivos */
+  .container, .content-container, .page-container {
+    @apply w-full max-w-full px-2;
   }
 }
 
@@ -206,9 +217,29 @@ body, html {
   position: relative !important;
 }
 
+/* Assegura que todos os elementos tenham largura máxima contida */
+.full-width-container {
+  width: 100% !important;
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+}
+
 /* Conserta problema de overflow-x em tables */
 .table-container {
   @apply w-full max-w-full overflow-x-auto pb-2;
+}
+
+/* Ajustes específicos para o contexto do relatório */
+[data-radix-scroll-area-viewport] {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.scrollbar-content, 
+.scroll-content,
+[data-radix-scroll-area-viewport] > div {
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 /* PDF Export Styling */
@@ -263,6 +294,8 @@ body, html {
   width: 100%;
   position: relative;
   background-color: #ffffff;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* PDF content specific styles */
@@ -270,6 +303,8 @@ body, html {
   padding: 1cm;
   background-color: #ffffff;
   color: #000000;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Clear Radix ScrollArea for PDF */

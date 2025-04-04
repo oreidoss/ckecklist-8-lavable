@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import RelatorioDetalhado from '@/components/relatorio/RelatorioDetalhado';
 import { RelatorioActions } from '@/components/relatorio/RelatorioActions';
 import { exportToPdf } from '@/utils/pdfExport';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface RelatorioViewProps {
   auditoria: any;
@@ -28,6 +29,7 @@ const RelatorioView: React.FC<RelatorioViewProps> = ({
 }) => {
   const navigate = useNavigate();
   const reportRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
   
   const handleExportPDF = () => {
     if (reportRef.current) {
@@ -36,7 +38,7 @@ const RelatorioView: React.FC<RelatorioViewProps> = ({
   };
 
   return (
-    <div className="relative">
+    <div className="relative w-full max-w-full overflow-x-hidden">
       <RelatorioActions 
         auditoria={auditoria} 
         usuarios={usuarios} 
@@ -44,7 +46,7 @@ const RelatorioView: React.FC<RelatorioViewProps> = ({
         exportarPDF={handleExportPDF} 
       />
       
-      <div ref={reportRef} className="pdf-container">
+      <div ref={reportRef} className="pdf-container w-full max-w-full">
         <RelatorioDetalhado 
           auditoria={auditoria} 
           loja={loja} 
