@@ -226,7 +226,7 @@ const AdminUsuarios: React.FC = () => {
     }
   };
   
-  const handleExcluirUsuario = async (id: number) => {
+  const handleExcluirUsuario = async (id: string) => {
     try {
       setIsLoading(true);
       // Verificar se possui auditorias está removido por agora

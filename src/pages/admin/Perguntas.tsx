@@ -260,7 +260,7 @@ const AdminPerguntas: React.FC = () => {
                                     value={perguntaParaEditar.secao_id.toString()} 
                                     onValueChange={(value) => setPerguntaParaEditar({ 
                                       ...perguntaParaEditar, 
-                                      secao_id: parseInt(value) 
+                                      secao_id: value // Changed from parseInt(value) to value
                                     })}
                                   >
                                     <SelectTrigger className="col-span-3">

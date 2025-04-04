@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { PageTitle } from "@/components/PageTitle";
 import { useQuery } from '@tanstack/react-query';
@@ -96,7 +97,13 @@ const AdminSecoes: React.FC = () => {
         throw error;
       }
       
-      return (data || []) as Usuario[];
+      // Convert all data to match the Usuario type with string IDs
+      const typedUsuarios: Usuario[] = (data || []).map(user => ({
+        ...user,
+        id: user.id.toString()
+      }));
+      
+      return typedUsuarios;
     },
   });
   
