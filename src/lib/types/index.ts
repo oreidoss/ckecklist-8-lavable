@@ -23,7 +23,7 @@ export interface Usuario {
   nome: string;
   email: string;
   senha?: string;
-  role?: 'admin' | 'user';
+  role?: 'admin' | 'user' | 'supervisor' | 'gerente';
 }
 
 export interface Auditoria {
@@ -31,7 +31,7 @@ export interface Auditoria {
   data: string;
   loja_id: string;
   usuario_id: string;
-  status: 'em_andamento' | 'concluida' | 'cancelada';
+  status: string; // Changed from enum to string for compatibility with current data
   pontuacao_total: number;
   gerente?: string;
   supervisor?: string;

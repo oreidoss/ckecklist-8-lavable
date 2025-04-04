@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -10,7 +9,6 @@ const Relatorio: React.FC = () => {
   const { auditoriaId, lojaId } = useParams();
   const navigate = useNavigate();
   
-  // Fetch specific audit data if we have an auditoriaId
   const { 
     data: auditoria, 
     isLoading: loadingAuditoria,
@@ -32,7 +30,6 @@ const Relatorio: React.FC = () => {
     enabled: !!auditoriaId
   });
 
-  // Fetch store audits if we have a lojaId
   const {
     data: auditoriasPorLoja,
     isLoading: loadingAuditoriasPorLoja
@@ -62,7 +59,6 @@ const Relatorio: React.FC = () => {
     enabled: !!lojaId && !auditoriaId
   });
 
-  // Fetch section data for categorizing questions
   const { data: secoes } = useQuery({
     queryKey: ['secoes'],
     queryFn: async () => {
@@ -75,7 +71,6 @@ const Relatorio: React.FC = () => {
     }
   });
 
-  // Fetch questions data for displaying question text
   const { data: perguntas } = useQuery({
     queryKey: ['perguntas'],
     queryFn: async () => {
@@ -104,9 +99,7 @@ const Relatorio: React.FC = () => {
     );
   }
 
-  // Report for a specific audit
   if (auditoria && secoes && perguntas) {
-    // Get all audits for this store to show historical data
     const { data: auditorias = [] } = useQuery({
       queryKey: ['auditorias-loja', auditoria.loja_id],
       queryFn: async () => {
@@ -122,32 +115,47 @@ const Relatorio: React.FC = () => {
       initialData: [],
     });
 
-    // Convert response types to match our TypeScript definitions
     const typedRespostas = auditoria.respostas ? 
       auditoria.respostas.map(r => ({
         ...r,
-        // Ensure types match our Resposta interface
         id: r.id.toString(),
         auditoria_id: r.auditoria_id?.toString() || '',
         pergunta_id: r.pergunta_id?.toString() || '',
         resposta: r.resposta || '',
         pontuacao_obtida: Number(r.pontuacao_obtida || 0),
-        observacao: r.observacao || undefined  // Using undefined if not present for optional property
+        observacao: r.observacao || undefined
       })) : [];
+
+    const typedAuditoria = {
+      ...auditoria,
+      id: auditoria.id.toString(),
+      loja_id: auditoria.loja_id.toString(),
+      usuario_id: auditoria.usuario_id.toString(),
+      status: auditoria.status || 'em_andamento',
+      pontuacao_total: Number(auditoria.pontuacao_total || 0)
+    } as Auditoria;
+
+    const typedAuditorias = auditorias.map(a => ({
+      ...a,
+      id: a.id.toString(),
+      loja_id: a.loja_id.toString(),
+      usuario_id: a.usuario_id?.toString() || '',
+      status: a.status || 'em_andamento',
+      pontuacao_total: Number(a.pontuacao_total || 0)
+    })) as Auditoria[];
 
     return (
       <RelatorioDetalhado 
-        auditoria={auditoria} 
+        auditoria={typedAuditoria} 
         loja={auditoria.loja} 
         respostas={typedRespostas} 
         perguntas={perguntas} 
         secoes={secoes}
-        auditorias={auditorias}
+        auditorias={typedAuditorias}
       />
     );
   }
-  
-  // Report for a store (showing history of audits)
+
   if (auditoriasPorLoja && perguntas) {
     return (
       <HistoricoLoja 

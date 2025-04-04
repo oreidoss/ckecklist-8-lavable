@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -133,7 +132,7 @@ const AdminUsuarios: React.FC = () => {
       const usuarioData = {
         nome: novoUsuario.nome,
         email: novoUsuario.email,
-        role: novoUsuario.role,
+        role: novoUsuario.role as 'admin' | 'user' | 'supervisor' | 'gerente' | undefined,
         senha: novoUsuario.senha
       };
       
