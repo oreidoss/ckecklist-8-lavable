@@ -29,6 +29,7 @@ const Checklist: React.FC = () => {
   
   const [activeSecao, setActiveSecao] = useState<string | null>(null);
   const [currentDate, setCurrentDate] = useState<string>('');
+  const [incompleteSections, setIncompleteSections] = useState<string[]>([]);
   
   const [isEditingSupervisor, setIsEditingSupervisor] = useState(false);
   const [isEditingGerente, setIsEditingGerente] = useState(false);
@@ -56,6 +57,7 @@ const Checklist: React.FC = () => {
   const handleRespostaWrapped = (perguntaId: string, resposta: RespostaValor) => {
     if (respostasExistentes && perguntas) {
       handleRespostaBase(perguntaId, resposta, respostasExistentes, perguntas);
+      updateIncompleteSections();
     }
   };
 
@@ -75,6 +77,24 @@ const Checklist: React.FC = () => {
     const now = new Date();
     setCurrentDate(now.toLocaleDateString('pt-BR'));
   }, []);
+  
+  const updateIncompleteSections = () => {
+    if (!secoes || !perguntas) return;
+    
+    const incomplete: string[] = [];
+    
+    secoes.forEach(secao => {
+      const secaoPerguntas = perguntas.filter(p => p.secao_id === secao.id);
+      const requiredPerguntas = secaoPerguntas.slice(0, -2);
+      
+      if (requiredPerguntas.length > 0 && 
+          requiredPerguntas.some(p => !respostas[p.id])) {
+        incomplete.push(secao.id);
+      }
+    });
+    
+    setIncompleteSections(incomplete);
+  };
   
   const { data: usuarios, isLoading: loadingUsuarios } = useQuery({
     queryKey: ['usuarios'],
@@ -190,6 +210,7 @@ const Checklist: React.FC = () => {
         });
         
         setCompletedSections(completedSections);
+        updateIncompleteSections();
       }
     }
   }, [respostasExistentes, perguntas, secoes, setRespostas, setProgresso, setCompletedSections]);
@@ -288,6 +309,29 @@ const Checklist: React.FC = () => {
     }
   };
   
+  const handleSetActiveSecao = (secaoId: string) => {
+    if (!activeSecao || secaoId === activeSecao) {
+      setActiveSecao(secaoId);
+      return;
+    }
+    
+    const perguntasAtivas = getPerguntasBySecao(activeSecao);
+    const requiredPerguntas = perguntasAtivas.slice(0, -2);
+    const hasUnanswered = requiredPerguntas.some(p => !respostas[p.id]);
+    
+    if (hasUnanswered) {
+      toast({
+        title: "Perguntas não respondidas",
+        description: "Por favor, responda todas as perguntas obrigatórias antes de mudar de seção.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setActiveSecao(secaoId);
+    window.scrollTo(0, 0);
+  };
+  
   if (loadingAuditoria || loadingUsuarios) {
     return <div className="flex justify-center items-center h-96">Carregando...</div>;
   }
@@ -333,7 +377,8 @@ const Checklist: React.FC = () => {
           secoes={secoes || []}
           activeSecao={activeSecao}
           completedSections={completedSections}
-          setActiveSecao={setActiveSecao}
+          incompleteSections={incompleteSections}
+          setActiveSecao={handleSetActiveSecao}
         />
       </div>
       

@@ -1,11 +1,12 @@
 
 import React, { useRef } from 'react';
-import { ArrowLeftCircle, ArrowRightCircle, FileText, Paperclip, Save, Upload } from 'lucide-react';
+import { ArrowLeftCircle, ArrowRightCircle, FileText, Paperclip, Save, Upload, AlertTriangle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Pergunta, Secao } from '@/lib/types';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useToast } from '@/hooks/use-toast';
 import ChecklistQuestion, { RespostaValor } from './ChecklistQuestion';
 
 interface SectionContentProps {
@@ -57,6 +58,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
   
   if (!activeSecaoObj) return null;
   
@@ -83,6 +85,33 @@ const SectionContent: React.FC<SectionContentProps> = ({
     fileInputRef.current?.click();
   };
 
+  // Check if all required questions are answered
+  const hasUnansweredQuestions = () => {
+    // The last two elements are not required (observation and attachment)
+    const requiredQuestions = perguntasSecaoAtiva.slice(0, -2);
+    return requiredQuestions.some(pergunta => !respostas[pergunta.id]);
+  };
+
+  const handlePreviousSection = () => {
+    if (isFirstSection) return;
+    goToPreviousSection();
+  };
+
+  const handleNextSection = () => {
+    if (isLastSection) return;
+    
+    if (hasUnansweredQuestions()) {
+      toast({
+        title: "Perguntas não respondidas",
+        description: "Por favor, responda todas as perguntas obrigatórias antes de avançar.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    goToNextSection();
+  };
+
   return (
     <div className="bg-white rounded-lg p-2 shadow-sm">
       <h2 className="text-sm font-bold mb-1">{activeSecaoObj.nome}</h2>
@@ -93,6 +122,13 @@ const SectionContent: React.FC<SectionContentProps> = ({
       <Progress value={(secaoIndex + 1) / totalSecoes * 100} className="h-1 mb-2" />
       
       <div className="space-y-1">
+        {hasUnansweredQuestions() && (
+          <div className="bg-amber-50 border border-amber-300 rounded p-2 mb-2 flex items-center gap-2 text-amber-700 text-xs">
+            <AlertTriangle className="h-4 w-4" />
+            Todas as perguntas são obrigatórias, exceto observações e anexos.
+          </div>
+        )}
+      
         {perguntasSecaoAtiva.map((pergunta, index) => (
           <ChecklistQuestion
             key={pergunta.id}
@@ -164,7 +200,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={goToPreviousSection}
+            onClick={handlePreviousSection}
             disabled={isFirstSection}
             className="flex-1 text-xs h-8"
           >
@@ -175,7 +211,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
           <Button
             variant="outline"
             size="sm"
-            onClick={goToNextSection}
+            onClick={handleNextSection}
             disabled={isLastSection}
             className="flex-1 text-xs h-8"
           >
