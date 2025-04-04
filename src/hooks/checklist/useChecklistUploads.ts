@@ -18,6 +18,7 @@ export const useChecklistUploads = (
     setUploading(prev => ({ ...prev, [perguntaId]: true }));
     
     try {
+      // Create the storage bucket if it doesn't exist (will be handled by Supabase)
       const fileExt = file.name.split('.').pop();
       const filePath = `${auditoriaId}/${perguntaId}.${fileExt}`;
       
@@ -48,6 +49,22 @@ export const useChecklistUploads = (
           })
           .eq('id', respostaExistente.id);
         
+        if (error) throw error;
+        
+        toast({
+          title: "Arquivo enviado",
+          description: "O arquivo foi enviado com sucesso."
+        });
+      } else {
+        // If there's no response yet, we'll create a response with just the file URL
+        const { error } = await supabase
+          .from('respostas')
+          .insert({
+            auditoria_id: auditoriaId,
+            pergunta_id: perguntaId,
+            anexo_url: publicUrl
+          });
+          
         if (error) throw error;
         
         toast({

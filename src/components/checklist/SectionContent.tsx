@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { ArrowLeftCircle, ArrowRightCircle, FileText, Save } from 'lucide-react';
+import React, { useRef } from 'react';
+import { ArrowLeftCircle, ArrowRightCircle, FileText, Paperclip, Save, Upload } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
@@ -56,6 +56,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
   isSaving
 }) => {
   const isMobile = useIsMobile();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   if (!activeSecaoObj) return null;
   
@@ -65,6 +66,22 @@ const SectionContent: React.FC<SectionContentProps> = ({
     
   const sectionObservacao = observacoes[lastPerguntaId] || 
     (respostasExistentes?.find(r => r.pergunta_id === lastPerguntaId)?.observacao || '');
+
+  const anexoUrl = fileUrls[lastPerguntaId] || 
+    (respostasExistentes?.find(r => r.pergunta_id === lastPerguntaId)?.anexo_url || '');
+    
+  const isUploading = uploading[lastPerguntaId] || false;
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && lastPerguntaId) {
+      handleFileUpload(lastPerguntaId, file);
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
 
   return (
     <div className="bg-white rounded-lg p-2 shadow-sm">
@@ -105,6 +122,40 @@ const SectionContent: React.FC<SectionContentProps> = ({
               <Save className="h-3 w-3" />
             </Button>
           </div>
+        </div>
+        
+        <div className="border rounded-lg p-1 bg-gray-50">
+          <h3 className="text-xs font-medium mb-1">Anexo/Foto</h3>
+          <div className="flex gap-1">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileInputChange}
+              className="hidden"
+              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+            />
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={triggerFileInput}
+              disabled={isUploading}
+              className="flex-1 text-xs h-7"
+            >
+              {isUploading ? (
+                <Upload className="h-3 w-3 animate-spin mr-1" />
+              ) : (
+                <Paperclip className="h-3 w-3 mr-1" />
+              )}
+              {isUploading ? 'Enviando...' : anexoUrl ? 'Alterar anexo' : 'Adicionar anexo'}
+            </Button>
+          </div>
+          {anexoUrl && (
+            <div className="mt-1 text-[10px] text-blue-500 truncate">
+              <a href={anexoUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                {anexoUrl.split('/').pop()}
+              </a>
+            </div>
+          )}
         </div>
       </div>
       

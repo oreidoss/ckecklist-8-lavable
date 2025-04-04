@@ -3,7 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { FileText, Search } from 'lucide-react';
+import { Edit, FileText, Search } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,7 +34,15 @@ export const HistoricoAuditoriasTable: React.FC<HistoricoAuditoriasTableProps> =
 }) => {
   const navigate = useNavigate();
 
-  const getStatusAuditoria = (pontuacao: number | null) => {
+  const getStatusAuditoria = (pontuacao: number | null, status: string | null) => {
+    // Check completion status first
+    if (status === 'concluido') {
+      return <Badge className="bg-green-500 hover:bg-green-500">Concluída</Badge>;
+    } else if (status === 'em_andamento') {
+      return <Badge className="bg-yellow-500 hover:bg-yellow-500">Em Andamento</Badge>;
+    }
+    
+    // Fallback to score-based status if no explicit status
     if (!pontuacao) return <Badge className="bg-gray-500 hover:bg-gray-500">Pendente</Badge>;
     
     if (pontuacao > 5) {
@@ -44,6 +52,10 @@ export const HistoricoAuditoriasTable: React.FC<HistoricoAuditoriasTableProps> =
     } else {
       return <Badge className="bg-red-500 hover:bg-red-500">Crítica</Badge>;
     }
+  };
+
+  const handleEditAuditoria = (auditoriaId: string) => {
+    navigate(`/checklist/${auditoriaId}`);
   };
 
   if (isLoadingAuditorias) {
@@ -96,16 +108,27 @@ export const HistoricoAuditoriasTable: React.FC<HistoricoAuditoriasTableProps> =
               {auditoria.pontuacao_total ? auditoria.pontuacao_total.toFixed(1) : '0.0'}
             </TableCell>
             <TableCell>
-              {getStatusAuditoria(auditoria.pontuacao_total)}
+              {getStatusAuditoria(auditoria.pontuacao_total, auditoria.status)}
             </TableCell>
             <TableCell className="text-right">
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={() => navigate(`/relatorio/${auditoria.id}`)}
-              >
-                <FileText className="h-4 w-4" />
-              </Button>
+              <div className="flex justify-end space-x-1">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => handleEditAuditoria(auditoria.id)}
+                  title="Editar auditoria"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => navigate(`/relatorio/${auditoria.id}`)}
+                  title="Ver relatório"
+                >
+                  <FileText className="h-4 w-4" />
+                </Button>
+              </div>
             </TableCell>
           </TableRow>
         ))}
