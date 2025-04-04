@@ -1,41 +1,42 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { useToast } from '@/hooks/use-toast';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Home, List } from 'lucide-react';
-import { Database } from '@/integrations/supabase/types';
+import { Home } from 'lucide-react';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 import { useChecklist } from '@/hooks/checklist';
+import { useChecklistData } from '@/hooks/checklist/useChecklistData';
+import { useSectionNavigation } from '@/hooks/checklist/useSectionNavigation';
+import useUserSelectors from '@/components/checklist/UserSelectors';
 import ChecklistHeader from '@/components/checklist/ChecklistHeader';
 import SectionNavigation from '@/components/checklist/SectionNavigation';
 import SectionContent from '@/components/checklist/SectionContent';
 
-type Loja = Database['public']['Tables']['lojas']['Row'];
-type Usuario = Database['public']['Tables']['usuarios']['Row'];
-type Secao = Database['public']['Tables']['secoes']['Row'];
-type Pergunta = Database['public']['Tables']['perguntas']['Row'];
-type Resposta = Database['public']['Tables']['respostas']['Row'];
-type Auditoria = Database['public']['Tables']['auditorias']['Row'] & {
-  loja?: Loja;
-  usuario?: Usuario;
-};
-
 const Checklist: React.FC = () => {
   const { auditoriaId } = useParams<{ auditoriaId: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
   
-  const [activeSecao, setActiveSecao] = useState<string | null>(null);
-  const [currentDate, setCurrentDate] = useState<string>('');
-  const [incompleteSections, setIncompleteSections] = useState<string[]>([]);
+  // Fetch all data
+  const {
+    usuarios,
+    auditoria,
+    secoes,
+    perguntas,
+    respostasExistentes,
+    supervisor,
+    gerente,
+    isEditingSupervisor,
+    isEditingGerente,
+    currentDate,
+    isLoading,
+    setSupervisor,
+    setGerente,
+    setIsEditingSupervisor,
+    setIsEditingGerente,
+    refetchAuditoria
+  } = useChecklistData(auditoriaId);
   
-  const [isEditingSupervisor, setIsEditingSupervisor] = useState(false);
-  const [isEditingGerente, setIsEditingGerente] = useState(false);
-  const [supervisor, setSupervisor] = useState('');
-  const [gerente, setGerente] = useState('');
-  
+  // Checklist state and handlers
   const {
     respostas,
     setRespostas,
@@ -53,7 +54,42 @@ const Checklist: React.FC = () => {
     handleSaveObservacao: handleSaveObservacaoBase,
     saveAndNavigateHome: saveAndNavigateHomeBase
   } = useChecklist(auditoriaId, undefined);
+  
+  // Section navigation
+  const {
+    activeSecao,
+    setActiveSecao,
+    incompleteSections,
+    updateIncompleteSections,
+    getPerguntasBySecao,
+    goToNextSection,
+    goToPreviousSection,
+    handleSetActiveSecao
+  } = useSectionNavigation({
+    secoes,
+    perguntas,
+    respostas
+  });
+  
+  // User selectors handlers
+  const {
+    handleSaveSupervisor,
+    handleSaveGerente
+  } = useUserSelectors({
+    auditoriaId, 
+    supervisor, 
+    gerente, 
+    isEditingSupervisor, 
+    isEditingGerente, 
+    usuarios: usuarios || [], 
+    setIsEditingSupervisor, 
+    setIsEditingGerente, 
+    setSupervisor, 
+    setGerente,
+    refetchAuditoria
+  });
 
+  // Wrapped handlers
   const handleRespostaWrapped = (perguntaId: string, resposta: RespostaValor) => {
     if (respostasExistentes && perguntas) {
       handleRespostaBase(perguntaId, resposta, respostasExistentes, perguntas);
@@ -73,114 +109,7 @@ const Checklist: React.FC = () => {
     }
   };
   
-  useEffect(() => {
-    const now = new Date();
-    setCurrentDate(now.toLocaleDateString('pt-BR'));
-  }, []);
-  
-  const updateIncompleteSections = () => {
-    if (!secoes || !perguntas) return;
-    
-    const incomplete: string[] = [];
-    
-    secoes.forEach(secao => {
-      const secaoPerguntas = perguntas.filter(p => p.secao_id === secao.id);
-      const requiredPerguntas = secaoPerguntas.slice(0, -2);
-      
-      if (requiredPerguntas.length > 0 && 
-          requiredPerguntas.some(p => !respostas[p.id])) {
-        incomplete.push(secao.id);
-      }
-    });
-    
-    setIncompleteSections(incomplete);
-  };
-  
-  const { data: usuarios, isLoading: loadingUsuarios } = useQuery({
-    queryKey: ['usuarios'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('usuarios')
-        .select('*')
-        .order('nome');
-      
-      if (error) throw error;
-      return data || [];
-    }
-  });
-  
-  const { data: auditoria, isLoading: loadingAuditoria, refetch: refetchAuditoria } = useQuery({
-    queryKey: ['auditoria', auditoriaId],
-    queryFn: async () => {
-      if (!auditoriaId) throw new Error('ID da auditoria não fornecido');
-      
-      const { data, error } = await supabase
-        .from('auditorias')
-        .select('*, loja:lojas(*), usuario:usuarios(*)')
-        .eq('id', auditoriaId)
-        .single();
-      
-      if (error) throw error;
-      return data as Auditoria;
-    },
-    meta: {
-      onSuccess: (data) => {
-        if (data) {
-          setSupervisor(data.supervisor || '');
-          setGerente(data.gerente || '');
-        }
-      }
-    }
-  });
-  
-  const { data: secoes, isLoading: loadingSecoes } = useQuery({
-    queryKey: ['secoes'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('secoes')
-        .select('*')
-        .order('id');
-      
-      if (error) throw error;
-      return data as Secao[];
-    },
-    meta: {
-      onSuccess: (data: Secao[]) => {
-        if (data?.length && activeSecao === null) {
-          setActiveSecao(data[0].id);
-        }
-      }
-    }
-  });
-  
-  const { data: perguntas, isLoading: loadingPerguntas } = useQuery({
-    queryKey: ['perguntas'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('perguntas')
-        .select('*')
-        .order('secao_id, id');
-      
-      if (error) throw error;
-      return data as Pergunta[];
-    }
-  });
-  
-  const { data: respostasExistentes, isLoading: loadingRespostas } = useQuery({
-    queryKey: ['respostas', auditoriaId],
-    queryFn: async () => {
-      if (!auditoriaId) throw new Error('ID da auditoria não fornecido');
-      
-      const { data, error } = await supabase
-        .from('respostas')
-        .select('*')
-        .eq('auditoria_id', auditoriaId);
-      
-      if (error) throw error;
-      return data as Resposta[];
-    }
-  });
-  
+  // Process existing responses
   useEffect(() => {
     if (respostasExistentes?.length && perguntas?.length) {
       const respostasMap: Record<string, RespostaValor> = {};
@@ -213,67 +142,14 @@ const Checklist: React.FC = () => {
         updateIncompleteSections();
       }
     }
-  }, [respostasExistentes, perguntas, secoes, setRespostas, setProgresso, setCompletedSections]);
+  }, [respostasExistentes, perguntas, secoes, setRespostas, setProgresso, setCompletedSections, updateIncompleteSections]);
   
-  const handleSaveSupervisor = async () => {
-    if (!auditoriaId) return;
-    
-    try {
-      const { error } = await supabase
-        .from('auditorias')
-        .update({ supervisor })
-        .eq('id', auditoriaId);
-      
-      if (error) throw error;
-      
-      setIsEditingSupervisor(false);
-      refetchAuditoria();
-      
-      toast({
-        title: "Supervisor(a) atualizado(a)",
-        description: "Nome do supervisor(a) foi salvo com sucesso."
-      });
-    } catch (error) {
-      console.error("Erro ao salvar supervisor:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível salvar o nome do supervisor(a).",
-        variant: "destructive"
-      });
+  // Set initial active section
+  useEffect(() => {
+    if (secoes?.length && activeSecao === null) {
+      setActiveSecao(secoes[0].id);
     }
-  };
-  
-  const handleSaveGerente = async () => {
-    if (!auditoriaId) return;
-    
-    try {
-      const { error } = await supabase
-        .from('auditorias')
-        .update({ gerente })
-        .eq('id', auditoriaId);
-      
-      if (error) throw error;
-      
-      setIsEditingGerente(false);
-      refetchAuditoria();
-      
-      toast({
-        title: "Gerente atualizado(a)",
-        description: "Nome do gerente foi salvo com sucesso."
-      });
-    } catch (error) {
-      console.error("Erro ao salvar gerente:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível salvar o nome do gerente.",
-        variant: "destructive"
-      });
-    }
-  };
-  
-  const getPerguntasBySecao = (secaoId: string) => {
-    return perguntas?.filter(pergunta => pergunta.secao_id === secaoId) || [];
-  };
+  }, [secoes, activeSecao, setActiveSecao]);
 
   const saveAndNavigateHome = async () => {
     if (respostasExistentes) {
@@ -288,60 +164,6 @@ const Checklist: React.FC = () => {
     if (!auditoriaId) return;
     navigate(`/relatorio/${auditoriaId}`);
   };
-
-  const goToNextSection = () => {
-    if (!secoes || !activeSecao) return;
-    
-    const currentIndex = secoes.findIndex(s => s.id === activeSecao);
-    if (currentIndex < secoes.length - 1) {
-      setActiveSecao(secoes[currentIndex + 1].id);
-      window.scrollTo(0, 0);
-    }
-  };
-  
-  const goToPreviousSection = () => {
-    if (!secoes || !activeSecao) return;
-    
-    const currentIndex = secoes.findIndex(s => s.id === activeSecao);
-    if (currentIndex > 0) {
-      setActiveSecao(secoes[currentIndex - 1].id);
-      window.scrollTo(0, 0);
-    }
-  };
-  
-  const handleSetActiveSecao = (secaoId: string) => {
-    if (!activeSecao || secaoId === activeSecao) {
-      setActiveSecao(secaoId);
-      return;
-    }
-    
-    const perguntasAtivas = getPerguntasBySecao(activeSecao);
-    const requiredPerguntas = perguntasAtivas.slice(0, -2);
-    const hasUnanswered = requiredPerguntas.some(p => !respostas[p.id]);
-    
-    if (hasUnanswered) {
-      toast({
-        title: "Perguntas não respondidas",
-        description: "Por favor, responda todas as perguntas obrigatórias antes de mudar de seção.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setActiveSecao(secaoId);
-    window.scrollTo(0, 0);
-  };
-  
-  if (loadingAuditoria || loadingUsuarios) {
-    return <div className="flex justify-center items-center h-96">Carregando...</div>;
-  }
-  
-  const activeSecaoObj = secoes?.find(s => s.id === activeSecao);
-  const perguntasSecaoAtiva = getPerguntasBySecao(activeSecao || '');
-  const secaoIndex = secoes?.findIndex(s => s.id === activeSecao) || 0;
-  const totalSecoes = secoes?.length || 0;
-  const isFirstSection = secaoIndex === 0;
-  const isLastSection = secaoIndex === totalSecoes - 1;
   
   const isLastPerguntaInSection = (perguntaId: string) => {
     if (!perguntas) return false;
@@ -351,6 +173,17 @@ const Checklist: React.FC = () => {
     
     return lastPergunta && lastPergunta.id === perguntaId;
   };
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-96">Carregando...</div>;
+  }
+  
+  const activeSecaoObj = secoes?.find(s => s.id === activeSecao);
+  const perguntasSecaoAtiva = getPerguntasBySecao(activeSecao || '');
+  const secaoIndex = secoes?.findIndex(s => s.id === activeSecao) || 0;
+  const totalSecoes = secoes?.length || 0;
+  const isFirstSection = secaoIndex === 0;
+  const isLastSection = secaoIndex === totalSecoes - 1;
 
   return (
     <div className="pb-12 max-w-4xl mx-auto">
