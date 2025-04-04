@@ -1,209 +1,68 @@
-import React, { useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+
+import React from 'react';
+import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import RelatorioDetalhado from '@/components/relatorio/RelatorioDetalhado';
-import { HistoricoLoja } from '@/components/relatorio/HistoricoLoja';
-import { Auditoria, Resposta } from '@/lib/types';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { RelatorioActions } from '@/components/relatorio/RelatorioActions';
-import { exportToPdf } from '@/utils/pdfExport';
+import { useRelatorioData } from '@/hooks/useRelatorioData';
+import { useLojaHistoryData } from '@/hooks/useLojaHistoryData';
+import RelatorioView from '@/components/relatorio/RelatorioView';
+import LojaHistoryView from '@/components/relatorio/LojaHistoryView';
+import RelatorioNotFound from '@/components/relatorio/RelatorioNotFound';
+import RelatorioLoading from '@/components/relatorio/RelatorioLoading';
 
 const Relatorio: React.FC = () => {
   const { auditoriaId, lojaId } = useParams();
-  const navigate = useNavigate();
-  const reportRef = useRef<HTMLDivElement>(null);
   
-  const { data: secoes } = useQuery({
-    queryKey: ['secoes'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('secoes')
-        .select('*');
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  const { data: perguntas } = useQuery({
-    queryKey: ['perguntas'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('perguntas')
-        .select('*');
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-  
+  // Load data based on what parameters we have
   const { 
-    data: auditoria, 
-    isLoading: loadingAuditoria,
-    refetch: refetchAuditoria
-  } = useQuery({
-    queryKey: ['auditoria', auditoriaId],
-    queryFn: async () => {
-      if (!auditoriaId) return null;
-      
-      const { data, error } = await supabase
-        .from('auditorias')
-        .select('*, loja:lojas(*), usuario:usuarios(*), respostas(*)')
-        .eq('id', auditoriaId)
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!auditoriaId
-  });
-
-  const { data: usuarios = [] } = useQuery({
-    queryKey: ['usuarios'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('usuarios')
-        .select('*');
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  const {
-    data: auditoriasPorLoja,
-    isLoading: loadingAuditoriasPorLoja
-  } = useQuery({
-    queryKey: ['auditorias-por-loja', lojaId],
-    queryFn: async () => {
-      if (!lojaId) return null;
-      
-      const { data: loja, error: lojaError } = await supabase
-        .from('lojas')
-        .select('*')
-        .eq('id', lojaId)
-        .single();
-      
-      if (lojaError) throw lojaError;
-      
-      const { data: auditorias, error: auditoriasError } = await supabase
-        .from('auditorias')
-        .select('*, usuario:usuarios(*), respostas(*)')
-        .eq('loja_id', lojaId)
-        .order('data', { ascending: false });
-      
-      if (auditoriasError) throw auditoriasError;
-      
-      return { loja, auditorias };
-    },
-    enabled: !!lojaId && !auditoriaId
-  });
-
-  const { data: auditorias = [] } = useQuery({
-    queryKey: ['auditorias-loja', auditoria?.loja_id],
-    queryFn: async () => {
-      if (!auditoria?.loja_id) return [];
-      
-      const { data, error } = await supabase
-        .from('auditorias')
-        .select('*, respostas(*)')
-        .eq('loja_id', auditoria.loja_id)
-        .order('data', { ascending: false });
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!auditoria?.loja_id
-  });
-
-  const handleExportPDF = () => {
-    if (reportRef.current) {
-      exportToPdf(reportRef, undefined, "O relatório completo foi exportado com sucesso!");
-    }
-  };
-
+    secoes, 
+    perguntas, 
+    auditoria, 
+    loadingAuditoria, 
+    refetchAuditoria, 
+    usuarios, 
+    processedData 
+  } = useRelatorioData();
+  
+  const { auditoriasPorLoja, loadingAuditoriasPorLoja } = useLojaHistoryData();
+  
+  // Show loading state while data is being fetched
   if (loadingAuditoria || loadingAuditoriasPorLoja) {
-    return <div className="flex justify-center items-center h-96">Carregando...</div>;
+    return <RelatorioLoading />;
   }
-
+  
+  // Show not found state if data doesn't exist
   if ((!auditoria && !auditoriasPorLoja) || (lojaId && !auditoriasPorLoja?.loja)) {
+    return <RelatorioNotFound />;
+  }
+  
+  // Show detailed report if we have an auditoria
+  if (processedData) {
+    const { typedAuditoria, typedRespostas, typedAuditorias } = processedData;
+    
     return (
-      <div className="text-center py-12">
-        <h2 className="text-2xl font-bold mb-2">Relatório não encontrado</h2>
-        <p className="mb-6">O relatório ou loja solicitado não foi encontrado no sistema.</p>
-        <button onClick={() => navigate(-1)} className="px-4 py-2 bg-blue-500 text-white rounded">
-          Voltar
-        </button>
-      </div>
+      <RelatorioView
+        auditoria={typedAuditoria}
+        loja={auditoria.loja}
+        respostas={typedRespostas}
+        perguntas={perguntas}
+        secoes={secoes}
+        auditorias={typedAuditorias}
+        usuarios={usuarios}
+        refetchAuditoria={refetchAuditoria}
+      />
     );
   }
-
-  if (auditoria && secoes && perguntas) {
-    const typedRespostas: Resposta[] = auditoria.respostas ? 
-      auditoria.respostas.map(r => ({
-        ...r,
-        id: r.id.toString(),
-        auditoria_id: r.auditoria_id?.toString() || '',
-        pergunta_id: r.pergunta_id?.toString() || '',
-        resposta: r.resposta || '',
-        pontuacao_obtida: Number(r.pontuacao_obtida || 0),
-        observacao: r.observacao || '',
-        anexo_url: r.anexo_url || ''
-      })) : [];
-
-    const typedAuditoria: Auditoria = {
-      ...auditoria,
-      id: auditoria.id.toString(),
-      loja_id: auditoria.loja_id.toString(),
-      usuario_id: auditoria.usuario_id.toString(),
-      status: auditoria.status || 'em_andamento',
-      pontuacao_total: Number(auditoria.pontuacao_total || 0)
-    };
-
-    const typedAuditorias: Auditoria[] = auditorias.map(a => ({
-      ...a,
-      id: a.id.toString(),
-      loja_id: a.loja_id.toString(),
-      usuario_id: a.usuario_id?.toString() || '',
-      status: a.status || 'em_andamento',
-      pontuacao_total: Number(a.pontuacao_total || 0)
-    }));
-
-    return (
-      <div className="relative">
-        <RelatorioActions 
-          auditoria={typedAuditoria} 
-          usuarios={usuarios} 
-          refetchAuditoria={refetchAuditoria}
-          exportarPDF={handleExportPDF} 
-        />
-        
-        <div ref={reportRef} className="pdf-container">
-          <RelatorioDetalhado 
-            auditoria={typedAuditoria} 
-            loja={auditoria.loja} 
-            respostas={typedRespostas} 
-            perguntas={perguntas} 
-            secoes={secoes}
-            auditorias={typedAuditorias}
-          />
-        </div>
-      </div>
-    );
-  }
-
+  
+  // Show loja history if we have that data
   if (auditoriasPorLoja && perguntas) {
     return (
-      <ScrollArea className="h-[calc(100vh-10rem)] w-full px-1">
-        <HistoricoLoja 
-          auditoriasPorLoja={auditoriasPorLoja}
-          perguntas={perguntas}
-        />
-      </ScrollArea>
+      <LojaHistoryView
+        auditoriasPorLoja={auditoriasPorLoja}
+        perguntas={perguntas}
+      />
     );
   }
-
+  
   return null;
 };
 
