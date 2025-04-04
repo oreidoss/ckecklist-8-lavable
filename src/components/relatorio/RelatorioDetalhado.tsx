@@ -61,7 +61,8 @@ const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
         id: r.id,
         pergunta_texto: pergunta ? pergunta.texto : 'Pergunta não encontrada',
         secao_nome: secao ? secao.nome : 'Seção não encontrada',
-        observacao: r.observacao || 'Sem observação'
+        observacao: r.observacao || 'Sem observação',
+        pontuacao: r.pontuacao_obtida || 0
       };
     });
 
