@@ -1,156 +1,156 @@
 
-import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Resposta, pontuacaoMap } from "@/lib/types";
-import { AlertTriangle, Info } from "lucide-react";
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-interface AnaliseIAProps {
-  respostas: Resposta[];
-  pontosCriticos: { pergunta: string; pontuacao: number }[];
-  pontosAtencao: { pergunta: string; pontuacao: number }[];
+export interface AnaliseIAProps {
+  pontuacaoTotal: number;
+  pontuacoesPorSecao: Array<{
+    id: string | number;
+    nome: string;
+    pontuacao: number;
+    total: number;
+    percentual: number;
+  }>;
+  itensCriticos: Array<any>;
+  itensAtencao: Array<any>;
+  lojaNome: string;
+  lojaNumero: string;
+  setAnaliseCompleta: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export function AnaliseIA({ respostas, pontosCriticos, pontosAtencao }: AnaliseIAProps) {
-  // Gerar uma análise baseada nos pontos críticos e de atenção
-  const gerarAnaliseIA = () => {
-    const totalRespostas = respostas.length;
-    const respostasNegativas = respostas.filter(r => r.pontuacao_obtida < 0).length;
-    const percentualNegativo = totalRespostas > 0 ? (respostasNegativas / totalRespostas) * 100 : 0;
-    
-    let situacaoGeral = "satisfatória";
-    if (percentualNegativo > 30) {
-      situacaoGeral = "crítica";
-    } else if (percentualNegativo > 15) {
-      situacaoGeral = "preocupante";
-    }
-    
-    let recomendacao = "";
-    
-    if (pontosCriticos.length > 0) {
-      recomendacao += "Recomendações para pontos críticos:\n";
-      pontosCriticos.forEach(ponto => {
-        const acao = getAcaoRecomendada(ponto.pergunta);
-        recomendacao += `- ${ponto.pergunta}: ${acao}\n`;
-      });
-    }
-    
-    if (pontosAtencao.length > 0) {
-      recomendacao += "\nRecomendações para pontos de atenção:\n";
-      pontosAtencao.forEach(ponto => {
-        const acao = getAcaoRecomendada(ponto.pergunta, false);
-        recomendacao += `- ${ponto.pergunta}: ${acao}\n`;
-      });
-    }
-    
-    const conclusao = gerarConclusao(situacaoGeral, pontosCriticos.length, pontosAtencao.length);
-    
-    return {
-      situacaoGeral,
-      recomendacao,
-      conclusao
+const AnaliseIA: React.FC<AnaliseIAProps> = ({
+  pontuacaoTotal,
+  pontuacoesPorSecao,
+  itensCriticos,
+  itensAtencao,
+  lojaNome,
+  lojaNumero,
+  setAnaliseCompleta
+}) => {
+  const [analise, setAnalise] = useState("");
+  const [recomendacoes, setRecomendacoes] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulating AI analysis process
+    const gerarAnalise = () => {
+      setLoading(true);
+      // Allow time for UI to render loading state
+      setTimeout(() => {
+        let analiseText = `Após análise das respostas da auditoria da loja ${lojaNome} (${lojaNumero}), `;
+        
+        if (pontuacaoTotal >= 80) {
+          analiseText += "foi verificado que a loja está com um desempenho muito bom. ";
+        } else if (pontuacaoTotal >= 60) {
+          analiseText += "foi verificado que a loja está com desempenho satisfatório, mas com pontos de melhoria. ";
+        } else {
+          analiseText += "foi verificado que a loja está com desempenho abaixo do esperado, necessitando de atenção imediata. ";
+        }
+
+        // Analysis of critical points
+        if (itensCriticos.length > 0) {
+          analiseText += `Foram identificados ${itensCriticos.length} pontos críticos que necessitam de ação imediata. `;
+        } else {
+          analiseText += "Não foram identificados pontos críticos, o que é um excelente indicador. ";
+        }
+
+        // Analysis of attention points
+        if (itensAtencao.length > 0) {
+          analiseText += `Também há ${itensAtencao.length} pontos de atenção que devem ser monitorados. `;
+        }
+
+        // Section analysis
+        const secoesBaixas = pontuacoesPorSecao.filter(s => s.percentual < 60);
+        if (secoesBaixas.length > 0) {
+          analiseText += `As seções ${secoesBaixas.map(s => s.nome).join(", ")} apresentam as piores pontuações e devem receber prioridade nas ações corretivas.`;
+        }
+
+        // Generate recommendations
+        const recs = [];
+        
+        if (itensCriticos.length > 0) {
+          recs.push("Elaborar um plano de ação urgente para resolver os pontos críticos identificados.");
+        }
+        
+        if (secoesBaixas.length > 0) {
+          recs.push(`Realizar treinamento específico nas seções ${secoesBaixas.map(s => s.nome).join(", ")}.`);
+        }
+        
+        if (pontuacaoTotal < 70) {
+          recs.push("Agendar uma nova auditoria em 30 dias para verificar o progresso das melhorias.");
+        }
+        
+        recs.push("Compartilhar os resultados com a equipe e definir metas claras para a próxima avaliação.");
+        
+        if (pontuacaoTotal >= 80) {
+          recs.push("Reconhecer e premiar a equipe pelo bom desempenho.");
+        }
+
+        setAnalise(analiseText);
+        setRecomendacoes(recs);
+        setLoading(false);
+        setAnaliseCompleta(true);
+      }, 1500);
     };
-  };
-  
-  // Função para gerar uma ação recomendada com base na pergunta
-  const getAcaoRecomendada = (pergunta: string, isCritico: boolean = true) => {
-    const acoesCriticas = [
-      "Implementar ação corretiva imediata",
-      "Revisar processo com urgência",
-      "Treinar equipe sobre este ponto específico",
-      "Estabelecer verificação diária deste item",
-      "Criar procedimento de verificação dupla"
-    ];
-    
-    const acoesAtencao = [
-      "Monitorar regularmente",
-      "Incluir em auditorias semanais",
-      "Conscientizar a equipe sobre este ponto",
-      "Revisar processo nas próximas semanas",
-      "Estabelecer meta de melhoria gradual"
-    ];
-    
-    // Gera um índice pseudo-aleatório mas consistente baseado na pergunta
-    const hashCode = pergunta.split("").reduce((acc, char) => {
-      return acc + char.charCodeAt(0);
-    }, 0);
-    
-    const opcoes = isCritico ? acoesCriticas : acoesAtencao;
-    const indice = hashCode % opcoes.length;
-    
-    return opcoes[indice];
-  };
-  
-  // Gerar conclusão personalizada
-  const gerarConclusao = (situacao: string, numCriticos: number, numAtencao: number) => {
-    if (numCriticos === 0 && numAtencao === 0) {
-      return "A auditoria não identificou pontos críticos ou de atenção. Recomenda-se manter os bons procedimentos e continuar com as práticas atuais.";
-    }
-    
-    if (situacao === "crítica") {
-      return `A situação é crítica com ${numCriticos} pontos críticos identificados. Recomenda-se uma intervenção imediata e revisão completa dos processos.`;
-    } else if (situacao === "preocupante") {
-      return `A situação é preocupante com ${numCriticos} pontos críticos e ${numAtencao} pontos de atenção. Recomenda-se atenção especial aos pontos críticos e estabelecer um plano de ação para os próximos 30 dias.`;
-    } else {
-      return `A situação geral é satisfatória, mas foram identificados ${numCriticos} pontos críticos e ${numAtencao} pontos de atenção que devem ser acompanhados. Recomenda-se incluir estes pontos no plano de melhoria contínua.`;
-    }
-  };
-  
-  const analise = gerarAnaliseIA();
-  
+
+    gerarAnalise();
+  }, [
+    pontuacaoTotal, 
+    pontuacoesPorSecao, 
+    itensCriticos, 
+    itensAtencao, 
+    lojaNome, 
+    lojaNumero, 
+    setAnaliseCompleta
+  ]);
+
   return (
-    <Card className="mb-6">
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center text-xl">
-          <Info className="mr-2 h-5 w-5" />
-          Análise de IA
+    <Card className="mb-8">
+      <CardHeader>
+        <CardTitle className="text-xl flex items-center gap-2">
+          Análise IA
+          {loading && (
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+          )}
         </CardTitle>
+        <CardDescription>
+          Análise automatizada baseada nos resultados da auditoria
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          <div>
-            <h3 className="font-medium mb-1">Situação Geral:</h3>
-            <p className={`${
-              analise.situacaoGeral === "crítica" 
-                ? "text-red-500" 
-                : analise.situacaoGeral === "preocupante" 
-                  ? "text-amber-500" 
-                  : "text-green-500"
-            }`}>
-              A auditoria apresenta uma situação {analise.situacaoGeral}.
-            </p>
+        {loading ? (
+          <div className="space-y-4">
+            <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-4 bg-gray-200 rounded animate-pulse w-5/6"></div>
+            <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-4 bg-gray-200 rounded animate-pulse w-4/6"></div>
           </div>
-          
-          {(pontosCriticos.length > 0 || pontosAtencao.length > 0) && (
-            <div>
-              <h3 className="font-medium mb-1">Recomendações:</h3>
-              <div className="pl-4 space-y-1 text-sm">
-                {pontosCriticos.map((ponto, index) => (
-                  <div key={`critico-${index}`} className="flex items-start gap-2 text-red-500">
-                    <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <p>
-                      <span className="font-medium">{ponto.pergunta}:</span> {getAcaoRecomendada(ponto.pergunta)}
-                    </p>
-                  </div>
-                ))}
-                
-                {pontosAtencao.map((ponto, index) => (
-                  <div key={`atencao-${index}`} className="flex items-start gap-2 text-amber-500">
-                    <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <p>
-                      <span className="font-medium">{ponto.pergunta}:</span> {getAcaoRecomendada(ponto.pergunta, false)}
-                    </p>
-                  </div>
-                ))}
-              </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="text-sm text-gray-700">
+              {analise}
             </div>
-          )}
-          
-          <div>
-            <h3 className="font-medium mb-1">Conclusão:</h3>
-            <p className="text-sm">{analise.conclusao}</p>
+            
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="recommendations">
+                <AccordionTrigger className="text-md font-medium">
+                  Recomendações
+                </AccordionTrigger>
+                <AccordionContent>
+                  <ul className="list-disc pl-6 space-y-2 text-sm">
+                    {recomendacoes.map((rec, index) => (
+                      <li key={index}>{rec}</li>
+                    ))}
+                  </ul>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );
-}
+};
+
+export default AnaliseIA;

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,10 +29,20 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Initialize database outside of component
-db.initDatabase();
-
 const App = () => {
+  // Initialize database when app loads
+  useEffect(() => {
+    const initDb = async () => {
+      try {
+        await db.initDatabase();
+      } catch (error) {
+        console.error("Error initializing database:", error);
+      }
+    };
+    
+    initDb();
+  }, []);
+
   return (
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
