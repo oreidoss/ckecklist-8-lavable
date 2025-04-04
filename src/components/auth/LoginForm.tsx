@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { usuarioService } from "@/lib/services/usuarioService";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const LoginForm = () => {
   const [nome, setNome] = useState('');
@@ -13,6 +14,7 @@ export const LoginForm = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,13 +38,13 @@ export const LoginForm = () => {
       const usuarios = await usuarioService.getUsuarios();
       console.log("Available users in the system:", usuarios);
       
-      // Try to login
-      const user = await usuarioService.login(nome, senha);
+      // Try to login using AuthContext's login method
+      const success = await login(nome, senha);
       
-      if (user) {
+      if (success) {
         toast({
           title: "Login bem-sucedido",
-          description: `Bem-vindo, ${user.nome}!`
+          description: "Bem-vindo ao sistema!"
         });
         navigate('/');
       } else {

@@ -1,3 +1,4 @@
+
 import { Usuario } from '../types';
 import { BaseService } from './baseService';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,14 +34,14 @@ export class UsuarioService extends BaseService {
     try {
       console.log("Attempting to add user to Supabase:", usuario);
       
-      // Add user to Supabase
+      // Add user to Supabase - handle the case where 'role' is not a column
       const { data, error } = await supabase
         .from('usuarios')
         .insert([{
           nome: usuario.nome,
           email: usuario.email,
-          senha: usuario.senha,
-          role: usuario.role || 'user'
+          senha: usuario.senha
+          // Don't include role if it's causing issues
         }])
         .select()
         .single();
@@ -51,6 +52,11 @@ export class UsuarioService extends BaseService {
       }
       
       const newUser = data as Usuario;
+      
+      // Add role in localStorage even if not in Supabase
+      if (usuario.role) {
+        newUser.role = usuario.role;
+      }
       
       console.log("User successfully added to Supabase:", newUser);
       return newUser;
@@ -67,15 +73,20 @@ export class UsuarioService extends BaseService {
 
   async updateUsuario(usuario: Usuario): Promise<void> {
     try {
-      // Atualiza usuário no Supabase
+      // Update user in Supabase - handle the case where 'role' is not a column
+      const updateData = {
+        nome: usuario.nome,
+        email: usuario.email
+      };
+      
+      // Only include senha if it's provided
+      if (usuario.senha) {
+        (updateData as any).senha = usuario.senha;
+      }
+      
       const { error } = await supabase
         .from('usuarios')
-        .update({
-          nome: usuario.nome,
-          email: usuario.email,
-          senha: usuario.senha,
-          role: usuario.role
-        })
+        .update(updateData)
         .eq('id', usuario.id);
       
       if (error) {
@@ -84,6 +95,15 @@ export class UsuarioService extends BaseService {
       }
       
       console.log("User updated successfully in Supabase:", usuario);
+      
+      // Store role in localStorage if it's not in Supabase
+      if (usuario.role) {
+        const currentUser = this.getCurrentUser();
+        if (currentUser && currentUser.id === usuario.id) {
+          const updatedUser = { ...currentUser, ...usuario };
+          localStorage.setItem(this.AUTH_KEY, JSON.stringify(updatedUser));
+        }
+      }
     } catch (e) {
       console.error("Error updating user, using fallback localStorage:", e);
       // Fallback to localStorage
@@ -143,8 +163,20 @@ export class UsuarioService extends BaseService {
       
       // Check if any user was found
       if (!data || data.length === 0) {
-        console.log("User not found in Supabase");
-        return null;
+        // Try direct query for exact matching
+        const { data: exactData, error: exactError } = await supabase
+          .from('usuarios')
+          .select('*')
+          .eq('nome', loginId);
+          
+        if (exactError || !exactData || exactData.length === 0) {
+          console.log("User not found in Supabase");
+          // Try localStorage fallback
+          return this.loginWithLocalStorage(loginId, senha);
+        }
+        
+        console.log("Found user by exact name match:", exactData);
+        data = exactData;
       }
       
       // Find user with correct credentials
@@ -152,10 +184,16 @@ export class UsuarioService extends BaseService {
       
       if (!user) {
         console.log("Incorrect password");
-        return null;
+        // Try localStorage fallback
+        return this.loginWithLocalStorage(loginId, senha);
       }
       
       const convertedUser = user as Usuario;
+      
+      // Add role if it doesn't exist in the database
+      if (!convertedUser.role) {
+        convertedUser.role = 'user'; // Default role
+      }
       
       // Remove password before storing in localStorage
       const { senha: _, ...userWithoutPassword } = convertedUser;
@@ -165,35 +203,38 @@ export class UsuarioService extends BaseService {
       return convertedUser;
     } catch (e) {
       console.error("Login error, trying localStorage fallback:", e);
-      
-      // Fallback to localStorage
-      const users = this.getItem<Usuario>(this.STORAGE_KEY);
-      console.log("Trying login via localStorage for:", loginId);
-      console.log("Available users:", users.length);
-      
-      // Try to find user by name or email
-      const user = users.find(
-        u => u.nome.toLowerCase() === loginId.toLowerCase() || 
-             (u.email && u.email.toLowerCase() === loginId.toLowerCase())
-      );
-      
-      if (!user) {
-        console.log("User not found");
-        return null;
-      }
-      
-      // Verify password
-      if (user.senha === senha) {
-        console.log("Correct password, login successful");
-        // Remove password before storing in localStorage
-        const { senha: _, ...userWithoutPassword } = user;
-        localStorage.setItem(this.AUTH_KEY, JSON.stringify(userWithoutPassword));
-        return user;
-      }
-      
-      console.log("Incorrect password");
+      return this.loginWithLocalStorage(loginId, senha);
+    }
+  }
+  
+  private async loginWithLocalStorage(loginId: string, senha: string): Promise<Usuario | null> {
+    // Fallback to localStorage
+    const users = this.getItem<Usuario>(this.STORAGE_KEY);
+    console.log("Trying login via localStorage for:", loginId);
+    console.log("Available users:", users.length);
+    
+    // Try to find user by name or email
+    const user = users.find(
+      u => u.nome.toLowerCase() === loginId.toLowerCase() || 
+            (u.email && u.email.toLowerCase() === loginId.toLowerCase())
+    );
+    
+    if (!user) {
+      console.log("User not found");
       return null;
     }
+    
+    // Verify password
+    if (user.senha === senha) {
+      console.log("Correct password, login successful");
+      // Remove password before storing in localStorage
+      const { senha: _, ...userWithoutPassword } = user;
+      localStorage.setItem(this.AUTH_KEY, JSON.stringify(userWithoutPassword));
+      return user;
+    }
+    
+    console.log("Incorrect password");
+    return null;
   }
 
   // Get current authenticated user
@@ -207,10 +248,10 @@ export class UsuarioService extends BaseService {
     localStorage.removeItem(this.AUTH_KEY);
   }
 
-  // Método para verificar credenciais sem login
+  // Method to verify credentials without login
   async verificarCredenciais(loginId: string, senha: string): Promise<boolean> {
     try {
-      // Busca usuário no Supabase pelo nome ou email
+      // Search user in Supabase by name or email
       const { data, error } = await supabase
         .from('usuarios')
         .select('*')
@@ -221,12 +262,12 @@ export class UsuarioService extends BaseService {
         throw error;
       }
       
-      // Verifica se encontrou algum usuário com a senha correta
+      // Check if found any user with the correct password
       return data && data.some(u => u.senha === senha);
     } catch (e) {
       console.error("Error verifying credentials, using fallback localStorage:", e);
       
-      // Fallback para localStorage
+      // Fallback to localStorage
       const usuarios = this.getItem<Usuario>(this.STORAGE_KEY);
       return usuarios.some(
         u => (u.nome.toLowerCase() === loginId.toLowerCase() || 
