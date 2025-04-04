@@ -18,7 +18,7 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
   setActiveSecao
 }) => {
   return (
-    <div className="flex overflow-x-auto space-x-2 pb-2">
+    <div className="flex flex-wrap gap-2">
       {secoes?.map((secao) => {
         const isCompleted = completedSections.includes(secao.id);
         return (
