@@ -7,7 +7,7 @@ export class UsuarioService extends BaseService {
   private readonly AUTH_KEY = 'currentUser';
 
   getUsuarios(): Usuario[] {
-    const usuarios = this.getItem<Usuario>(this.STORAGE_KEY) || [];
+    const usuarios = this.getItem<Usuario[]>(this.STORAGE_KEY) || [];
     return usuarios;
   }
 
@@ -15,7 +15,16 @@ export class UsuarioService extends BaseService {
     const usuarios = this.getUsuarios();
     const id = this.getMaxId(usuarios);
     const novoUsuario = { ...usuario, id };
+    
+    // Debug info for user creation
+    console.log("Adicionando novo usuário:", novoUsuario);
+    
     this.setItem(this.STORAGE_KEY, [...usuarios, novoUsuario]);
+    
+    // Verify if the user was saved correctly
+    const usuariosAtualizados = this.getUsuarios();
+    console.log("Lista de usuários após adicionar:", usuariosAtualizados);
+    
     return novoUsuario;
   }
 
@@ -38,23 +47,26 @@ export class UsuarioService extends BaseService {
     return usuario?.role === 'admin';
   }
 
-  login(nome: string, senha: string): Usuario | null {
+  login(loginId: string, senha: string): Usuario | null {
     const usuarios = this.getUsuarios();
     
     // Debug info for troubleshooting
-    console.log("Tentando login para: ", nome);
+    console.log("Tentando login para: ", loginId);
     console.log("Usuários disponíveis: ", usuarios.length);
     console.log("Lista de usuários:", JSON.stringify(usuarios));
     
-    // Check if the user exists by name first (case insensitive)
-    const usuario = usuarios.find(u => u.nome.toLowerCase() === nome.toLowerCase());
+    // Try to find user by name or email (case insensitive)
+    const usuario = usuarios.find(
+      u => u.nome.toLowerCase() === loginId.toLowerCase() || 
+           (u.email && u.email.toLowerCase() === loginId.toLowerCase())
+    );
     
     if (!usuario) {
       console.log("Usuário não encontrado");
       return null;
     }
     
-    console.log("Usuário encontrado, verificando senha");
+    console.log("Usuário encontrado:", usuario.nome, "verificando senha");
     // Then check if the password matches exactly
     if (usuario.senha === senha) {
       console.log("Senha correta, login bem-sucedido");
@@ -80,9 +92,13 @@ export class UsuarioService extends BaseService {
   }
 
   // Método para verificar credenciais sem login
-  verificarCredenciais(nome: string, senha: string): boolean {
+  verificarCredenciais(loginId: string, senha: string): boolean {
     const usuarios = this.getUsuarios();
-    return usuarios.some(u => u.nome.toLowerCase() === nome.toLowerCase() && u.senha === senha);
+    return usuarios.some(
+      u => (u.nome.toLowerCase() === loginId.toLowerCase() || 
+            (u.email && u.email.toLowerCase() === loginId.toLowerCase())) && 
+           u.senha === senha
+    );
   }
 }
 
