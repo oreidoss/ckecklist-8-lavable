@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ArrowLeftCircle, ArrowRightCircle } from 'lucide-react';
+import { ArrowLeftCircle, ArrowRightCircle, FileText } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Pergunta, Secao } from '@/lib/types';
