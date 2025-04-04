@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Home, List } from 'lucide-react';
 import { Database } from '@/integrations/supabase/types';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
-import { useChecklist } from '@/hooks/useChecklist';
+import { useChecklist } from '@/hooks/checklist';
 import ChecklistHeader from '@/components/checklist/ChecklistHeader';
 import SectionNavigation from '@/components/checklist/SectionNavigation';
 import SectionContent from '@/components/checklist/SectionContent';
@@ -54,10 +53,9 @@ const Checklist: React.FC = () => {
     saveAndNavigateHome: saveAndNavigateHomeBase
   } = useChecklist(auditoriaId, undefined);
 
-  // Wrap the hook functions to pass in the required respostasExistentes parameter
   const handleRespostaWrapped = (perguntaId: string, resposta: RespostaValor) => {
-    if (respostasExistentes) {
-      handleRespostaBase(perguntaId, resposta, respostasExistentes);
+    if (respostasExistentes && perguntas) {
+      handleRespostaBase(perguntaId, resposta, respostasExistentes, perguntas);
     }
   };
 
