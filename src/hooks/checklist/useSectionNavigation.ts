@@ -69,26 +69,21 @@ export const useSectionNavigation = ({
       return;
     }
     
-    // Verifica se há perguntas não respondidas na seção atual
+    // Verificar se há perguntas não respondidas na seção atual
     const perguntasAtivas = getPerguntasBySecao(activeSecao);
-    // Consideramos apenas perguntas obrigatórias (exceto as duas últimas, que são observações e anexos)
+    // Consideramos apenas perguntas obrigatórias (exceto as duas últimas)
     const requiredPerguntas = perguntasAtivas.slice(0, -2);
     const hasUnanswered = requiredPerguntas.some(p => !respostas[p.id]);
     
-    // Se houver perguntas não respondidas, mostra alerta
+    // Se houver perguntas não respondidas, mostrar alerta mas permitir navegação
     if (hasUnanswered) {
       toast({
         title: "Perguntas não respondidas",
-        description: "Por favor, responda todas as perguntas obrigatórias antes de mudar de seção.",
-        variant: "destructive"
+        description: "Existem perguntas não respondidas nesta seção. Você ainda pode navegar, mas a seção não será salva como completa.",
       });
-      // Apesar do aviso, permitimos a navegação
-      setActiveSecao(secaoId);
-      window.scrollTo(0, 0);
-      return;
     }
     
-    // Se todas as perguntas foram respondidas, muda de seção
+    // Sempre permite a navegação
     setActiveSecao(secaoId);
     window.scrollTo(0, 0);
   }, [activeSecao, getPerguntasBySecao, respostas, toast]);

@@ -28,7 +28,6 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
       toast({
         title: "Perguntas não respondidas",
         description: "Existem perguntas não respondidas nesta seção. Você ainda pode avançar, mas a seção não será salva como completa.",
-        variant: "destructive"
       });
     }
     
