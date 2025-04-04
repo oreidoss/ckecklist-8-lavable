@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -47,31 +48,42 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { PageTitle } from "@/components/PageTitle";
-import { db, Usuario } from "@/lib/db";
+import { usuarioService } from "@/lib/services/usuarioService";
 import { useToast } from '@/hooks/use-toast';
-import { Edit, Plus, Trash2, User, UserPlus, ShieldCheck } from 'lucide-react';
-
-interface UsuarioComFuncao extends Usuario {
-  role?: string;
-}
+import { Edit, Plus, Trash2, User, UserPlus, ShieldCheck, RefreshCw } from 'lucide-react';
+import { Usuario } from "@/lib/types";
 
 const AdminUsuarios: React.FC = () => {
-  const [usuarios, setUsuarios] = useState<UsuarioComFuncao[]>([]);
-  const [usuarioParaEditar, setUsuarioParaEditar] = useState<UsuarioComFuncao | null>(null);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [usuarioParaEditar, setUsuarioParaEditar] = useState<Usuario | null>(null);
   const [novoUsuario, setNovoUsuario] = useState({ 
     nome: '', 
     email: '', 
     role: '', 
     senha: '' 
   });
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
+  const carregarUsuarios = async () => {
+    setIsLoading(true);
+    try {
+      const usuariosDB = await usuarioService.getUsuarios();
+      setUsuarios(usuariosDB);
+    } catch (error) {
+      console.error("Erro ao carregar usuários:", error);
+      toast({
+        title: "Erro ao carregar usuários",
+        description: "Não foi possível carregar os usuários. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   useEffect(() => {
-    const usuariosDB = db.getUsuarios();
-    setUsuarios(usuariosDB.map(usuario => ({
-      ...usuario,
-      role: usuario.role || ''
-    })));
+    carregarUsuarios();
   }, []);
   
   const validarEmail = (email: string) => {
@@ -79,7 +91,7 @@ const AdminUsuarios: React.FC = () => {
     return re.test(email);
   };
   
-  const handleAdicionarUsuario = () => {
+  const handleAdicionarUsuario = async () => {
     if (!novoUsuario.nome || !novoUsuario.email || !novoUsuario.senha) {
       toast({
         title: "Campos obrigatórios",
@@ -116,30 +128,37 @@ const AdminUsuarios: React.FC = () => {
       return;
     }
     
-    const usuarioData = {
-      nome: novoUsuario.nome,
-      email: novoUsuario.email,
-      role: novoUsuario.role,
-      senha: novoUsuario.senha
-    };
-    
-    const adicionado = db.addUsuario(usuarioData);
-    
-    const usuarioComFuncao = {
-      ...adicionado,
-      role: novoUsuario.role
-    };
-    
-    setUsuarios([...usuarios, usuarioComFuncao]);
-    setNovoUsuario({ nome: '', email: '', role: '', senha: '' });
-    
-    toast({
-      title: "Usuário adicionado",
-      description: `Usuário ${adicionado.nome} foi adicionado com sucesso.`
-    });
+    try {
+      setIsLoading(true);
+      const usuarioData = {
+        nome: novoUsuario.nome,
+        email: novoUsuario.email,
+        role: novoUsuario.role,
+        senha: novoUsuario.senha
+      };
+      
+      const adicionado = await usuarioService.addUsuario(usuarioData);
+      
+      setUsuarios([...usuarios, adicionado]);
+      setNovoUsuario({ nome: '', email: '', role: '', senha: '' });
+      
+      toast({
+        title: "Usuário adicionado",
+        description: `Usuário ${adicionado.nome} foi adicionado com sucesso.`
+      });
+    } catch (error) {
+      console.error("Erro ao adicionar usuário:", error);
+      toast({
+        title: "Erro ao adicionar usuário",
+        description: "Não foi possível adicionar o usuário. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
   
-  const handleAtualizarUsuario = () => {
+  const handleAtualizarUsuario = async () => {
     if (!usuarioParaEditar) return;
     
     if (!usuarioParaEditar.nome || !usuarioParaEditar.email) {
@@ -181,40 +200,54 @@ const AdminUsuarios: React.FC = () => {
       return;
     }
     
-    db.updateUsuario(usuarioParaEditar);
-    
-    setUsuarios(usuarios.map(usuario => 
-      usuario.id === usuarioParaEditar.id ? usuarioParaEditar : usuario
-    ));
-    
-    setUsuarioParaEditar(null);
-    
-    toast({
-      title: "Usuário atualizado",
-      description: `Usuário ${usuarioParaEditar.nome} foi atualizado com sucesso.`
-    });
-  };
-  
-  const handleExcluirUsuario = (id: number) => {
-    const auditorias = db.getAuditorias();
-    const temAuditorias = auditorias.some(auditoria => auditoria.usuario_id === id);
-    
-    if (temAuditorias) {
+    try {
+      setIsLoading(true);
+      await usuarioService.updateUsuario(usuarioParaEditar);
+      
+      setUsuarios(usuarios.map(usuario => 
+        usuario.id === usuarioParaEditar.id ? usuarioParaEditar : usuario
+      ));
+      
+      setUsuarioParaEditar(null);
+      
       toast({
-        title: "Não é possível excluir",
-        description: "Este usuário possui auditorias associadas. Exclua as auditorias primeiro.",
+        title: "Usuário atualizado",
+        description: `Usuário ${usuarioParaEditar.nome} foi atualizado com sucesso.`
+      });
+    } catch (error) {
+      console.error("Erro ao atualizar usuário:", error);
+      toast({
+        title: "Erro ao atualizar usuário",
+        description: "Não foi possível atualizar o usuário. Tente novamente.",
         variant: "destructive"
       });
-      return;
+    } finally {
+      setIsLoading(false);
     }
-    
-    db.deleteUsuario(id);
-    setUsuarios(usuarios.filter(usuario => usuario.id !== id));
-    
-    toast({
-      title: "Usuário excluído",
-      description: "O usuário foi excluído com sucesso."
-    });
+  };
+  
+  const handleExcluirUsuario = async (id: number) => {
+    try {
+      setIsLoading(true);
+      // Verificar se possui auditorias está removido por agora
+      
+      await usuarioService.deleteUsuario(id);
+      setUsuarios(usuarios.filter(usuario => usuario.id !== id));
+      
+      toast({
+        title: "Usuário excluído",
+        description: "O usuário foi excluído com sucesso."
+      });
+    } catch (error) {
+      console.error("Erro ao excluir usuário:", error);
+      toast({
+        title: "Erro ao excluir usuário",
+        description: "Não foi possível excluir o usuário. Verifique se não há auditorias associadas a ele.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const renderRoleBadge = (role?: string) => {
@@ -239,7 +272,7 @@ const AdminUsuarios: React.FC = () => {
         description="Adicione, edite e remova usuários do sistema"
       />
       
-      <div className="flex justify-end mb-6">
+      <div className="flex justify-between items-center mb-6">
         <Dialog>
           <DialogTrigger asChild>
             <Button>
@@ -318,11 +351,19 @@ const AdminUsuarios: React.FC = () => {
                 <Button variant="outline">Cancelar</Button>
               </DialogClose>
               <DialogClose asChild>
-                <Button onClick={handleAdicionarUsuario}>Adicionar</Button>
+                <Button onClick={handleAdicionarUsuario} disabled={isLoading}>
+                  {isLoading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : null}
+                  Adicionar
+                </Button>
               </DialogClose>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        
+        <Button variant="outline" onClick={carregarUsuarios} disabled={isLoading}>
+          {isLoading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+          Atualizar
+        </Button>
       </div>
       
       <Card>
@@ -333,7 +374,11 @@ const AdminUsuarios: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {usuarios.length > 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <RefreshCw className="h-8 w-8 animate-spin text-primary/70" />
+            </div>
+          ) : usuarios.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -446,7 +491,10 @@ const AdminUsuarios: React.FC = () => {
                                 <Button variant="outline">Cancelar</Button>
                               </DialogClose>
                               <DialogClose asChild>
-                                <Button onClick={handleAtualizarUsuario}>Salvar Alterações</Button>
+                                <Button onClick={handleAtualizarUsuario} disabled={isLoading}>
+                                  {isLoading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : null}
+                                  Salvar Alterações
+                                </Button>
                               </DialogClose>
                             </DialogFooter>
                           </DialogContent>
@@ -471,7 +519,9 @@ const AdminUsuarios: React.FC = () => {
                               <AlertDialogAction 
                                 onClick={() => handleExcluirUsuario(usuario.id)}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                disabled={isLoading}
                               >
+                                {isLoading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : null}
                                 Excluir
                               </AlertDialogAction>
                             </AlertDialogFooter>

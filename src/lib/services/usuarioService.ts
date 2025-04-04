@@ -1,83 +1,196 @@
 
 import { Usuario } from '../types';
 import { BaseService } from './baseService';
+import { supabase } from '@/integrations/supabase/client';
 
 export class UsuarioService extends BaseService {
   private readonly STORAGE_KEY = 'usuarios';
   private readonly AUTH_KEY = 'currentUser';
 
-  getUsuarios(): Usuario[] {
-    const usuarios = this.getItem<Usuario>(this.STORAGE_KEY);
-    return usuarios;
+  async getUsuarios(): Promise<Usuario[]> {
+    try {
+      // Tenta buscar usuários do Supabase
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('*');
+      
+      if (error) {
+        console.error("Erro ao buscar usuários do Supabase:", error);
+        // Fallback para localStorage se houver erro
+        return this.getItem<Usuario>(this.STORAGE_KEY);
+      }
+      
+      // Converte os IDs de string para número
+      return (data || []).map(user => ({
+        ...user,
+        id: typeof user.id === 'string' ? parseInt(user.id, 10) : user.id
+      })) as Usuario[];
+    } catch (e) {
+      console.error("Erro ao buscar usuários:", e);
+      // Fallback para localStorage
+      return this.getItem<Usuario>(this.STORAGE_KEY);
+    }
   }
 
-  addUsuario(usuario: Omit<Usuario, "id">): Usuario {
-    const usuarios = this.getUsuarios();
-    const id = this.getMaxId(usuarios);
-    const novoUsuario = { ...usuario, id };
-    
-    // Debug info for user creation
-    console.log("Adicionando novo usuário:", novoUsuario);
-    
-    this.setItem(this.STORAGE_KEY, [...usuarios, novoUsuario]);
-    
-    // Verify if the user was saved correctly
-    const usuariosAtualizados = this.getUsuarios();
-    console.log("Lista de usuários após adicionar:", usuariosAtualizados);
-    
-    return novoUsuario;
+  async addUsuario(usuario: Omit<Usuario, "id">): Promise<Usuario> {
+    try {
+      // Adiciona usuário no Supabase
+      const { data, error } = await supabase
+        .from('usuarios')
+        .insert([usuario])
+        .select()
+        .single();
+      
+      if (error) {
+        console.error("Erro ao adicionar usuário no Supabase:", error);
+        throw error;
+      }
+      
+      // Converte o ID de string para número se necessário
+      const novoUsuario = {
+        ...data,
+        id: typeof data.id === 'string' ? parseInt(data.id, 10) : data.id
+      } as Usuario;
+      
+      console.log("Usuário adicionado com sucesso no Supabase:", novoUsuario);
+      return novoUsuario;
+    } catch (e) {
+      console.error("Erro ao adicionar usuário, usando fallback localStorage:", e);
+      // Fallback para o localStorage em caso de erro
+      const usuarios = this.getItem<Usuario>(this.STORAGE_KEY);
+      const id = this.getMaxId(usuarios);
+      const novoUsuario = { ...usuario, id } as Usuario;
+      this.setItem(this.STORAGE_KEY, [...usuarios, novoUsuario]);
+      return novoUsuario;
+    }
   }
 
-  updateUsuario(usuario: Usuario): void {
-    const usuarios = this.getUsuarios();
-    const index = usuarios.findIndex(u => u.id === usuario.id);
-    if (index >= 0) {
-      usuarios[index] = usuario;
+  async updateUsuario(usuario: Usuario): Promise<void> {
+    try {
+      // Atualiza usuário no Supabase
+      const { error } = await supabase
+        .from('usuarios')
+        .update(usuario)
+        .eq('id', usuario.id);
+      
+      if (error) {
+        console.error("Erro ao atualizar usuário no Supabase:", error);
+        throw error;
+      }
+      
+      console.log("Usuário atualizado com sucesso no Supabase:", usuario);
+    } catch (e) {
+      console.error("Erro ao atualizar usuário, usando fallback localStorage:", e);
+      // Fallback para o localStorage em caso de erro
+      const usuarios = this.getItem<Usuario>(this.STORAGE_KEY);
+      const index = usuarios.findIndex(u => u.id === usuario.id);
+      if (index >= 0) {
+        usuarios[index] = usuario;
+        this.setItem(this.STORAGE_KEY, usuarios);
+      }
+    }
+  }
+
+  async deleteUsuario(id: number): Promise<void> {
+    try {
+      // Deleta usuário no Supabase
+      const { error } = await supabase
+        .from('usuarios')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        console.error("Erro ao deletar usuário no Supabase:", error);
+        throw error;
+      }
+      
+      console.log("Usuário deletado com sucesso no Supabase, ID:", id);
+    } catch (e) {
+      console.error("Erro ao deletar usuário, usando fallback localStorage:", e);
+      // Fallback para o localStorage em caso de erro
+      const usuarios = this.getItem<Usuario>(this.STORAGE_KEY).filter(u => u.id !== id);
       this.setItem(this.STORAGE_KEY, usuarios);
     }
   }
-
-  deleteUsuario(id: number): void {
-    const usuarios = this.getUsuarios().filter(u => u.id !== id);
-    this.setItem(this.STORAGE_KEY, usuarios);
-  }
   
   isAdmin(id: number): boolean {
-    const usuario = this.getUsuarios().find(u => u.id === id);
+    const usuarios = this.getItem<Usuario>(this.STORAGE_KEY);
+    const usuario = usuarios.find(u => u.id === id);
     return usuario?.role === 'admin';
   }
 
-  login(loginId: string, senha: string): Usuario | null {
-    const usuarios = this.getUsuarios();
-    
-    // Debug info for troubleshooting
-    console.log("Tentando login para: ", loginId);
-    console.log("Usuários disponíveis: ", usuarios.length);
-    console.log("Lista de usuários:", JSON.stringify(usuarios));
-    
-    // Try to find user by name or email (case insensitive)
-    const usuario = usuarios.find(
-      u => u.nome.toLowerCase() === loginId.toLowerCase() || 
-           (u.email && u.email.toLowerCase() === loginId.toLowerCase())
-    );
-    
-    if (!usuario) {
-      console.log("Usuário não encontrado");
+  async login(loginId: string, senha: string): Promise<Usuario | null> {
+    try {
+      // Busca usuário no Supabase pelo nome ou email
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .or(`nome.ilike.${loginId},email.ilike.${loginId}`);
+      
+      if (error) {
+        console.error("Erro ao buscar usuário para login do Supabase:", error);
+        throw error;
+      }
+      
+      console.log("Resultado da busca por usuário:", data);
+      
+      // Verifica se encontrou algum usuário
+      if (!data || data.length === 0) {
+        console.log("Usuário não encontrado no Supabase");
+        return null;
+      }
+      
+      // Encontra o usuário com credenciais corretas
+      const usuario = data.find(u => u.senha === senha);
+      
+      if (!usuario) {
+        console.log("Senha incorreta");
+        return null;
+      }
+      
+      // Converte o ID de string para número
+      const usuarioConvertido = {
+        ...usuario,
+        id: typeof usuario.id === 'string' ? parseInt(usuario.id, 10) : usuario.id
+      } as Usuario;
+      
+      // Remove a senha antes de armazenar no localStorage
+      const { senha: _, ...userWithoutSenha } = usuarioConvertido;
+      localStorage.setItem(this.AUTH_KEY, JSON.stringify(userWithoutSenha));
+      
+      console.log("Login bem-sucedido:", usuarioConvertido.nome);
+      return usuarioConvertido;
+    } catch (e) {
+      console.error("Erro no login, tentando fallback localStorage:", e);
+      
+      // Fallback para localStorage
+      const usuarios = this.getItem<Usuario>(this.STORAGE_KEY);
+      console.log("Tentando login via localStorage para:", loginId);
+      console.log("Usuários disponíveis:", usuarios.length);
+      
+      // Tenta encontrar usuário por nome ou email
+      const usuario = usuarios.find(
+        u => u.nome.toLowerCase() === loginId.toLowerCase() || 
+             (u.email && u.email.toLowerCase() === loginId.toLowerCase())
+      );
+      
+      if (!usuario) {
+        console.log("Usuário não encontrado");
+        return null;
+      }
+      
+      // Verifica a senha
+      if (usuario.senha === senha) {
+        console.log("Senha correta, login bem-sucedido");
+        // Remove a senha antes de armazenar no localStorage
+        const { senha: _, ...userWithoutSenha } = usuario;
+        localStorage.setItem(this.AUTH_KEY, JSON.stringify(userWithoutSenha));
+        return usuario;
+      }
+      
+      console.log("Senha incorreta");
       return null;
     }
-    
-    console.log("Usuário encontrado:", usuario.nome, "verificando senha");
-    // Then check if the password matches exactly
-    if (usuario.senha === senha) {
-      console.log("Senha correta, login bem-sucedido");
-      // Remove the password before storing in localStorage
-      const { senha: _, ...userWithoutSenha } = usuario;
-      localStorage.setItem(this.AUTH_KEY, JSON.stringify(userWithoutSenha));
-      return usuario;
-    }
-    
-    console.log("Senha incorreta, fornecida:", senha, "esperada:", usuario.senha);
-    return null;
   }
 
   // Get current authenticated user
@@ -92,13 +205,32 @@ export class UsuarioService extends BaseService {
   }
 
   // Método para verificar credenciais sem login
-  verificarCredenciais(loginId: string, senha: string): boolean {
-    const usuarios = this.getUsuarios();
-    return usuarios.some(
-      u => (u.nome.toLowerCase() === loginId.toLowerCase() || 
-            (u.email && u.email.toLowerCase() === loginId.toLowerCase())) && 
-           u.senha === senha
-    );
+  async verificarCredenciais(loginId: string, senha: string): Promise<boolean> {
+    try {
+      // Busca usuário no Supabase pelo nome ou email
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .or(`nome.ilike.${loginId},email.ilike.${loginId}`);
+      
+      if (error) {
+        console.error("Erro ao verificar credenciais no Supabase:", error);
+        throw error;
+      }
+      
+      // Verifica se encontrou algum usuário com a senha correta
+      return data.some(u => u.senha === senha);
+    } catch (e) {
+      console.error("Erro ao verificar credenciais, usando fallback localStorage:", e);
+      
+      // Fallback para localStorage
+      const usuarios = this.getItem<Usuario>(this.STORAGE_KEY);
+      return usuarios.some(
+        u => (u.nome.toLowerCase() === loginId.toLowerCase() || 
+              (u.email && u.email.toLowerCase() === loginId.toLowerCase())) && 
+             u.senha === senha
+      );
+    }
   }
 }
 

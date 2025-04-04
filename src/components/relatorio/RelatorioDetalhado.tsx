@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PageTitle } from '@/components/PageTitle';
@@ -8,6 +8,7 @@ import { PontuacaoPorSecao } from './PontuacaoPorSecao';
 import { PontosAtencao } from './PontosAtencao';
 import { AnaliseGeral } from './AnaliseGeral';
 import { RelatorioActions } from './RelatorioActions';
+import { AnaliseIA } from './AnaliseIA';
 import { exportToPdf } from '@/utils/pdfExport';
 
 interface RelatorioDetalhadoProps {
@@ -24,6 +25,7 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
   refetchAuditoria
 }) => {
   const reportRef = useRef<HTMLDivElement>(null);
+  const [analiseIACompleta, setAnaliseIACompleta] = useState(false);
   
   // Fetch available users for select dropdowns
   const { data: usuarios, isLoading: loadingUsuarios } = useQuery({
@@ -133,13 +135,37 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
           id: resposta.id,
           pergunta_texto: pergunta?.texto || 'Pergunta não encontrada',
           secao_nome: secao?.nome || 'Seção não encontrada',
-          observacao: 'Item não conforme'
+          observacao: 'Item não conforme',
+          pontuacao: -1
+        };
+      });
+  };
+
+  // Get items that need attention (zero score)
+  const getItensAtencao = () => {
+    if (!auditoria.respostas || !perguntas) return [];
+    
+    return auditoria.respostas
+      .filter(resposta => resposta.resposta === 'Regular')
+      .map(resposta => {
+        const pergunta = perguntas.find(p => p.id === resposta.pergunta_id);
+        const secao = secoes?.find(s => s.id === pergunta?.secao_id);
+        return {
+          id: resposta.id,
+          pergunta_texto: pergunta?.texto || 'Pergunta não encontrada',
+          secao_nome: secao?.nome || 'Seção não encontrada',
+          observacao: 'Item requer atenção',
+          pontuacao: 0.5
         };
       });
   };
 
   // Get the critical items by calling the function
   const itensCriticos = getItensCriticos();
+  const itensAtencao = getItensAtencao();
+
+  // Combina itens críticos e itens que precisam de atenção
+  const todosItensProblemáticos = [...itensCriticos, ...itensAtencao];
 
   // Generate and download PDF
   const exportarPDF = () => {
@@ -178,6 +204,16 @@ export const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
           pontuacaoTotal={pontuacaoTotal} 
           pontuacoesPorSecao={pontuacoesPorSecao}
           itensCriticos={itensCriticos}
+        />
+
+        <AnaliseIA 
+          pontuacaoTotal={pontuacaoTotal}
+          pontuacoesPorSecao={pontuacoesPorSecao}
+          itensCriticos={itensCriticos} 
+          itensAtencao={itensAtencao}
+          lojaNome={auditoria.loja?.nome || 'Desconhecida'}
+          lojaNumero={auditoria.loja?.numero || '0'}
+          setAnaliseCompleta={setAnaliseIACompleta}
         />
       </div>
     </div>
