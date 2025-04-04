@@ -26,7 +26,7 @@ export class LojaService extends BaseService {
     }
   }
 
-  deleteLoja(id: number): void {
+  deleteLoja(id: string): void {
     const lojas = this.getLojas().filter(l => l.id !== id);
     this.setItem(this.STORAGE_KEY, lojas);
   }

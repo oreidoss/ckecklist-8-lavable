@@ -9,7 +9,7 @@ export class PerguntaService extends BaseService {
     return this.getItem<Pergunta>(this.STORAGE_KEY);
   }
 
-  getPerguntasBySecao(secaoId: number): Pergunta[] {
+  getPerguntasBySecao(secaoId: string): Pergunta[] {
     return this.getPerguntas().filter(p => p.secao_id === secaoId);
   }
 
@@ -30,7 +30,7 @@ export class PerguntaService extends BaseService {
     }
   }
 
-  deletePergunta(id: number): void {
+  deletePergunta(id: string): void {
     const perguntas = this.getPerguntas().filter(p => p.id !== id);
     this.setItem(this.STORAGE_KEY, perguntas);
   }

@@ -75,7 +75,7 @@ const AdminPerguntas: React.FC = () => {
     }
     
     const adicionada = db.addPergunta({
-      secao_id: parseInt(novaPergunta.secao_id),
+      secao_id: novaPergunta.secao_id,
       texto: novaPergunta.texto
     });
     
@@ -112,7 +112,7 @@ const AdminPerguntas: React.FC = () => {
     });
   };
   
-  const handleExcluirPergunta = (id: number) => {
+  const handleExcluirPergunta = (id: string) => {
     // Verificar se há respostas associadas a esta pergunta
     const respostas = db.getRespostas();
     const temRespostas = respostas.some(resposta => resposta.pergunta_id === id);
@@ -135,7 +135,7 @@ const AdminPerguntas: React.FC = () => {
     });
   };
   
-  const getSecaoNome = (secaoId: number) => {
+  const getSecaoNome = (secaoId: string) => {
     const secao = secoes.find(s => s.id === secaoId);
     return secao ? secao.nome : 'Seção não encontrada';
   };

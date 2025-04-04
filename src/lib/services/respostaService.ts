@@ -9,7 +9,7 @@ export class RespostaService extends BaseService {
     return this.getItem<Resposta>(this.STORAGE_KEY);
   }
 
-  getRespostasByAuditoria(auditoriaId: number): Resposta[] {
+  getRespostasByAuditoria(auditoriaId: string): Resposta[] {
     return this.getRespostas().filter(r => r.auditoria_id === auditoriaId);
   }
 
@@ -30,12 +30,12 @@ export class RespostaService extends BaseService {
     }
   }
 
-  deleteResposta(id: number): void {
+  deleteResposta(id: string): void {
     const respostas = this.getRespostas().filter(r => r.id !== id);
     this.setItem(this.STORAGE_KEY, respostas);
   }
 
-  deleteRespostasByAuditoria(auditoriaId: number): void {
+  deleteRespostasByAuditoria(auditoriaId: string): void {
     const respostas = this.getRespostas().filter(r => r.auditoria_id !== auditoriaId);
     this.setItem(this.STORAGE_KEY, respostas);
   }

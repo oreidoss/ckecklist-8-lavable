@@ -10,7 +10,7 @@ export class AuditoriaService extends BaseService {
     return this.getItem<Auditoria>(this.STORAGE_KEY);
   }
 
-  getAuditoria(id: number): Auditoria | undefined {
+  getAuditoria(id: string): Auditoria | undefined {
     return this.getAuditorias().find(a => a.id === id);
   }
 
@@ -31,7 +31,7 @@ export class AuditoriaService extends BaseService {
     }
   }
 
-  deleteAuditoria(id: number): void {
+  deleteAuditoria(id: string): void {
     const auditorias = this.getAuditorias().filter(a => a.id !== id);
     this.setItem(this.STORAGE_KEY, auditorias);
     

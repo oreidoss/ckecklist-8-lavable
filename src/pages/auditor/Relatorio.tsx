@@ -122,11 +122,24 @@ const Relatorio: React.FC = () => {
       initialData: [],
     });
 
+    // Convert response types to match our TypeScript definitions
+    const typedRespostas = auditoria.respostas ? 
+      auditoria.respostas.map(r => ({
+        ...r,
+        // Ensure types match our Resposta interface
+        id: r.id.toString(),
+        auditoria_id: r.auditoria_id?.toString() || '',
+        pergunta_id: r.pergunta_id?.toString() || '',
+        resposta: r.resposta || '',
+        pontuacao_obtida: Number(r.pontuacao_obtida || 0),
+        observacao: r.observacao
+      })) : [];
+
     return (
       <RelatorioDetalhado 
         auditoria={auditoria} 
         loja={auditoria.loja} 
-        respostas={auditoria.respostas || []} 
+        respostas={typedRespostas} 
         perguntas={perguntas} 
         secoes={secoes}
         auditorias={auditorias}

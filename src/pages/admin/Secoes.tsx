@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { PageTitle } from "@/components/PageTitle";
 import { useQuery } from '@tanstack/react-query';
@@ -16,7 +15,6 @@ import { Usuario } from '@/lib/types';
 const AdminSecoes: React.FC = () => {
   const { toast } = useToast();
   
-  // Fetch data using React Query with better error handling
   const { 
     data: secoes = [], 
     isLoading: isLoadingSecoes, 
@@ -98,11 +96,7 @@ const AdminSecoes: React.FC = () => {
         throw error;
       }
       
-      // Transform string IDs to number IDs to match the Usuario interface
-      return (data || []).map(user => ({
-        ...user,
-        id: typeof user.id === 'string' ? parseInt(user.id, 10) : user.id
-      })) as Usuario[];
+      return (data || []) as Usuario[];
     },
   });
   

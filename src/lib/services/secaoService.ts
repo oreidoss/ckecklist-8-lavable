@@ -26,7 +26,7 @@ export class SecaoService extends BaseService {
     }
   }
 
-  deleteSecao(id: number): void {
+  deleteSecao(id: string): void {
     const secoes = this.getSecoes().filter(s => s.id !== id);
     this.setItem(this.STORAGE_KEY, secoes);
   }

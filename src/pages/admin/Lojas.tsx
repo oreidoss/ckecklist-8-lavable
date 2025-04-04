@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -118,7 +117,7 @@ const AdminLojas: React.FC = () => {
     });
   };
   
-  const handleExcluirLoja = (id: number) => {
+  const handleExcluirLoja = (id: string) => {
     // Verificar se há auditorias associadas a esta loja
     const auditorias = db.getAuditorias();
     const temAuditorias = auditorias.some(auditoria => auditoria.loja_id === id);

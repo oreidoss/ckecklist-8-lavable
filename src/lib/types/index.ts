@@ -40,8 +40,9 @@ export interface Resposta {
   id: string;
   auditoria_id: string;
   pergunta_id: string;
-  resposta: 'Sim' | 'Não' | 'Regular' | 'Não se aplica';
+  resposta: string; // Changed from enum to string to match Supabase data
   pontuacao_obtida: number;
+  observacao?: string; // Added observacao property
 }
 
 // Form types
@@ -81,6 +82,6 @@ export interface AuditoriaFormData {
 export interface RespostaFormData {
   auditoria_id: string;
   pergunta_id: string;
-  resposta: 'Sim' | 'Não' | 'Regular' | 'Não se aplica';
+  resposta: string;
   pontuacao_obtida: number;
 }
