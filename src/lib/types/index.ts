@@ -1,57 +1,86 @@
 
-// Atualizar a interface de Usuário para incluir senha e usar string para o ID
-export interface Usuario {
+// Basic types
+export interface Loja {
   id: string;
   nome: string;
-  email: string;
-  role?: string;
-  senha: string; // Tornar senha um campo obrigatório
-}
-
-// Types of data
-export interface Loja {
-  id: number;
   numero: string;
-  nome: string;
 }
 
 export interface Secao {
-  id: number;
+  id: string;
   nome: string;
 }
 
 export interface Pergunta {
-  id: number;
-  secao_id: number;
+  id: string;
   texto: string;
+  secao_id: string;
+}
+
+export interface Usuario {
+  id: string;
+  nome: string;
+  email: string;
+  senha?: string;
+  role?: string;
 }
 
 export interface Auditoria {
-  id: number;
-  loja_id: number;
-  usuario_id: number;
+  id: string;
   data: string;
-  pontuacao_total: number;
-  status?: string;
-  supervisor?: string;
+  loja_id: string;
+  usuario_id: string;
   gerente?: string;
+  supervisor?: string;
+  status?: string;
+  pontuacao_total: number;
 }
 
 export interface Resposta {
-  id: number;
-  auditoria_id: number;
-  pergunta_id: number;
-  resposta: "Sim" | "Não" | "Regular" | "Não se aplica";
+  id: string;
+  auditoria_id: string;
+  pergunta_id: string;
+  resposta: 'Sim' | 'Não' | 'Regular' | 'Não se aplica';
   pontuacao_obtida: number;
 }
 
-// Mapping of responses to scores
-export const pontuacaoMap = {
-  "Sim": 1,
-  "Não": -1,
-  "Regular": 0.5,
-  "Não se aplica": 0
-};
+// Form types
+export interface SecaoFormData {
+  nome: string;
+}
 
-// Role types for user management
-export type UserRole = "supervisor" | "gerente" | "admin" | "";
+export interface PerguntaFormData {
+  texto: string;
+  secao_id: string;
+}
+
+export interface LojaFormData {
+  nome: string;
+  numero: string;
+}
+
+export interface UsuarioFormData {
+  nome: string;
+  email: string;
+  senha: string;
+  role?: string;
+}
+
+export interface LoginFormData {
+  nome: string;
+  senha: string;
+}
+
+export interface AuditoriaFormData {
+  loja_id: string;
+  data: string;
+  gerente?: string;
+  supervisor?: string;
+}
+
+export interface RespostaFormData {
+  auditoria_id: string;
+  pergunta_id: string;
+  resposta: 'Sim' | 'Não' | 'Regular' | 'Não se aplica';
+  pontuacao_obtida: number;
+}

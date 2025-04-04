@@ -5,10 +5,10 @@ export const initDatabase = async () => {
   try {
     // Check if usuarios already exist - get as Promise and await result
     const existingUsers = await db.getUsuarios();
-    console.log("Usuários existentes:", existingUsers.length);
+    console.log("Usuários existentes:", existingUsers?.length || 0);
     
     // If no users exist, create a default test user
-    if (existingUsers.length === 0) {
+    if (!existingUsers || existingUsers.length === 0) {
       console.log("Criando usuário de teste...");
       const novoUsuario = await db.addUsuario({
         nome: 'testeuser',

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,9 +40,12 @@ const Login = () => {
     }
     
     // Debug users on mount
-    usuarioService.getUsuarios().then(usuarios => {
+    const checkUsers = async () => {
+      const usuarios = await usuarioService.getUsuarios();
       console.log("Usuários disponíveis ao carregar página de login:", usuarios);
-    });
+    };
+    
+    checkUsers();
   }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -124,19 +128,22 @@ const Login = () => {
     try {
       // Check if user already exists
       const usuarios = await usuarioService.getUsuarios();
-      const userExists = usuarios.some(u => 
-        u.nome.toLowerCase() === newNome.toLowerCase() || 
-        (u.email && u.email.toLowerCase() === newEmail.toLowerCase())
-      );
       
-      if (userExists) {
-        toast({
-          title: "Usuário já existe",
-          description: "Este nome de usuário ou email já está em uso",
-          variant: "destructive"
-        });
-        setRegistering(false);
-        return;
+      if (usuarios) {
+        const userExists = usuarios.some(u => 
+          u.nome.toLowerCase() === newNome.toLowerCase() || 
+          (u.email && u.email.toLowerCase() === newEmail.toLowerCase())
+        );
+        
+        if (userExists) {
+          toast({
+            title: "Usuário já existe",
+            description: "Este nome de usuário ou email já está em uso",
+            variant: "destructive"
+          });
+          setRegistering(false);
+          return;
+        }
       }
       
       console.log("Registrando novo usuário:", newNome, newEmail);
