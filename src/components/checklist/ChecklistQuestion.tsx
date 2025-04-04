@@ -30,13 +30,13 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
     
     switch (valor) {
       case 'Sim':
-        return 'bg-green-500 text-white border-green-500 hover:bg-green-600';
+        return 'bg-green-500 text-white border-green-500 hover:bg-green-600 font-bold';
       case 'Não':
-        return 'bg-red-500 text-white border-red-500 hover:bg-red-600';
+        return 'bg-red-500 text-white border-red-500 hover:bg-red-600 font-bold';
       case 'Regular':
-        return 'bg-yellow-500 text-white border-yellow-500 hover:bg-yellow-600';
+        return 'bg-yellow-500 text-white border-yellow-500 hover:bg-yellow-600 font-bold';
       case 'N/A':
-        return 'bg-gray-500 text-white border-gray-500 hover:bg-gray-600';
+        return 'bg-gray-500 text-white border-gray-500 hover:bg-gray-600 font-bold';
       default:
         return '';
     }
@@ -52,7 +52,7 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
             key={valor}
             variant={getButtonVariant(valor)}
             size="sm"
-            className={`text-[10px] p-1 transition-colors duration-200 ${getButtonStyle(valor)}`}
+            className={`text-[10px] p-1 transition-colors duration-200 ${getButtonStyle(valor)} ${resposta === valor ? 'ring-2 ring-offset-1 ring-opacity-50' : ''}`}
             onClick={() => handleResposta(pergunta.id, valor)}
           >
             {valor}
