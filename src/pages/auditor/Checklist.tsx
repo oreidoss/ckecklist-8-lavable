@@ -1,18 +1,13 @@
+
 import React, { useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { Home } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 import { useChecklist } from '@/hooks/checklist';
 import { useChecklistData } from '@/hooks/checklist/useChecklistData';
 import { useSectionNavigation } from '@/hooks/checklist/useSectionNavigation';
+import { useChecklistHelpers } from '@/hooks/checklist/useChecklistHelpers';
 import useUserSelectors from '@/components/checklist/UserSelectors';
-import ChecklistHeader from '@/components/checklist/ChecklistHeader';
-import SectionNavigation from '@/components/checklist/SectionNavigation';
-import SectionContent from '@/components/checklist/SectionContent';
-import SectionNavigationButtons from '@/components/checklist/SectionNavigationButtons';
-import ChecklistActions from '@/components/checklist/ChecklistActions';
-import SectionWarning from '@/components/checklist/SectionWarning';
+import ChecklistContainer from '@/components/checklist/ChecklistContainer';
 
 const Checklist: React.FC = () => {
   const { auditoriaId } = useParams<{ auditoriaId: string }>();
@@ -55,7 +50,7 @@ const Checklist: React.FC = () => {
     handleObservacaoChange,
     handleSaveObservacao: handleSaveObservacaoBase,
     saveAndNavigateHome: saveAndNavigateHomeBase
-  } = useChecklist(auditoriaId, undefined);
+  } = useChecklist(auditoriaId, perguntas);
   
   // Section navigation
   const {
@@ -72,6 +67,13 @@ const Checklist: React.FC = () => {
     perguntas,
     respostas
   });
+
+  // Helpers for checklist operations
+  const { hasUnansweredQuestions, isLastPerguntaInSection } = useChecklistHelpers(
+    perguntas,
+    respostas,
+    activeSecao
+  );
   
   // User selectors handlers
   const {
@@ -161,117 +163,47 @@ const Checklist: React.FC = () => {
       }
     }
   };
-  
-  const isLastPerguntaInSection = (perguntaId: string) => {
-    if (!perguntas) return false;
-    
-    const perguntasDestaSecao = perguntas.filter(p => p.secao_id === activeSecao);
-    const lastPergunta = perguntasDestaSecao[perguntasDestaSecao.length - 1];
-    
-    return lastPergunta && lastPergunta.id === perguntaId;
-  };
-
-  const hasUnansweredQuestions = () => {
-    if (!activeSecao || !perguntas) return false;
-    
-    const perguntasSecaoAtiva = perguntas.filter(p => p.secao_id === activeSecao);
-    const requiredQuestions = perguntasSecaoAtiva.slice(0, -2);
-    return requiredQuestions.some(pergunta => !respostas[pergunta.id]);
-  };
-
-  if (isLoading) {
-    return <div className="flex justify-center items-center h-96">Carregando...</div>;
-  }
-  
-  const activeSecaoObj = secoes?.find(s => s.id === activeSecao);
-  const perguntasSecaoAtiva = getPerguntasBySecao(activeSecao || '');
-  const secaoIndex = secoes?.findIndex(s => s.id === activeSecao) || 0;
-  const totalSecoes = secoes?.length || 0;
-  const isFirstSection = secaoIndex === 0;
-  const isLastSection = secaoIndex === totalSecoes - 1;
 
   return (
-    <div className="pb-12 max-w-4xl mx-auto">
-      <ChecklistHeader
-        lojaName={auditoria?.loja?.nome || ''}
-        lojaNumero={auditoria?.loja?.numero || ''}
-        progresso={progresso}
-        currentDate={currentDate}
-        supervisor={supervisor}
-        gerente={gerente}
-        isEditingSupervisor={isEditingSupervisor}
-        isEditingGerente={isEditingGerente}
-        usuarios={usuarios || []}
-        setIsEditingSupervisor={setIsEditingSupervisor}
-        setIsEditingGerente={setIsEditingGerente}
-        setSupervisor={setSupervisor}
-        setGerente={setGerente}
-        handleSaveSupervisor={handleSaveSupervisor}
-        handleSaveGerente={handleSaveGerente}
-      />
-      
-      <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
-        <SectionNavigation
-          secoes={secoes || []}
-          activeSecao={activeSecao}
-          completedSections={completedSections}
-          incompleteSections={incompleteSections}
-          setActiveSecao={handleSetActiveSecao}
-        />
-      </div>
-      
-      {activeSecaoObj && (
-        <div className="bg-white rounded-lg p-2 shadow-sm">
-          <h2 className="text-sm font-bold mb-1">{activeSecaoObj.nome}</h2>
-          <div className="text-[10px] text-gray-600 mb-1">
-            Seção {secaoIndex + 1} de {totalSecoes}
-          </div>
-          
-          {hasUnansweredQuestions() && <SectionWarning />}
-          
-          <div className="space-y-1">
-            <SectionContent
-              perguntasSecaoAtiva={perguntasSecaoAtiva}
-              respostas={respostas}
-              observacoes={observacoes}
-              fileUrls={fileUrls}
-              uploading={uploading}
-              respostasExistentes={respostasExistentes}
-              handleResposta={handleRespostaWrapped}
-              handleObservacaoChange={handleObservacaoChange}
-              handleSaveObservacao={handleSaveObservacaoWrapped}
-              handleFileUpload={handleFileUploadWrapped}
-              isLastPerguntaInSection={isLastPerguntaInSection}
-            />
-          </div>
-          
-          <div className="mt-2 flex flex-col sm:flex-row justify-between gap-1">
-            <SectionNavigationButtons 
-              isFirstSection={isFirstSection}
-              isLastSection={isLastSection}
-              handlePreviousSection={goToPreviousSection}
-              handleNextSection={goToNextSection}
-              hasUnansweredQuestions={hasUnansweredQuestions}
-            />
-            
-            <ChecklistActions 
-              auditoriaId={auditoriaId}
-              saveAndNavigateHome={saveAndNavigateHome}
-              isSaving={isSaving}
-            />
-          </div>
-        </div>
-      )}
-      
-      <div className="mt-6 text-center">
-        <Button variant="outline" asChild className="border-[#00bfa5] text-[#00bfa5]">
-          <Link to="/" className="flex items-center justify-center">
-            <Home className="mr-2 h-4 w-4" />
-            Voltar para lojas
-          </Link>
-        </Button>
-      </div>
-    </div>
+    <ChecklistContainer
+      isLoading={isLoading}
+      auditoria={auditoria}
+      secoes={secoes}
+      perguntas={perguntas}
+      respostas={respostas}
+      observacoes={observacoes}
+      uploading={uploading}
+      fileUrls={fileUrls}
+      respostasExistentes={respostasExistentes}
+      supervisor={supervisor}
+      gerente={gerente}
+      isEditingSupervisor={isEditingSupervisor}
+      isEditingGerente={isEditingGerente}
+      currentDate={currentDate}
+      activeSecao={activeSecao}
+      progresso={progresso}
+      completedSections={completedSections}
+      incompleteSections={incompleteSections}
+      isSaving={isSaving}
+      usuarios={usuarios || []}
+      setIsEditingSupervisor={setIsEditingSupervisor}
+      setIsEditingGerente={setIsEditingGerente}
+      setSupervisor={setSupervisor}
+      setGerente={setGerente}
+      handleSaveSupervisor={handleSaveSupervisor}
+      handleSaveGerente={handleSaveGerente}
+      getPerguntasBySecao={getPerguntasBySecao}
+      handleSetActiveSecao={handleSetActiveSecao}
+      handleResposta={handleRespostaWrapped}
+      handleObservacaoChange={handleObservacaoChange}
+      handleSaveObservacao={handleSaveObservacaoWrapped}
+      handleFileUpload={handleFileUploadWrapped}
+      goToPreviousSection={goToPreviousSection}
+      goToNextSection={goToNextSection}
+      hasUnansweredQuestions={hasUnansweredQuestions}
+      isLastPerguntaInSection={isLastPerguntaInSection}
+      saveAndNavigateHome={saveAndNavigateHome}
+    />
   );
 };
 
