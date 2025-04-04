@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -10,6 +11,32 @@ const Relatorio: React.FC = () => {
   const { auditoriaId, lojaId } = useParams();
   const navigate = useNavigate();
   
+  // Always fetch secoes and perguntas regardless of other conditions
+  const { data: secoes } = useQuery({
+    queryKey: ['secoes'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('secoes')
+        .select('*');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const { data: perguntas } = useQuery({
+    queryKey: ['perguntas'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('perguntas')
+        .select('*');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+  
+  // Fetch auditoria if auditoriaId is provided
   const { 
     data: auditoria, 
     isLoading: loadingAuditoria,
@@ -31,6 +58,7 @@ const Relatorio: React.FC = () => {
     enabled: !!auditoriaId
   });
 
+  // Fetch auditorias for a loja if lojaId is provided
   const {
     data: auditoriasPorLoja,
     isLoading: loadingAuditoriasPorLoja
@@ -60,28 +88,22 @@ const Relatorio: React.FC = () => {
     enabled: !!lojaId && !auditoriaId
   });
 
-  const { data: secoes } = useQuery({
-    queryKey: ['secoes'],
+  // Fetch auditorias for auditoria's loja (only if auditoria exists)
+  const { data: auditorias = [] } = useQuery({
+    queryKey: ['auditorias-loja', auditoria?.loja_id],
     queryFn: async () => {
+      if (!auditoria?.loja_id) return [];
+      
       const { data, error } = await supabase
-        .from('secoes')
-        .select('*');
+        .from('auditorias')
+        .select('*, respostas(*)')
+        .eq('loja_id', auditoria.loja_id)
+        .order('data', { ascending: false });
       
       if (error) throw error;
       return data;
-    }
-  });
-
-  const { data: perguntas } = useQuery({
-    queryKey: ['perguntas'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('perguntas')
-        .select('*');
-      
-      if (error) throw error;
-      return data;
-    }
+    },
+    enabled: !!auditoria?.loja_id
   });
 
   if (loadingAuditoria || loadingAuditoriasPorLoja) {
@@ -101,21 +123,6 @@ const Relatorio: React.FC = () => {
   }
 
   if (auditoria && secoes && perguntas) {
-    const { data: auditorias = [] } = useQuery({
-      queryKey: ['auditorias-loja', auditoria.loja_id],
-      queryFn: async () => {
-        const { data, error } = await supabase
-          .from('auditorias')
-          .select('*, respostas(*)')
-          .eq('loja_id', auditoria.loja_id)
-          .order('data', { ascending: false });
-        
-        if (error) throw error;
-        return data;
-      },
-      initialData: [],
-    });
-
     const typedRespostas: Resposta[] = auditoria.respostas ? 
       auditoria.respostas.map(r => ({
         ...r,
