@@ -19,13 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserCheck, Link } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
-
-type Usuario = {
-  id: number;
-  nome: string;
-  email: string;
-  role?: string;
-};
+import { Usuario } from '@/lib/types';
 
 interface UsuariosCardProps {
   usuarios: Usuario[];

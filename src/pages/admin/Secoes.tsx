@@ -80,7 +80,7 @@ const AdminSecoes: React.FC = () => {
   });
 
   const { 
-    data: usuarios = [], 
+    data: usuariosData = [], 
     isLoading: isLoadingUsuarios,
     refetch: refetchUsuarios
   } = useQuery({
@@ -97,15 +97,15 @@ const AdminSecoes: React.FC = () => {
         throw error;
       }
       
-      // Convert all data to match the Usuario type with string IDs
-      const typedUsuarios: Usuario[] = (data || []).map(user => ({
-        ...user,
-        id: user.id.toString()
-      }));
-      
-      return typedUsuarios;
+      return data || [];
     },
   });
+  
+  // Convert the user data to the correct Usuario type
+  const usuarios: Usuario[] = usuariosData.map(user => ({
+    ...user,
+    id: user.id.toString()
+  }));
   
   const refreshAllData = () => {
     refetchSecoes();

@@ -84,4 +84,5 @@ export interface RespostaFormData {
   pergunta_id: string;
   resposta: string;
   pontuacao_obtida: number;
+  observacao?: string; // Added observacao property to match Resposta interface
 }
