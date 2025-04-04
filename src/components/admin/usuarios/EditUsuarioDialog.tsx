@@ -170,13 +170,27 @@ export const EditUsuarioDialog: React.FC<EditUsuarioDialogProps> = ({
           <DialogClose asChild>
             <Button variant="outline">Cancelar</Button>
           </DialogClose>
-          <DialogClose>
-            {(close) => (
-              <Button onClick={() => handleSalvarClick(close)} disabled={isLoading}>
-                {isLoading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : null}
-                Salvar Alterações
-              </Button>
-            )}
+          <DialogClose asChild>
+            <Button onClick={(e) => {
+              // Get the close function from DialogClose context
+              const closeButton = e.currentTarget.closest('button');
+              const closeEvent = new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                button: 0
+              });
+              
+              // First handle our logic
+              handleSalvarClick(() => {
+                // Then trigger the close action
+                if (closeButton) {
+                  closeButton.dispatchEvent(closeEvent);
+                }
+              });
+            }} disabled={isLoading}>
+              {isLoading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Salvar Alterações
+            </Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>

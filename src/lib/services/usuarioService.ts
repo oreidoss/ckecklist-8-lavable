@@ -9,19 +9,23 @@ export class UsuarioService extends BaseService {
 
   async getUsuarios(): Promise<Usuario[]> {
     try {
+      // Try to fetch users from Supabase
       const { data, error } = await supabase
         .from('usuarios')
         .select('*');
       
       if (error) {
         console.error("Error fetching users from Supabase:", error);
+        // Fallback to localStorage if there's an error
         return this.getItem<Usuario>(this.STORAGE_KEY);
       }
       
+      // Log successful retrieval
       console.log("Successfully retrieved users from Supabase:", data);
       return data as Usuario[];
     } catch (e) {
       console.error("Error fetching users:", e);
+      // Fallback to localStorage
       return this.getItem<Usuario>(this.STORAGE_KEY);
     }
   }
@@ -30,12 +34,14 @@ export class UsuarioService extends BaseService {
     try {
       console.log("Attempting to add user to Supabase:", usuario);
       
+      // Add user to Supabase - handle the case where 'role' is not a column
       const { data, error } = await supabase
         .from('usuarios')
         .insert([{
           nome: usuario.nome,
           email: usuario.email,
           senha: usuario.senha
+          // Don't include role if it's causing issues
         }])
         .select()
         .single();
@@ -47,6 +53,7 @@ export class UsuarioService extends BaseService {
       
       const newUser = data as Usuario;
       
+      // Add role in localStorage even if not in Supabase
       if (usuario.role) {
         newUser.role = usuario.role;
       }
@@ -55,8 +62,9 @@ export class UsuarioService extends BaseService {
       return newUser;
     } catch (e) {
       console.error("Error adding user, using localStorage fallback:", e);
+      // Fallback to localStorage in case of error
       const users = this.getItem<Usuario>(this.STORAGE_KEY);
-      const id = this.getMaxId(users).toString();
+      const id = this.getMaxId(users).toString(); // Convert to string
       const newUser = { ...usuario, id } as Usuario;
       this.setItem(this.STORAGE_KEY, [...users, newUser]);
       return newUser;
@@ -65,11 +73,13 @@ export class UsuarioService extends BaseService {
 
   async updateUsuario(usuario: Usuario): Promise<void> {
     try {
+      // Update user in Supabase - handle the case where 'role' is not a column
       const updateData = {
         nome: usuario.nome,
         email: usuario.email
       };
       
+      // Only include senha if it's provided
       if (usuario.senha) {
         (updateData as any).senha = usuario.senha;
       }
@@ -86,6 +96,7 @@ export class UsuarioService extends BaseService {
       
       console.log("User updated successfully in Supabase:", usuario);
       
+      // Store role in localStorage if it's not in Supabase
       if (usuario.role) {
         const currentUser = this.getCurrentUser();
         if (currentUser && currentUser.id === usuario.id) {
@@ -95,6 +106,7 @@ export class UsuarioService extends BaseService {
       }
     } catch (e) {
       console.error("Error updating user, using fallback localStorage:", e);
+      // Fallback to localStorage
       const users = this.getItem<Usuario>(this.STORAGE_KEY);
       const index = users.findIndex(u => u.id === usuario.id);
       if (index >= 0) {
@@ -106,6 +118,7 @@ export class UsuarioService extends BaseService {
 
   async deleteUsuario(id: string): Promise<void> {
     try {
+      // Deleta usuário no Supabase
       const { error } = await supabase
         .from('usuarios')
         .delete()
@@ -119,6 +132,7 @@ export class UsuarioService extends BaseService {
       console.log("User deleted successfully from Supabase, ID:", id);
     } catch (e) {
       console.error("Error deleting user, using fallback localStorage:", e);
+      // Fallback to localStorage
       const users = this.getItem<Usuario>(this.STORAGE_KEY).filter(u => u.id !== id);
       this.setItem(this.STORAGE_KEY, users);
     }
@@ -134,7 +148,7 @@ export class UsuarioService extends BaseService {
     try {
       console.log("Attempting login with:", loginId);
       
-      // Use let instead of const for data that needs to be reassigned later
+      // Search for user in Supabase by name or email
       let { data, error } = await supabase
         .from('usuarios')
         .select('*')
@@ -147,7 +161,9 @@ export class UsuarioService extends BaseService {
       
       console.log("Login search results:", data);
       
+      // Check if any user was found
       if (!data || data.length === 0) {
+        // Try direct query for exact matching
         const { data: exactData, error: exactError } = await supabase
           .from('usuarios')
           .select('*')
@@ -155,6 +171,7 @@ export class UsuarioService extends BaseService {
           
         if (exactError || !exactData || exactData.length === 0) {
           console.log("User not found in Supabase");
+          // Try localStorage fallback
           return this.loginWithLocalStorage(loginId, senha);
         }
         
@@ -162,19 +179,23 @@ export class UsuarioService extends BaseService {
         data = exactData;
       }
       
+      // Find user with correct credentials
       const user = data.find(u => u.senha === senha);
       
       if (!user) {
         console.log("Incorrect password");
+        // Try localStorage fallback
         return this.loginWithLocalStorage(loginId, senha);
       }
       
       const convertedUser = user as Usuario;
       
+      // Add role if it doesn't exist in the database
       if (!convertedUser.role) {
-        convertedUser.role = 'user';
+        convertedUser.role = 'user'; // Default role
       }
       
+      // Remove password before storing in localStorage
       const { senha: _, ...userWithoutPassword } = convertedUser;
       localStorage.setItem(this.AUTH_KEY, JSON.stringify(userWithoutPassword));
       
@@ -187,10 +208,12 @@ export class UsuarioService extends BaseService {
   }
   
   private async loginWithLocalStorage(loginId: string, senha: string): Promise<Usuario | null> {
+    // Fallback to localStorage
     const users = this.getItem<Usuario>(this.STORAGE_KEY);
     console.log("Trying login via localStorage for:", loginId);
     console.log("Available users:", users.length);
     
+    // Try to find user by name or email
     const user = users.find(
       u => u.nome.toLowerCase() === loginId.toLowerCase() || 
             (u.email && u.email.toLowerCase() === loginId.toLowerCase())
@@ -201,8 +224,10 @@ export class UsuarioService extends BaseService {
       return null;
     }
     
+    // Verify password
     if (user.senha === senha) {
       console.log("Correct password, login successful");
+      // Remove password before storing in localStorage
       const { senha: _, ...userWithoutPassword } = user;
       localStorage.setItem(this.AUTH_KEY, JSON.stringify(userWithoutPassword));
       return user;
@@ -212,17 +237,21 @@ export class UsuarioService extends BaseService {
     return null;
   }
 
+  // Get current authenticated user
   getCurrentUser(): Usuario | null {
     const userJson = localStorage.getItem(this.AUTH_KEY);
     return userJson ? JSON.parse(userJson) : null;
   }
 
+  // Logout method
   logout(): void {
     localStorage.removeItem(this.AUTH_KEY);
   }
 
+  // Method to verify credentials without login
   async verificarCredenciais(loginId: string, senha: string): Promise<boolean> {
     try {
+      // Search user in Supabase by name or email
       const { data, error } = await supabase
         .from('usuarios')
         .select('*')
@@ -233,10 +262,12 @@ export class UsuarioService extends BaseService {
         throw error;
       }
       
+      // Check if found any user with the correct password
       return data && data.some(u => u.senha === senha);
     } catch (e) {
       console.error("Error verifying credentials, using fallback localStorage:", e);
       
+      // Fallback to localStorage
       const usuarios = this.getItem<Usuario>(this.STORAGE_KEY);
       return usuarios.some(
         u => (u.nome.toLowerCase() === loginId.toLowerCase() || 
