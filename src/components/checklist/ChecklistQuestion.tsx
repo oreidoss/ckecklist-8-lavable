@@ -20,19 +20,15 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
   handleResposta
 }) => {
   const isMobile = useIsMobile();
-  const [localResposta, setLocalResposta] = useState<RespostaValor | undefined>(resposta);
-  
-  // Update local state when parent prop changes
-  useEffect(() => {
-    setLocalResposta(resposta);
-  }, [resposta]);
+  // Changed to directly use resposta prop for rendering buttons
+  // No more local state which could get out of sync
   
   const getButtonVariant = (valor: RespostaValor) => {
-    return (localResposta === valor) ? "default" : "outline";
+    return (resposta === valor) ? "default" : "outline";
   };
 
   const getButtonStyle = (valor: RespostaValor): string => {
-    if (localResposta !== valor) return "text-gray-700 border-gray-300";
+    if (resposta !== valor) return "text-gray-700 border-gray-300";
     
     switch (valor) {
       case 'Sim':
@@ -49,9 +45,7 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
   };
   
   const handleClick = (valor: RespostaValor) => {
-    // Update local state immediately for UI feedback
-    setLocalResposta(valor);
-    // Call parent function to persist the response
+    // Directly call parent handler without local state
     handleResposta(pergunta.id, valor);
   };
   
@@ -65,7 +59,7 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
             key={valor}
             variant={getButtonVariant(valor)}
             size="sm"
-            className={`text-[10px] p-1 transition-colors duration-200 ${getButtonStyle(valor)} ${localResposta === valor ? 'ring-2 ring-offset-1 ring-opacity-50' : ''}`}
+            className={`text-[10px] p-1 transition-colors duration-200 ${getButtonStyle(valor)} ${resposta === valor ? 'ring-2 ring-offset-1 ring-opacity-50' : ''}`}
             onClick={() => handleClick(valor)}
           >
             {valor}
