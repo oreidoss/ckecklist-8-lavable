@@ -21,9 +21,12 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
 }) => {
   const isMobile = useIsMobile();
   
-  // Função para determinar o estilo baseado na resposta
+  const getButtonVariant = (valor: RespostaValor) => {
+    return resposta === valor ? "default" : "outline";
+  };
+
   const getButtonStyle = (valor: RespostaValor): string => {
-    if (resposta !== valor) return '';
+    if (resposta !== valor) return "text-gray-700 border-gray-300";
     
     switch (valor) {
       case 'Sim':
@@ -47,9 +50,9 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
         {(['Sim', 'Não', 'Regular', 'N/A'] as RespostaValor[]).map((valor) => (
           <Button
             key={valor}
-            variant={resposta === valor ? "default" : "outline"}
+            variant={getButtonVariant(valor)}
             size="sm"
-            className={`text-[10px] p-1 ${getButtonStyle(valor)}`}
+            className={`text-[10px] p-1 transition-colors duration-200 ${getButtonStyle(valor)}`}
             onClick={() => handleResposta(pergunta.id, valor)}
           >
             {valor}
