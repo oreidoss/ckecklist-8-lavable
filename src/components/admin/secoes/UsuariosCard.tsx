@@ -21,7 +21,7 @@ import { UserCheck, Link } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 
 type Usuario = {
-  id: string;
+  id: number;
   nome: string;
   email: string;
   role?: string;
