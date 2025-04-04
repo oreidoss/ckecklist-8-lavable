@@ -24,6 +24,7 @@ export interface Usuario {
   email: string;
   senha?: string;
   role?: 'admin' | 'user' | 'supervisor' | 'gerente';
+  funcao?: string; // Add the funcao field to match Supabase schema
 }
 
 export interface Auditoria {

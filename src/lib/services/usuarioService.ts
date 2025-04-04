@@ -1,4 +1,3 @@
-
 import { Usuario } from '../types';
 import { BaseService } from './baseService';
 import { supabase } from '@/integrations/supabase/client';
@@ -142,7 +141,7 @@ export class UsuarioService extends BaseService {
       this.setItem(this.STORAGE_KEY, users);
     }
   }
-  
+
   isAdmin(id: string): boolean {
     const usuarios = this.getItem<Usuario>(this.STORAGE_KEY);
     const usuario = usuarios.find(u => u.id === id);
@@ -241,18 +240,15 @@ export class UsuarioService extends BaseService {
     return null;
   }
 
-  // Get current authenticated user
   getCurrentUser(): Usuario | null {
     const userJson = localStorage.getItem(this.AUTH_KEY);
     return userJson ? JSON.parse(userJson) : null;
   }
 
-  // Logout method
   logout(): void {
     localStorage.removeItem(this.AUTH_KEY);
   }
 
-  // Method to verify credentials without login
   async verificarCredenciais(loginId: string, senha: string): Promise<boolean> {
     try {
       // Search user in Supabase by name or email
