@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -42,11 +41,27 @@ export const useChecklistScores = (
       // Calculate scores by section
       const scores: Record<string, number> = {};
       
+      // First, initialize all secoes to 0
+      perguntasData.forEach(pergunta => {
+        if (pergunta.secao_id && !scores[pergunta.secao_id]) {
+          scores[pergunta.secao_id] = 0;
+        }
+      });
+      
+      // Now calculate the actual scores from responses
       respostasData.forEach(resposta => {
         const pergunta = perguntasData.find(p => p.id === resposta.pergunta_id);
         if (pergunta && pergunta.secao_id) {
           const secaoId = pergunta.secao_id;
-          scores[secaoId] = (scores[secaoId] || 0) + (resposta.pontuacao_obtida || 0);
+          
+          // Use the actual score from the response if available
+          // Otherwise calculate it from the response value using pontuacaoMap
+          if (resposta.pontuacao_obtida !== null && resposta.pontuacao_obtida !== undefined) {
+            scores[secaoId] = (scores[secaoId] || 0) + resposta.pontuacao_obtida;
+          } else if (resposta.resposta) {
+            const pontuacao = pontuacaoMap[resposta.resposta] || 0;
+            scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
+          }
         }
       });
       

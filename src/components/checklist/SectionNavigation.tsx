@@ -21,6 +21,9 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
   setActiveSecao,
   pontuacaoPorSecao = {}
 }) => {
+  // Debug the scores
+  console.log("SectionNavigation pontuacaoPorSecao:", pontuacaoPorSecao);
+  
   const getButtonVariant = (secao: Secao) => {
     // If it's the active section, use default style
     if (activeSecao === secao.id) return "default";
@@ -69,6 +72,7 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
             
             {secao.nome}
             
+            {/* Always show score if it's available */}
             {pontuacao !== 0 && (
               <span 
                 className="absolute -top-1 -right-1 bg-white text-black text-xs px-1 py-0 rounded-full border border-gray-300 font-semibold"

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useChecklistPageState } from '@/hooks/checklist/useChecklistPageState';
@@ -14,7 +13,6 @@ const Checklist: React.FC = () => {
   
   // Use our new hooks to manage state
   const {
-    // Data
     usuarios,
     auditoria,
     secoes,
@@ -27,7 +25,6 @@ const Checklist: React.FC = () => {
     currentDate,
     isLoading,
     
-    // State
     respostas,
     activeSecao,
     progresso,
@@ -38,13 +35,11 @@ const Checklist: React.FC = () => {
     fileUrls,
     isSaving,
     
-    // Setters
     setSupervisor,
     setGerente,
     setIsEditingSupervisor,
     setIsEditingGerente,
     
-    // Methods
     refetchAuditoria,
     getPerguntasBySecao,
     handleSetActiveSecao,
@@ -91,17 +86,70 @@ const Checklist: React.FC = () => {
   const updateSectionScores = async () => {
     if (auditoriaId) {
       try {
-        // Use the Supabase-based method first
-        const scores = await analiseService.calcularPontuacaoPorSecaoSupabase(auditoriaId);
-        console.log("Updated section scores from Supabase:", scores);
+        // Direct Supabase query for more accurate score calculation
+        const { data: respostasData, error: respostasError } = await supabase
+          .from('respostas')
+          .select('*')
+          .eq('auditoria_id', auditoriaId);
+          
+        if (respostasError) throw respostasError;
+
+        const { data: perguntasData, error: perguntasError } = await supabase
+          .from('perguntas')
+          .select('*');
+          
+        if (perguntasError) throw perguntasError;
+        
+        // Calculate scores directly
+        const scores: Record<string, number> = {};
+        
+        // Initialize all section scores to 0
+        perguntasData.forEach(pergunta => {
+          if (pergunta.secao_id && !scores[pergunta.secao_id]) {
+            scores[pergunta.secao_id] = 0;
+          }
+        });
+        
+        // Direct scoring from responses
+        const pontuacaoMap: Record<string, number> = {
+          'Sim': 1,
+          'Não': -1,
+          'Regular': 0.5,
+          'N/A': 0
+        };
+        
+        respostasData.forEach(resposta => {
+          const pergunta = perguntasData.find(p => p.id === resposta.pergunta_id);
+          if (pergunta && pergunta.secao_id) {
+            const secaoId = pergunta.secao_id;
+            // Use the pontuacao_obtida if available, otherwise calculate from resposta
+            if (resposta.pontuacao_obtida !== null && resposta.pontuacao_obtida !== undefined) {
+              scores[secaoId] = (scores[secaoId] || 0) + resposta.pontuacao_obtida;
+            } else if (resposta.resposta) {
+              const pontuacao = pontuacaoMap[resposta.resposta] || 0;
+              scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
+            }
+          }
+        });
+        
+        console.log("Direct calculated scores:", scores);
         setPontuacaoPorSecao(scores);
       } catch (error) {
-        console.error("Error fetching scores from Supabase:", error);
+        console.error("Error calculating scores directly:", error);
         
-        // Fallback to local storage if Supabase fails
-        const scores = analiseService.calcularPontuacaoPorSecao(auditoriaId);
-        console.log("Calculated local scores:", scores);
-        setPontuacaoPorSecao(scores);
+        // Fallback to using the service
+        try {
+          const scores = await analiseService.calcularPontuacaoPorSecaoSupabase(auditoriaId);
+          console.log("Service calculated scores:", scores);
+          setPontuacaoPorSecao(scores);
+        } catch (serviceError) {
+          console.error("Error with service calculation:", serviceError);
+          
+          // Last resort - local calculation
+          const scores = analiseService.calcularPontuacaoPorSecao(auditoriaId);
+          console.log("Local calculated scores:", scores);
+          setPontuacaoPorSecao(scores);
+        }
       }
     }
   };

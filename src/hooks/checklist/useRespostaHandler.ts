@@ -19,7 +19,8 @@ export const useRespostaHandler = (
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
 
-  const pontuacaoMap: Record<RespostaValor, number> = {
+  // Define pontuacaoMap values - ensure consistent scoring across all hooks
+  const pontuacaoMap: Record<string, number> = {
     'Sim': 1,
     'Não': -1,
     'Regular': 0.5,
@@ -49,7 +50,8 @@ export const useRespostaHandler = (
       return updatedRespostas;
     });
     
-    const pontuacao = pontuacaoMap[resposta];
+    // Calculate pontuacao based on the response value
+    const pontuacao = pontuacaoMap[resposta as string] || 0;
     const observacao = observacoes[perguntaId] || '';
     const anexo_url = fileUrls[perguntaId] || '';
     
@@ -91,8 +93,8 @@ export const useRespostaHandler = (
         
         // Add up scores from existing responses (excluding the current one)
         respostasExistentes?.forEach(r => {
-          if (r.pergunta_id !== perguntaId) {
-            pontuacaoTotal += r.pontuacao_obtida || 0;
+          if (r.pergunta_id !== perguntaId && r.pontuacao_obtida !== null) {
+            pontuacaoTotal += r.pontuacao_obtida;
           }
         });
         
