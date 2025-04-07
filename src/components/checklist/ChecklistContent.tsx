@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import SectionNavigation from '@/components/checklist/SectionNavigation';
@@ -7,6 +6,7 @@ import SectionNavigationButtons from '@/components/checklist/SectionNavigationBu
 import ChecklistActions from '@/components/checklist/ChecklistActions';
 import SectionWarning from '@/components/checklist/SectionWarning';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
+import { analiseService } from '@/lib/services/analiseService';
 
 interface ChecklistContentProps {
   activeSecao: string | null;
@@ -31,6 +31,7 @@ interface ChecklistContentProps {
   hasUnansweredQuestions: () => boolean;
   isLastPerguntaInSection: (perguntaId: string) => boolean;
   saveAndNavigateHome: () => void;
+  pontuacaoPorSecao?: Record<string, number>;
 }
 
 const ChecklistContent: React.FC<ChecklistContentProps> = ({
@@ -55,7 +56,8 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
   goToNextSection,
   hasUnansweredQuestions,
   isLastPerguntaInSection,
-  saveAndNavigateHome
+  saveAndNavigateHome,
+  pontuacaoPorSecao
 }) => {
   const { auditoriaId } = useParams<{ auditoriaId: string }>();
   
@@ -77,6 +79,7 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
           completedSections={completedSections}
           incompleteSections={incompleteSections}
           setActiveSecao={handleSetActiveSecao}
+          pontuacaoPorSecao={pontuacaoPorSecao}
         />
       </div>
       

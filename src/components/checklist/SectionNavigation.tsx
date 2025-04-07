@@ -10,6 +10,7 @@ interface SectionNavigationProps {
   completedSections: string[];
   incompleteSections: string[];
   setActiveSecao: (secaoId: string) => void;
+  pontuacaoPorSecao?: Record<string, number>;  // Add this prop to receive section scores
 }
 
 const SectionNavigation: React.FC<SectionNavigationProps> = ({
@@ -17,19 +18,22 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
   activeSecao,
   completedSections,
   incompleteSections,
-  setActiveSecao
+  setActiveSecao,
+  pontuacaoPorSecao = {}  // Default to empty object if not provided
 }) => {
   return (
     <div className="flex flex-wrap gap-2">
       {secoes?.map((secao) => {
         const isCompleted = completedSections.includes(secao.id);
         const isIncomplete = incompleteSections.includes(secao.id);
+        const pontuacao = pontuacaoPorSecao[secao.id] || 0;
+        
         return (
           <Button
             key={secao.id}
             variant={activeSecao === secao.id ? "default" : "outline"}
             onClick={() => setActiveSecao(secao.id)}
-            className={`whitespace-nowrap flex items-center gap-1 ${
+            className={`whitespace-nowrap flex items-center gap-1 relative ${
               activeSecao === secao.id 
                 ? 'bg-[#00bfa5] hover:bg-[#00a896]' 
                 : isCompleted 
@@ -42,6 +46,14 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
             {isCompleted && <Check className="h-4 w-4" />}
             {isIncomplete && <AlertTriangle className="h-4 w-4" />}
             {secao.nome}
+            {pontuacao !== 0 && (
+              <span 
+                className="absolute top-[-4px] right-[-4px] bg-white text-black text-[8px] px-[2px] rounded-full border border-gray-300"
+                style={{ fontSize: '6px', lineHeight: '10px' }}
+              >
+                {pontuacao.toFixed(1)}
+              </span>
+            )}
           </Button>
         );
       })}

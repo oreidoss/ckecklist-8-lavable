@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useChecklistPageState } from '@/hooks/checklist/useChecklistPageState';
 import { useUserSelectorHandlers } from '@/hooks/checklist/useUserSelectorHandlers';
 import ChecklistContainer from '@/components/checklist/ChecklistContainer';
+import { analiseService } from '@/lib/services/analiseService';
 
 const Checklist: React.FC = () => {
   const { auditoriaId } = useParams<{ auditoriaId: string }>();
@@ -83,6 +83,11 @@ const Checklist: React.FC = () => {
     }
   };
 
+  // Calculate section scores
+  const pontuacaoPorSecao = auditoriaId 
+    ? analiseService.calcularPontuacaoPorSecao(auditoriaId) 
+    : {};
+
   return (
     <ChecklistContainer
       isLoading={isLoading}
@@ -122,6 +127,7 @@ const Checklist: React.FC = () => {
       hasUnansweredQuestions={hasUnansweredQuestions}
       isLastPerguntaInSection={isLastPerguntaInSection}
       saveAndNavigateHome={saveAndNavigateHome}
+      pontuacaoPorSecao={pontuacaoPorSecao}
     />
   );
 };

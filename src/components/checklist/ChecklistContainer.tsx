@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { Home } from 'lucide-react';
 import ChecklistHeader from '@/components/checklist/ChecklistHeader';
 import ChecklistContent from '@/components/checklist/ChecklistContent';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
+import { analiseService } from '@/lib/services/analiseService';
 
 interface ChecklistContainerProps {
   isLoading: boolean;
@@ -45,6 +45,7 @@ interface ChecklistContainerProps {
   hasUnansweredQuestions: () => boolean;
   isLastPerguntaInSection: (perguntaId: string) => boolean;
   saveAndNavigateHome: () => void;
+  pontuacaoPorSecao?: Record<string, number>;
 }
 
 const ChecklistContainer: React.FC<ChecklistContainerProps> = ({
@@ -84,7 +85,8 @@ const ChecklistContainer: React.FC<ChecklistContainerProps> = ({
   goToNextSection,
   hasUnansweredQuestions,
   isLastPerguntaInSection,
-  saveAndNavigateHome
+  saveAndNavigateHome,
+  pontuacaoPorSecao
 }) => {
   if (isLoading) {
     return <div className="flex justify-center items-center h-96">Carregando...</div>;
@@ -134,6 +136,7 @@ const ChecklistContainer: React.FC<ChecklistContainerProps> = ({
           hasUnansweredQuestions={hasUnansweredQuestions}
           isLastPerguntaInSection={isLastPerguntaInSection}
           saveAndNavigateHome={saveAndNavigateHome}
+          pontuacaoPorSecao={pontuacaoPorSecao}
         />
       )}
       
