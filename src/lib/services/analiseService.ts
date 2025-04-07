@@ -11,14 +11,16 @@ export class AnaliseService {
   }
 
   calcularPontuacaoPorSecao(auditoriaId: string): Record<string, number> {
+    if (!auditoriaId) return {};
+    
     const respostas = respostaService.getRespostasByAuditoria(auditoriaId);
     const perguntas = perguntaService.getPerguntas();
     
-    const pontuacaoPorSecao: Record<string, { total: number, count: number }> = {};
+    const pontuacaoPorSecao: Record<string, number> = {};
     
     // Initialize scores by section
     secaoService.getSecoes().forEach(secao => {
-      pontuacaoPorSecao[secao.id] = { total: 0, count: 0 };
+      pontuacaoPorSecao[secao.id] = 0;
     });
     
     // Calculate score by section
@@ -26,18 +28,12 @@ export class AnaliseService {
       const pergunta = perguntas.find(p => p.id === resposta.pergunta_id);
       if (pergunta) {
         const secaoId = pergunta.secao_id;
-        pontuacaoPorSecao[secaoId].total += resposta.pontuacao_obtida;
-        pontuacaoPorSecao[secaoId].count += 1;
+        pontuacaoPorSecao[secaoId] += resposta.pontuacao_obtida || 0;
       }
     });
     
-    // Calculate average score by section
-    const resultado: Record<string, number> = {};
-    Object.entries(pontuacaoPorSecao).forEach(([secaoId, { total, count }]) => {
-      resultado[secaoId] = count > 0 ? total : 0;
-    });
-    
-    return resultado;
+    console.log('Pontuação por seção:', pontuacaoPorSecao);
+    return pontuacaoPorSecao;
   }
 
   identificarPontosCriticos(auditoriaId: string): { secaoId: string, nome: string, pontuacao: number }[] {

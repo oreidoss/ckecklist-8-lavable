@@ -48,8 +48,8 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
             {secao.nome}
             {pontuacao !== 0 && (
               <span 
-                className="absolute top-[-4px] right-[-4px] bg-white text-black text-[8px] px-[2px] rounded-full border border-gray-300"
-                style={{ fontSize: '6px', lineHeight: '10px' }}
+                className="absolute -top-1 -right-1 bg-white text-black text-xs px-1 py-0 rounded-full border border-gray-300 font-semibold"
+                style={{ fontSize: '10px', minWidth: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 {pontuacao.toFixed(1)}
               </span>

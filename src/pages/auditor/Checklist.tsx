@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useChecklistPageState } from '@/hooks/checklist/useChecklistPageState';
 import { useUserSelectorHandlers } from '@/hooks/checklist/useUserSelectorHandlers';
@@ -8,6 +9,7 @@ import { analiseService } from '@/lib/services/analiseService';
 const Checklist: React.FC = () => {
   const { auditoriaId } = useParams<{ auditoriaId: string }>();
   const navigate = useNavigate();
+  const [pontuacaoPorSecao, setPontuacaoPorSecao] = useState<Record<string, number>>({});
   
   // Use our new hooks to manage state
   const {
@@ -83,10 +85,14 @@ const Checklist: React.FC = () => {
     }
   };
 
-  // Calculate section scores
-  const pontuacaoPorSecao = auditoriaId 
-    ? analiseService.calcularPontuacaoPorSecao(auditoriaId) 
-    : {};
+  // Calculate section scores when respostas change
+  useEffect(() => {
+    if (auditoriaId) {
+      const scores = analiseService.calcularPontuacaoPorSecao(auditoriaId);
+      console.log("Calculated scores:", scores);
+      setPontuacaoPorSecao(scores);
+    }
+  }, [auditoriaId, respostas, respostasExistentes]);
 
   return (
     <ChecklistContainer

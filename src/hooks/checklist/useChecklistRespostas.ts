@@ -26,6 +26,8 @@ export const useChecklistRespostas = (
   const handleResposta = async (perguntaId: string, resposta: RespostaValor, respostasExistentes: any[], perguntas?: Pergunta[]) => {
     if (!auditoriaId) return;
     
+    console.log(`Handling resposta for pergunta ${perguntaId}: ${resposta}`);
+    
     // Update local state BEFORE any async operations for immediate UI feedback
     setRespostas(prev => {
       const updatedRespostas = {
@@ -103,6 +105,8 @@ export const useChecklistRespostas = (
         });
         
         pontuacaoTotal += pontuacao;
+        
+        console.log(`Updating pontuacao_total for auditoria ${auditoriaId}: ${pontuacaoTotal}`);
         
         await supabase
           .from('auditorias')

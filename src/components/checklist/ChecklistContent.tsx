@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import SectionNavigation from '@/components/checklist/SectionNavigation';
@@ -6,7 +7,6 @@ import SectionNavigationButtons from '@/components/checklist/SectionNavigationBu
 import ChecklistActions from '@/components/checklist/ChecklistActions';
 import SectionWarning from '@/components/checklist/SectionWarning';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
-import { analiseService } from '@/lib/services/analiseService';
 
 interface ChecklistContentProps {
   activeSecao: string | null;
@@ -67,6 +67,8 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
   const totalSecoes = secoes?.length || 0;
   const isFirstSection = secaoIndex === 0;
   const isLastSection = secaoIndex === totalSecoes - 1;
+
+  console.log("ChecklistContent - pontuacaoPorSecao:", pontuacaoPorSecao);
 
   if (!activeSecaoObj) return null;
   
