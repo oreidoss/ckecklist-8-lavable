@@ -1,81 +1,70 @@
 
-import { useState } from 'react';
+// File: src/hooks/checklist/index.ts
+import { useState, useEffect } from 'react';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
-import { Pergunta } from '@/lib/types';
-import { useChecklistRespostas } from './useChecklistRespostas';
+import { useChecklistSections } from './useChecklistSections';
 import { useChecklistObservacoes } from './useChecklistObservacoes';
 import { useChecklistUploads } from './useChecklistUploads';
+import { useChecklistRespostas } from './useChecklistRespostas';
 import { useChecklistSave } from './useChecklistSave';
-import { useChecklistSections } from './useChecklistSections';
-import { useChecklistState } from './useChecklistState';
+import { Pergunta } from '@/lib/types';
 
 /**
- * Main hook for checklist functionality
+ * Main hook that combines all the checklist hooks
  */
-export const useChecklist = (
+export function useChecklist(
   auditoriaId: string | undefined, 
-  perguntas: Pergunta[] | undefined,
+  perguntas: Pergunta[] = [],
   setPontuacaoPorSecao?: React.Dispatch<React.SetStateAction<Record<string, number>>>
-) => {
-  // Checklist state
+) {
+  const [respostas, setRespostas] = useState<Record<string, RespostaValor>>({});
+  const [progresso, setProgresso] = useState(0);
+  const [completedSections, setCompletedSections] = useState<string[]>([]);
+  
+  // Import sub-hooks for checklist functionality
+  const { 
+    updateCompletedSections, 
+    markSectionAsComplete 
+  } = useChecklistSections(auditoriaId, completedSections, setCompletedSections);
+  
   const {
-    respostas,
-    setRespostas,
-    progresso,
-    setProgresso,
-    completedSections, 
-    setCompletedSections,
     observacoes,
-    setObservacoes,
+    handleObservacaoChange,
+    handleSaveObservacao
+  } = useChecklistObservacoes(auditoriaId);
+  
+  const {
     uploading,
-    setUploading,
     fileUrls,
-    setFileUrls,
+    handleFileUpload
+  } = useChecklistUploads(auditoriaId);
+  
+  const {
     isSaving,
-    setIsSaving
-  } = useChecklistState();
+    handleResposta,
+    saveAllResponses
+  } = useChecklistRespostas(auditoriaId, setRespostas, setProgresso, observacoes, fileUrls, setPontuacaoPorSecao);
   
-  // Handle respostas
-  const { handleResposta, pontuacaoMap, saveAllResponses, updatePontuacaoPorSecao } = useChecklistRespostas(
-    auditoriaId,
-    setRespostas,
-    setProgresso,
-    observacoes,
-    fileUrls,
-    setPontuacaoPorSecao
-  );
-  
-  // Handle observacoes
-  const { handleObservacaoChange, handleSaveObservacao } = useChecklistObservacoes(
-    auditoriaId,
-    observacoes,
-    setObservacoes
-  );
-  
-  // Handle file uploads
-  const { handleFileUpload } = useChecklistUploads(
-    auditoriaId,
-    uploading,
-    setUploading,
-    fileUrls,
-    setFileUrls
-  );
-  
-  // Handle sections
-  const { updateCompletedSections, markSectionAsComplete } = useChecklistSections(
-    auditoriaId,
-    completedSections,
-    setCompletedSections
-  );
-  
-  // Handle saving
-  const { saveAndNavigateHome } = useChecklistSave(auditoriaId, progresso);
-  
+  const {
+    saveAndNavigateHome
+  } = useChecklistSave(auditoriaId);
+
+  // Update section completion status when responses change
+  useEffect(() => {
+    if (!auditoriaId || !perguntas || perguntas.length === 0) return;
+    
+    // Calculate progress
+    const progresso = perguntas.length > 0 ? 
+      (Object.keys(respostas).length / perguntas.length) * 100 : 0;
+    
+    setProgresso(progresso);
+  }, [respostas, perguntas, auditoriaId]);
+
   return {
     // State
     respostas,
     setRespostas,
-    progresso,
+    progresso, 
     setProgresso,
     completedSections,
     setCompletedSections,
@@ -85,14 +74,13 @@ export const useChecklist = (
     isSaving,
     
     // Methods
+    updateCompletedSections,
+    markSectionAsComplete,
     handleResposta,
+    handleFileUpload,
     handleObservacaoChange,
     handleSaveObservacao,
-    handleFileUpload,
-    markSectionAsComplete,
     saveAndNavigateHome,
-    saveAllResponses,
-    updatePontuacaoPorSecao,
-    updateCompletedSections
+    saveAllResponses
   };
-};
+}

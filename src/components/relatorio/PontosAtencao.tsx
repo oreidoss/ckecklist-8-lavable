@@ -55,9 +55,10 @@ export const PontosAtencao: React.FC<PontosAtencaoProps> = ({ itensCriticos }) =
     );
   }
 
-  // Separar itens críticos (-1) dos itens de atenção (0)
+  // Separar itens críticos (-1) dos itens de atenção (0 e 0.5)
   const itensCriticosNegativo = itensCriticos.filter(item => item.pontuacao === -1);
-  const itensAtencao = itensCriticos.filter(item => item.pontuacao === 0);
+  const itensAtencaoZero = itensCriticos.filter(item => item.pontuacao === 0);
+  const itensAtencaoMedio = itensCriticos.filter(item => item.pontuacao === 0.5);
 
   return (
     <Card>
@@ -70,7 +71,7 @@ export const PontosAtencao: React.FC<PontosAtencaoProps> = ({ itensCriticos }) =
           <div className="mb-8">
             <div className="flex items-center mb-4">
               <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
-              <h3 className="text-lg font-medium text-red-700">Pontos Críticos</h3>
+              <h3 className="text-lg font-medium text-red-700">Pontos Críticos (-1)</h3>
             </div>
             <Table>
               <TableHeader>
@@ -95,11 +96,11 @@ export const PontosAtencao: React.FC<PontosAtencaoProps> = ({ itensCriticos }) =
           </div>
         )}
 
-        {itensAtencao.length > 0 && (
-          <div>
+        {itensAtencaoZero.length > 0 && (
+          <div className="mb-8">
             <div className="flex items-center mb-4">
               <AlertTriangle className="h-5 w-5 text-yellow-500 mr-2" />
-              <h3 className="text-lg font-medium text-yellow-700">Pontos de Atenção</h3>
+              <h3 className="text-lg font-medium text-yellow-700">Pontos de Atenção (0)</h3>
             </div>
             <Table>
               <TableHeader>
@@ -110,10 +111,41 @@ export const PontosAtencao: React.FC<PontosAtencaoProps> = ({ itensCriticos }) =
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {itensAtencao.map((item) => (
+                {itensAtencaoZero.map((item) => (
                   <TableRow key={item.id} className="bg-yellow-50">
                     <TableCell className="font-medium">
                       <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                        {item.secao_nome}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{item.pergunta_texto}</TableCell>
+                    <TableCell>{item.observacao || "Sem observação"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+
+        {itensAtencaoMedio.length > 0 && (
+          <div>
+            <div className="flex items-center mb-4">
+              <AlertTriangle className="h-5 w-5 text-amber-400 mr-2" />
+              <h3 className="text-lg font-medium text-amber-600">Pontos Regulares (0.5)</h3>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Seção</TableHead>
+                  <TableHead>Item</TableHead>
+                  <TableHead>Observação</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {itensAtencaoMedio.map((item) => (
+                  <TableRow key={item.id} className="bg-amber-50">
+                    <TableCell className="font-medium">
+                      <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">
                         {item.secao_nome}
                       </Badge>
                     </TableCell>

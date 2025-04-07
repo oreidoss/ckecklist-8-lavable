@@ -34,6 +34,24 @@ export const PontuacaoPorSecao: React.FC<PontuacaoPorSecaoProps> = ({
 
   // Calcular o total geral (todas as perguntas de todas as seções)
   const totalGeral = pontuacoesPorSecao.reduce((total, secao) => total + secao.total, 0);
+  
+  // Determinar cor da pontuação baseada no valor e porcentagem
+  const getPontuacaoStyle = (pontuacao: number, total: number) => {
+    // Pontuação negativa: vermelho
+    if (pontuacao < 0) return 'text-red-600 font-bold';
+    
+    // Calcular percentual da pontuação em relação ao total
+    const percentual = total > 0 ? (pontuacao / total) * 100 : 0;
+    
+    // Pontuação crítica (menos de 50%)
+    if (percentual < 50) return 'text-amber-600';
+    
+    // Pontuação boa (mais de 80%)
+    if (percentual > 80) return 'text-green-600 font-bold';
+    
+    // Pontuação regular
+    return 'text-blue-600';
+  };
 
   return (
     <Card>
@@ -61,7 +79,10 @@ export const PontuacaoPorSecao: React.FC<PontuacaoPorSecaoProps> = ({
                           <Info className="h-3.5 w-3.5 text-gray-400 hover:text-gray-600" />
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p className="text-xs max-w-xs">A meta é igual ao número total de perguntas na seção</p>
+                          <p className="text-xs max-w-xs">
+                            A meta é igual ao número total de perguntas na seção.
+                            <br/>Pontuações: Sim=1, Regular=0.5, N/A=0, Não=-1
+                          </p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -73,9 +94,7 @@ export const PontuacaoPorSecao: React.FC<PontuacaoPorSecaoProps> = ({
               {pontuacoesPorSecao.map((secao) => {
                 // A meta é igual ao total de perguntas na seção
                 const meta = secao.total;
-                const corPontuacao = secao.pontuacao > 0 
-                  ? 'text-green-600' 
-                  : secao.pontuacao < 0 ? 'text-red-600' : 'text-gray-600';
+                const corPontuacao = getPontuacaoStyle(secao.pontuacao, meta);
                 
                 return (
                   <tr key={secao.id} className="border-b hover:bg-gray-50">
@@ -97,7 +116,11 @@ export const PontuacaoPorSecao: React.FC<PontuacaoPorSecaoProps> = ({
               
               <tr className="bg-gray-50 font-medium">
                 <td className="py-3 px-4">TOTAL</td>
-                <td className="py-3 px-4 text-center">
+                <td className={`py-3 px-4 text-center ${
+                  pontuacoesPorSecao.reduce((total, secao) => total + secao.pontuacao, 0) < 0 
+                    ? 'text-red-600 font-bold' 
+                    : 'text-blue-700 font-bold'
+                }`}>
                   {pontuacoesPorSecao.reduce((total, secao) => total + secao.pontuacao, 0).toFixed(1)}
                 </td>
                 <td className="py-3 px-4 text-center">
