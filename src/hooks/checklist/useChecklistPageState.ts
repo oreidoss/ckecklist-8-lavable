@@ -138,7 +138,6 @@ export const useChecklistPageState = (
     });
     
     setCompletedSections(completedSections);
-    // Fixed error here: Don't pass any argument to updateIncompleteSections
     updateIncompleteSections();
     
   }, [respostasExistentes, perguntas, secoes]);

@@ -8,7 +8,6 @@ import { PontosAtencao } from './PontosAtencao';
 import { InformacoesGerais } from './InformacoesGerais';
 import { InfoLoja } from './InfoLoja';
 import { HistoricoAuditorias } from './HistoricoAuditorias';
-import { HistoricoLoja } from './HistoricoLoja';
 import AnaliseIA from './AnaliseIA';
 import { AnaliseTendencias } from './AnaliseTendencias';
 
@@ -98,10 +97,6 @@ const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
 
       <Card className="print-item">
         <HistoricoAuditorias auditorias={auditorias} />
-      </Card>
-
-      <Card className="print-item">
-        <HistoricoLoja auditoriasPorLoja={{ loja, auditorias }} perguntas={perguntas} />
       </Card>
 
       <Card className="print-item">
