@@ -17,12 +17,14 @@ export const defaultPdfOptions = {
 
 // Create custom options by merging with defaults
 export const createPdfOptions = (customOptions = {}) => {
+  const options = customOptions as Record<string, any>;
+  
   return {
     ...defaultPdfOptions,
     ...customOptions,
     html2canvas: {
       ...(defaultPdfOptions.html2canvas),
-      ...(customOptions?.html2canvas || {}),
+      ...(options.html2canvas || {}),
       useCORS: true,
       scale: 2,
       backgroundColor: '#ffffff',

@@ -125,7 +125,7 @@ export const useChecklistPageState = (
   
   const saveAllResponses = async () => {
     if (respostasExistentes) {
-      return saveAllResponsesBase(respostasExistentes);
+      return saveAllResponsesBase();
     }
     return Promise.resolve();
   };

@@ -39,7 +39,7 @@ export const AnaliseGeral: React.FC<AnaliseGeralProps> = ({
   const itensCriticosCount = itensCriticos.filter(item => item.pontuacao === -1).length;
   const itensAtencaoCount = itensCriticos.filter(item => item.pontuacao === 0 || item.pontuacao === 0.5).length;
   
-  // Calculate overall performance rating
+  // Calculate overall performance rating based on actual questions
   const totalPerguntas = pontuacoesPorSecao.reduce((sum, secao) => sum + secao.total, 0);
   const percentualTotal = totalPerguntas > 0 ? (pontuacaoTotal / totalPerguntas) * 100 : 0;
   

@@ -25,10 +25,9 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
   // Calculate total questions
   const totalPerguntas = auditoria.respostas?.length || 0;
   
-  // Total de todas as perguntas disponíveis no sistema (meta real)
-  // Nota: Isso seria idealmente obtido do total de perguntas no sistema
-  // Aqui estamos definindo como 111 conforme especificado
-  const metaTotal = 111;
+  // Total de perguntas disponíveis no sistema com base na pontuação real
+  // Usamos o total de perguntas respondidas como base para calcular a pontuação máxima possível
+  const metaTotal = totalPerguntas;
   
   // Formato da pontuação atual
   const pontuacaoAtual = auditoria.pontuacao_total !== null && auditoria.pontuacao_total !== undefined 
@@ -152,7 +151,7 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p className="text-xs">A meta é baseada no total de perguntas disponíveis no sistema (111)</p>
+                    <p className="text-xs">A meta é baseada no total de perguntas respondidas na auditoria</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

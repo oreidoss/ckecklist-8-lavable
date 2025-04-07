@@ -20,8 +20,8 @@ interface PontuacaoPorSecaoProps {
     id: string;
     nome: string;
     pontuacao: number;
-    total: number;
-    percentual: number;
+    total: number; // Total number of questions
+    percentual: number; // Percentage score
   }>;
 }
 
@@ -80,7 +80,7 @@ export const PontuacaoPorSecao: React.FC<PontuacaoPorSecaoProps> = ({
                         </TooltipTrigger>
                         <TooltipContent>
                           <p className="text-xs max-w-xs">
-                            A meta é igual ao número total de perguntas na seção.
+                            A meta é igual ao número de perguntas na seção.
                             <br/>Pontuações: Sim=1, Regular=0.5, N/A=0, Não=-1
                           </p>
                         </TooltipContent>
@@ -92,7 +92,7 @@ export const PontuacaoPorSecao: React.FC<PontuacaoPorSecaoProps> = ({
             </thead>
             <tbody>
               {pontuacoesPorSecao.map((secao) => {
-                // A meta é igual ao total de perguntas na seção
+                // A meta é igual ao número de perguntas na seção
                 const meta = secao.total;
                 const corPontuacao = getPontuacaoStyle(secao.pontuacao, meta);
                 

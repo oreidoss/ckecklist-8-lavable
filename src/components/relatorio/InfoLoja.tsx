@@ -23,8 +23,13 @@ interface InfoLojaProps {
 }
 
 export const InfoLoja: React.FC<InfoLojaProps> = ({ loja, auditorias }) => {
-  // Definir a meta total de pontos possíveis (111 conforme especificado)
-  const metaTotal = 111;
+  // Calculate average number of questions per audit
+  const avgQuestions = auditorias && auditorias.length > 0
+    ? auditorias.reduce((acc, audit) => acc + (audit.respostas?.length || 0), 0) / auditorias.length
+    : 0;
+    
+  // Use this as the target total for consistency
+  const metaTotal = Math.round(avgQuestions);
   
   // Calcular média de pontuação
   const mediaPontuacao = auditorias && auditorias.length > 0
@@ -32,7 +37,7 @@ export const InfoLoja: React.FC<InfoLojaProps> = ({ loja, auditorias }) => {
     : '0.0';
 
   // Calcular percentual médio da meta
-  const percentualMedio = auditorias && auditorias.length > 0
+  const percentualMedio = auditorias && auditorias.length > 0 && metaTotal > 0
     ? (parseFloat(mediaPontuacao) / metaTotal * 100).toFixed(1)
     : '0.0';
   
@@ -79,7 +84,7 @@ export const InfoLoja: React.FC<InfoLojaProps> = ({ loja, auditorias }) => {
                 <TooltipContent>
                   <p className="text-xs max-w-xs">
                     Pontuação média de todas as auditorias. 
-                    A meta total possível é de {metaTotal} pontos.
+                    A meta total é calculada com base na média de perguntas respondidas.
                   </p>
                 </TooltipContent>
               </Tooltip>

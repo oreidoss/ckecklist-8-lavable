@@ -32,8 +32,15 @@ export const ResumoGeral: React.FC<ResumoGeralProps> = ({
   estatisticas,
   auditorias
 }) => {
-  // Calculate the target score - one point per audit on average is ideal
-  const metaTotal = estatisticas.total;
+  // Calculate average number of questions per audit
+  const avgQuestionCount = auditorias && auditorias.length > 0
+    ? Math.round(auditorias.reduce((acc, audit) => acc + (audit.respostas?.length || 0), 0) / auditorias.length)
+    : 0;
+    
+  // Use this as our target total for consistency
+  const metaTotal = avgQuestionCount;
+  
+  // Calculate total score based on audit average
   const pontuacaoTotal = estatisticas.media * estatisticas.total;
   
   return (
@@ -102,14 +109,14 @@ export const ResumoGeral: React.FC<ResumoGeralProps> = ({
                           <div className="font-medium">{pontuacaoTotal.toFixed(1)}</div>
                         </div>
                         <div>
-                          <div className="text-xs text-muted-foreground">Meta Total</div>
+                          <div className="text-xs text-muted-foreground">Meta por Auditoria</div>
                           <div className="font-medium">{metaTotal}</div>
                         </div>
                         <div>
                           <div className="text-xs text-muted-foreground">Progresso</div>
                           <div className="font-medium">
                             {metaTotal > 0 
-                              ? `${Math.round((pontuacaoTotal / metaTotal) * 100)}%` 
+                              ? `${Math.round((estatisticas.media / metaTotal) * 100)}%` 
                               : '0%'}
                           </div>
                         </div>
@@ -129,10 +136,10 @@ export const ResumoGeral: React.FC<ResumoGeralProps> = ({
                   className="h-full bg-primary rounded-full"
                   style={{ 
                     width: `${
-                      estatisticas.total > 0 
+                      metaTotal > 0 
                         ? Math.min(
                             Math.max(
-                              (estatisticas.media + 10) * 5, 
+                              (estatisticas.media / metaTotal) * 100, 
                               0
                             ), 
                             100
@@ -143,7 +150,7 @@ export const ResumoGeral: React.FC<ResumoGeralProps> = ({
                 ></div>
               </div>
               <span className="ml-2 font-bold text-primary">
-                {estatisticas.media}
+                {estatisticas.media.toFixed(1)}
               </span>
             </div>
           </div>
