@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Pergunta } from '@/lib/types';
@@ -20,8 +20,6 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
   handleResposta
 }) => {
   const isMobile = useIsMobile();
-  // Changed to directly use resposta prop for rendering buttons
-  // No more local state which could get out of sync
   
   const getButtonVariant = (valor: RespostaValor) => {
     return (resposta === valor) ? "default" : "outline";
@@ -45,7 +43,6 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
   };
   
   const handleClick = (valor: RespostaValor) => {
-    // Directly call parent handler without local state
     handleResposta(pergunta.id, valor);
   };
   
