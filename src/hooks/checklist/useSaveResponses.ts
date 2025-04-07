@@ -27,9 +27,6 @@ export const useSaveResponses = (
         title: "Seção salva",
         description: "Todas as respostas desta seção foram salvas com sucesso.",
       });
-      
-      // Don't return the data, just return void to match the expected Promise<void> type
-      return;
     } catch (error) {
       console.error("Erro ao salvar respostas:", error);
       toast({

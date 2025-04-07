@@ -19,7 +19,7 @@ export const useChecklistScores = (
   /**
    * Updates section scores based on existing responses
    */
-  const updatePontuacaoPorSecao = async () => {
+  const updatePontuacaoPorSecao = async (): Promise<void> => {
     if (!auditoriaId || !setPontuacaoPorSecao) return;
     
     try {
@@ -81,11 +81,8 @@ export const useChecklistScores = (
       
       console.log("Final calculated section scores:", scores);
       setPontuacaoPorSecao(scores);
-      
-      return scores;
     } catch (error) {
       console.error("Error updating section scores:", error);
-      return null;
     }
   };
 
