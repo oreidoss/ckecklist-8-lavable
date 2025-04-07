@@ -25,7 +25,7 @@ export const useChecklistSections = (
     }
   };
   
-  const markSectionAsComplete = async (secaoId: string) => {
+  const markSectionAsComplete = (secaoId: string) => {
     if (!completedSections.includes(secaoId)) {
       setCompletedSections(prev => [...prev, secaoId]);
     }
