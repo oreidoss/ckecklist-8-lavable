@@ -58,8 +58,9 @@ export const useChecklistPageState = (
     activeSecao,
     setActiveSecao,
     incompleteSections,
-    updateIncompleteSections,
+    setIncompleteSections,
     getPerguntasBySecao,
+    updateIncompleteSections,
     goToNextSection,
     goToPreviousSection,
     handleSetActiveSecao
