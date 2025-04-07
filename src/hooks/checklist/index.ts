@@ -41,7 +41,8 @@ export function useChecklist(
   const {
     isSaving,
     handleResposta,
-    saveAllResponses
+    saveAllResponses,
+    updatePontuacaoPorSecao
   } = useChecklistRespostas(auditoriaId, setRespostas, setProgresso, observacoes, fileUrls, setPontuacaoPorSecao);
   
   const {
@@ -80,6 +81,7 @@ export function useChecklist(
     handleObservacaoChange,
     handleSaveObservacao,
     saveAndNavigateHome,
-    saveAllResponses
+    saveAllResponses,
+    updatePontuacaoPorSecao
   };
 }
