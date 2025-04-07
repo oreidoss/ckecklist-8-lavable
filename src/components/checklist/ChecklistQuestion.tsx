@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Pergunta } from '@/lib/types';
@@ -20,13 +20,18 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
   handleResposta
 }) => {
   const isMobile = useIsMobile();
+  // Add local state to track the selected button for immediate visual feedback
+  const [localResposta, setLocalResposta] = useState<RespostaValor | undefined>(resposta);
+  
+  // Use either the local state or the prop, with local state taking precedence
+  const displayedResposta = localResposta !== undefined ? localResposta : resposta;
   
   const getButtonVariant = (valor: RespostaValor) => {
-    return (resposta === valor) ? "default" : "outline";
+    return (displayedResposta === valor) ? "default" : "outline";
   };
 
   const getButtonStyle = (valor: RespostaValor): string => {
-    if (resposta !== valor) return "text-gray-700 border-gray-300";
+    if (displayedResposta !== valor) return "text-gray-700 border-gray-300";
     
     switch (valor) {
       case 'Sim':
@@ -43,8 +48,16 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
   };
   
   const handleClick = (valor: RespostaValor) => {
+    // Update local state immediately for visual feedback
+    setLocalResposta(valor);
+    // Then propagate the change to the parent
     handleResposta(pergunta.id, valor);
   };
+  
+  // Update local state when prop changes
+  React.useEffect(() => {
+    setLocalResposta(resposta);
+  }, [resposta]);
   
   return (
     <div className="border rounded-lg p-1 w-full">
@@ -56,7 +69,7 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
             key={valor}
             variant={getButtonVariant(valor)}
             size="sm"
-            className={`text-[10px] p-1 transition-colors duration-200 ${getButtonStyle(valor)} ${resposta === valor ? 'ring-2 ring-offset-1 ring-opacity-50' : ''}`}
+            className={`text-[10px] p-1 transition-colors duration-200 ${getButtonStyle(valor)} ${displayedResposta === valor ? 'ring-2 ring-offset-1 ring-opacity-50' : ''}`}
             onClick={() => handleClick(valor)}
           >
             {valor}

@@ -27,10 +27,21 @@ export const useChecklistRespostas = (
     if (!auditoriaId) return;
     
     // Update local state BEFORE any async operations for immediate UI feedback
-    setRespostas(prev => ({
-      ...prev,
-      [perguntaId]: resposta
-    }));
+    setRespostas(prev => {
+      const updatedRespostas = {
+        ...prev,
+        [perguntaId]: resposta
+      };
+      
+      // Also update progress if we have perguntas
+      if (perguntas?.length) {
+        const respostasCount = Object.keys(updatedRespostas).length;
+        const novoProgresso = (respostasCount / perguntas.length) * 100;
+        setProgresso(novoProgresso);
+      }
+      
+      return updatedRespostas;
+    });
     
     const pontuacao = pontuacaoMap[resposta];
     const observacao = observacoes[perguntaId] || '';
@@ -80,23 +91,6 @@ export const useChecklistRespostas = (
           });
           return;
         }
-      }
-      
-      if (perguntas?.length) {
-        // Atualiza corretamente o progresso com base em todas as respostas existentes
-        const novasRespostas = {
-          ...respostasExistentes.reduce((acc, r) => {
-            if (r.pergunta_id && r.resposta) {
-              acc[r.pergunta_id] = r.resposta as RespostaValor;
-            }
-            return acc;
-          }, {} as Record<string, RespostaValor>),
-          [perguntaId]: resposta
-        };
-        
-        const novasRespostasCount = Object.keys(novasRespostas).length;
-        const novoProgresso = (novasRespostasCount / perguntas.length) * 100;
-        setProgresso(novoProgresso);
       }
       
       if (auditoriaId) {

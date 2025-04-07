@@ -92,7 +92,7 @@ export const useChecklistPageState = (auditoriaId: string | undefined) => {
     }
   };
   
-  // Process existing responses
+  // Process existing responses - only on initial load and when dependencies change
   useEffect(() => {
     if (!respostasExistentes?.length || !perguntas?.length || !secoes?.length) return;
     
