@@ -10,6 +10,7 @@ interface SectionNavigationButtonsProps {
   handlePreviousSection: () => void;
   handleNextSection: () => void;
   hasUnansweredQuestions: () => boolean;
+  saveResponses?: () => Promise<void>;
 }
 
 const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
@@ -17,11 +18,12 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
   isLastSection,
   handlePreviousSection,
   handleNextSection,
-  hasUnansweredQuestions
+  hasUnansweredQuestions,
+  saveResponses
 }) => {
   const { toast } = useToast();
   
-  const onNextSectionClick = () => {
+  const onNextSectionClick = async () => {
     if (isLastSection) return;
     
     if (hasUnansweredQuestions()) {
@@ -29,6 +31,15 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
         title: "Perguntas não respondidas",
         description: "Existem perguntas não respondidas nesta seção. Você ainda pode avançar, mas a seção não será salva como completa.",
       });
+    }
+    
+    // Save responses before advancing to next section
+    if (saveResponses) {
+      try {
+        await saveResponses();
+      } catch (error) {
+        console.error("Error saving responses:", error);
+      }
     }
     
     handleNextSection();

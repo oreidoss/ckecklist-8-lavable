@@ -31,6 +31,7 @@ interface ChecklistContentProps {
   hasUnansweredQuestions: () => boolean;
   isLastPerguntaInSection: (perguntaId: string) => boolean;
   saveAndNavigateHome: () => void;
+  saveAllResponses: () => Promise<void>;
   pontuacaoPorSecao?: Record<string, number>;
 }
 
@@ -57,6 +58,7 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
   hasUnansweredQuestions,
   isLastPerguntaInSection,
   saveAndNavigateHome,
+  saveAllResponses,
   pontuacaoPorSecao
 }) => {
   const { auditoriaId } = useParams<{ auditoriaId: string }>();
@@ -116,6 +118,7 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
             handlePreviousSection={goToPreviousSection}
             handleNextSection={goToNextSection}
             hasUnansweredQuestions={hasUnansweredQuestions}
+            saveResponses={saveAllResponses}
           />
           
           <ChecklistActions 

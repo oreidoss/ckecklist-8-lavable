@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ interface ChecklistContainerProps {
   hasUnansweredQuestions: () => boolean;
   isLastPerguntaInSection: (perguntaId: string) => boolean;
   saveAndNavigateHome: () => void;
+  saveAllResponses: () => Promise<void>;
   pontuacaoPorSecao?: Record<string, number>;
 }
 
@@ -86,6 +88,7 @@ const ChecklistContainer: React.FC<ChecklistContainerProps> = ({
   hasUnansweredQuestions,
   isLastPerguntaInSection,
   saveAndNavigateHome,
+  saveAllResponses,
   pontuacaoPorSecao
 }) => {
   if (isLoading) {
@@ -136,6 +139,7 @@ const ChecklistContainer: React.FC<ChecklistContainerProps> = ({
           hasUnansweredQuestions={hasUnansweredQuestions}
           isLastPerguntaInSection={isLastPerguntaInSection}
           saveAndNavigateHome={saveAndNavigateHome}
+          saveAllResponses={saveAllResponses}
           pontuacaoPorSecao={pontuacaoPorSecao}
         />
       )}

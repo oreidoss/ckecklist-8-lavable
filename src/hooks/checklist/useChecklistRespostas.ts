@@ -13,7 +13,8 @@ export const useChecklistRespostas = (
   setRespostas: React.Dispatch<React.SetStateAction<Record<string, RespostaValor>>>,
   setProgresso: React.Dispatch<React.SetStateAction<number>>,
   observacoes: Record<string, string>,
-  fileUrls: Record<string, string>
+  fileUrls: Record<string, string>,
+  setPontuacaoPorSecao?: React.Dispatch<React.SetStateAction<Record<string, number>>>
 ) => {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
@@ -23,6 +24,43 @@ export const useChecklistRespostas = (
     'Não': -1,
     'Regular': 0.5,
     'N/A': 0
+  };
+
+  const updatePontuacaoPorSecao = async () => {
+    if (!auditoriaId || !setPontuacaoPorSecao) return;
+    
+    try {
+      // Fetch all responses
+      const { data: respostasData, error: respostasError } = await supabase
+        .from('respostas')
+        .select('*')
+        .eq('auditoria_id', auditoriaId);
+        
+      if (respostasError) throw respostasError;
+
+      // Fetch all perguntas to map them to secoes
+      const { data: perguntasData, error: perguntasError } = await supabase
+        .from('perguntas')
+        .select('*');
+        
+      if (perguntasError) throw perguntasError;
+      
+      // Calculate scores by section
+      const scores: Record<string, number> = {};
+      
+      respostasData.forEach(resposta => {
+        const pergunta = perguntasData.find(p => p.id === resposta.pergunta_id);
+        if (pergunta && pergunta.secao_id) {
+          const secaoId = pergunta.secao_id;
+          scores[secaoId] = (scores[secaoId] || 0) + (resposta.pontuacao_obtida || 0);
+        }
+      });
+      
+      console.log("Updated section scores:", scores);
+      setPontuacaoPorSecao(scores);
+    } catch (error) {
+      console.error("Error updating section scores:", error);
+    }
   };
 
   const handleResposta = async (perguntaId: string, resposta: RespostaValor, respostasExistentes: any[], perguntas?: Pergunta[]) => {
@@ -108,6 +146,9 @@ export const useChecklistRespostas = (
         if (error) throw error;
       }
       
+      // Update section scores in real-time
+      await updatePontuacaoPorSecao();
+      
       // Show success message
       toast({
         title: "Resposta salva",
@@ -124,6 +165,34 @@ export const useChecklistRespostas = (
       setIsSaving(false);
     }
   };
+  
+  // Function to save all responses at once (for use with Next button)
+  const saveAllResponses = async () => {
+    if (!auditoriaId) return;
+    
+    setIsSaving(true);
+    
+    try {
+      // Since responses are already being saved individually when selected,
+      // we just need to ensure the section scores are updated
+      await updatePontuacaoPorSecao();
+      
+      toast({
+        title: "Seção salva",
+        description: "Todas as respostas desta seção foram salvas com sucesso.",
+      });
+    } catch (error) {
+      console.error("Erro ao salvar respostas:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao salvar as respostas.",
+        variant: "destructive"
+      });
+      throw error; // Propagate error for handling in the UI
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
-  return { handleResposta, pontuacaoMap, isSaving };
+  return { handleResposta, pontuacaoMap, isSaving, saveAllResponses, updatePontuacaoPorSecao };
 };

@@ -56,8 +56,9 @@ const Checklist: React.FC = () => {
     goToNextSection,
     hasUnansweredQuestions,
     isLastPerguntaInSection,
-    saveAndNavigateHomeBase
-  } = useChecklistPageState(auditoriaId);
+    saveAndNavigateHomeBase,
+    saveAllResponses
+  } = useChecklistPageState(auditoriaId, setPontuacaoPorSecao);
   
   // User selector handlers
   const {
@@ -89,45 +90,19 @@ const Checklist: React.FC = () => {
   // Calculate and update section scores when responses change
   const updateSectionScores = async () => {
     if (auditoriaId) {
-      // First try to get scores from Supabase
       try {
-        const { data: respostasData, error: respostasError } = await supabase
-          .from('respostas')
-          .select('*')
-          .eq('auditoria_id', auditoriaId);
-
-        if (!respostasError && respostasData) {
-          // We have responses from Supabase
-          // Get perguntas to map to secoes
-          const { data: perguntasData, error: perguntasError } = await supabase
-            .from('perguntas')
-            .select('*');
-            
-          if (!perguntasError && perguntasData) {
-            // Calculate scores by section
-            const scores: Record<string, number> = {};
-            
-            respostasData.forEach(resposta => {
-              const pergunta = perguntasData.find(p => p.id === resposta.pergunta_id);
-              if (pergunta && pergunta.secao_id) {
-                const secaoId = pergunta.secao_id;
-                scores[secaoId] = (scores[secaoId] || 0) + (resposta.pontuacao_obtida || 0);
-              }
-            });
-            
-            console.log("Updated section scores from Supabase:", scores);
-            setPontuacaoPorSecao(scores);
-            return;
-          }
-        }
+        // Use the Supabase-based method first
+        const scores = await analiseService.calcularPontuacaoPorSecaoSupabase(auditoriaId);
+        console.log("Updated section scores from Supabase:", scores);
+        setPontuacaoPorSecao(scores);
       } catch (error) {
         console.error("Error fetching scores from Supabase:", error);
+        
+        // Fallback to local storage if Supabase fails
+        const scores = analiseService.calcularPontuacaoPorSecao(auditoriaId);
+        console.log("Calculated local scores:", scores);
+        setPontuacaoPorSecao(scores);
       }
-      
-      // Fallback to local storage if Supabase fails
-      const scores = analiseService.calcularPontuacaoPorSecao(auditoriaId);
-      console.log("Calculated local scores:", scores);
-      setPontuacaoPorSecao(scores);
     }
   };
 
@@ -180,6 +155,7 @@ const Checklist: React.FC = () => {
       hasUnansweredQuestions={hasUnansweredQuestions}
       isLastPerguntaInSection={isLastPerguntaInSection}
       saveAndNavigateHome={saveAndNavigateHome}
+      saveAllResponses={saveAllResponses}
       pontuacaoPorSecao={pontuacaoPorSecao}
     />
   );

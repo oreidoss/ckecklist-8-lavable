@@ -1,25 +1,29 @@
 
-import { useEffect } from 'react';
+import { useState } from 'react';
+import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 import { Pergunta } from '@/lib/types';
-import { useChecklistState } from './useChecklistState';
 import { useChecklistRespostas } from './useChecklistRespostas';
 import { useChecklistObservacoes } from './useChecklistObservacoes';
 import { useChecklistUploads } from './useChecklistUploads';
 import { useChecklistSave } from './useChecklistSave';
 import { useChecklistSections } from './useChecklistSections';
-import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
-import { supabase } from '@/integrations/supabase/client';
+import { useChecklistState } from './useChecklistState';
 
 /**
- * Main hook that combines all checklist-related hooks
+ * Main hook for checklist functionality
  */
-export const useChecklist = (auditoriaId: string | undefined, perguntas: Pergunta[] | undefined) => {
+export const useChecklist = (
+  auditoriaId: string | undefined, 
+  perguntas: Pergunta[] | undefined,
+  setPontuacaoPorSecao?: React.Dispatch<React.SetStateAction<Record<string, number>>>
+) => {
+  // Checklist state
   const {
     respostas,
     setRespostas,
     progresso,
     setProgresso,
-    completedSections,
+    completedSections, 
     setCompletedSections,
     observacoes,
     setObservacoes,
@@ -30,61 +34,43 @@ export const useChecklist = (auditoriaId: string | undefined, perguntas: Pergunt
     isSaving,
     setIsSaving
   } = useChecklistState();
-
-  const { handleResposta, pontuacaoMap } = useChecklistRespostas(
-    auditoriaId, 
-    setRespostas, 
-    setProgresso, 
-    observacoes, 
-    fileUrls
+  
+  // Handle respostas
+  const { handleResposta, pontuacaoMap, saveAllResponses, updatePontuacaoPorSecao } = useChecklistRespostas(
+    auditoriaId,
+    setRespostas,
+    setProgresso,
+    observacoes,
+    fileUrls,
+    setPontuacaoPorSecao
   );
-
+  
+  // Handle observacoes
   const { handleObservacaoChange, handleSaveObservacao } = useChecklistObservacoes(
     auditoriaId,
     observacoes,
     setObservacoes
   );
-
+  
+  // Handle file uploads
   const { handleFileUpload } = useChecklistUploads(
     auditoriaId,
-    setFileUrls,
-    setUploading
+    uploading,
+    setUploading,
+    fileUrls,
+    setFileUrls
   );
-
-  const { saveAndNavigateHome } = useChecklistSave(auditoriaId, progresso);
-
-  const { updateCompletedSections } = useChecklistSections(
+  
+  // Handle sections
+  const { markSectionAsComplete } = useChecklistSections(
+    auditoriaId,
     completedSections,
-    setCompletedSections,
-    respostas
+    setCompletedSections
   );
-
-  // Create storage bucket for attachments if it doesn't exist
-  useEffect(() => {
-    const createBucket = async () => {
-      try {
-        // Check if the bucket exists
-        const { data, error } = await supabase
-          .storage
-          .getBucket('auditoria-anexos');
-
-        // If bucket doesn't exist, create it
-        if (error && error.message.includes('not found')) {
-          await supabase
-            .storage
-            .createBucket('auditoria-anexos', {
-              public: true,
-              fileSizeLimit: 10485760 // 10MB
-            });
-        }
-      } catch (error) {
-        console.error('Error creating bucket:', error);
-      }
-    };
-
-    createBucket();
-  }, []);
-
+  
+  // Handle saving
+  const { saveAndNavigateHome } = useChecklistSave(auditoriaId, progresso);
+  
   return {
     // State
     respostas,
@@ -94,28 +80,18 @@ export const useChecklist = (auditoriaId: string | undefined, perguntas: Pergunt
     completedSections,
     setCompletedSections,
     observacoes,
-    setObservacoes,
     uploading,
-    setUploading,
     fileUrls,
-    setFileUrls,
     isSaving,
-    setIsSaving,
     
-    // Handlers
+    // Methods
     handleResposta,
     handleObservacaoChange,
     handleSaveObservacao,
     handleFileUpload,
+    markSectionAsComplete,
     saveAndNavigateHome,
-    updateCompletedSections
+    saveAllResponses,
+    updatePontuacaoPorSecao
   };
 };
-
-// Re-export all hooks for direct usage
-export * from './useChecklistState';
-export * from './useChecklistRespostas';
-export * from './useChecklistObservacoes';
-export * from './useChecklistUploads';
-export * from './useChecklistSave';
-export * from './useChecklistSections';

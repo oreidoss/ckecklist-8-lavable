@@ -9,7 +9,10 @@ import { useChecklistHelpers } from '@/hooks/checklist/useChecklistHelpers';
 /**
  * Hook that combines all the checklist state management for the Checklist page
  */
-export const useChecklistPageState = (auditoriaId: string | undefined) => {
+export const useChecklistPageState = (
+  auditoriaId: string | undefined,
+  setPontuacaoPorSecao?: React.Dispatch<React.SetStateAction<Record<string, number>>>
+) => {
   // Fetch all data
   const {
     usuarios,
@@ -46,8 +49,9 @@ export const useChecklistPageState = (auditoriaId: string | undefined) => {
     handleFileUpload: handleFileUploadBase,
     handleObservacaoChange,
     handleSaveObservacao: handleSaveObservacaoBase,
-    saveAndNavigateHome: saveAndNavigateHomeBase
-  } = useChecklist(auditoriaId, perguntas);
+    saveAndNavigateHome: saveAndNavigateHomeBase,
+    saveAllResponses: saveAllResponsesBase
+  } = useChecklist(auditoriaId, perguntas, setPontuacaoPorSecao);
   
   // Section navigation
   const {
@@ -90,6 +94,13 @@ export const useChecklistPageState = (auditoriaId: string | undefined) => {
     if (respostasExistentes) {
       handleSaveObservacaoBase(perguntaId, respostasExistentes);
     }
+  };
+  
+  const saveAllResponses = async () => {
+    if (respostasExistentes) {
+      return saveAllResponsesBase(respostasExistentes);
+    }
+    return Promise.resolve();
   };
   
   // Process existing responses - only on initial load
@@ -179,6 +190,7 @@ export const useChecklistPageState = (auditoriaId: string | undefined) => {
     goToNextSection,
     hasUnansweredQuestions,
     isLastPerguntaInSection,
-    saveAndNavigateHomeBase
+    saveAndNavigateHomeBase,
+    saveAllResponses
   };
 };
