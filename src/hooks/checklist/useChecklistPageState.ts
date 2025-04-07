@@ -6,6 +6,9 @@ import { useChecklist } from '@/hooks/checklist';
 import { useSectionNavigation } from '@/hooks/checklist/useSectionNavigation';
 import { useChecklistHelpers } from '@/hooks/checklist/useChecklistHelpers';
 import { useChecklistProcessor } from '@/hooks/checklist/useChecklistProcessor';
+import { useSectionState } from '@/hooks/checklist/useSectionState';
+import { useResponseHandlers } from '@/hooks/checklist/useResponseHandlers';
+import { useNavigationHandlers } from '@/hooks/checklist/useNavigationHandlers';
 
 /**
  * Hook that combines all the checklist state management for the Checklist page
@@ -57,22 +60,25 @@ export const useChecklistPageState = (
   
   // Section navigation
   const {
-    activeSecao,
-    setActiveSecao,
     incompleteSections,
     setIncompleteSections,
-    getPerguntasBySecao,
     updateIncompleteSections,
     goToNextSection,
     goToPreviousSection,
-    handleSetActiveSecao
   } = useSectionNavigation({
     secoes,
     perguntas,
     respostas
   });
 
-  // Helpers for checklist operations - using our refactored hook
+  // Section state management (extracted to a new hook)
+  const {
+    activeSecao,
+    setActiveSecao,
+    getPerguntasBySecao
+  } = useSectionState(secoes, perguntas, respostas);
+
+  // Helpers for checklist operations
   const { 
     hasUnansweredQuestions, 
     isLastPerguntaInSection,
@@ -84,7 +90,36 @@ export const useChecklistPageState = (
     activeSecao
   );
 
-  // Process existing responses - using our refactored hook
+  // Response handlers (extracted to a new hook)
+  const {
+    handleRespostaWrapped,
+    handleFileUploadWrapped,
+    handleSaveObservacaoWrapped
+  } = useResponseHandlers(
+    handleRespostaBase,
+    handleFileUploadBase,
+    handleSaveObservacaoBase,
+    respostasExistentes,
+    perguntas,
+    updateIncompleteSections
+  );
+
+  // Navigation handlers (extracted to a new hook)
+  const {
+    handleSetActiveSecao,
+    saveAndNavigateHome,
+    saveAllResponses
+  } = useNavigationHandlers(
+    activeSecao,
+    setActiveSecao,
+    secoes,
+    goToNextSection,
+    goToPreviousSection,
+    saveAllResponsesBase,
+    saveAndNavigateHomeBase
+  );
+
+  // Process responses on initial load
   const { processExistingResponses } = useChecklistProcessor(
     respostasExistentes,
     perguntas,
@@ -95,46 +130,10 @@ export const useChecklistPageState = (
     setCompletedSections,
     updateIncompleteSections
   );
-
-  // Process responses on initial load
+  
   useEffect(() => {
     processExistingResponses();
   }, [respostasExistentes, perguntas, secoes]);
-  
-  // Set initial active section
-  useEffect(() => {
-    if (secoes?.length && activeSecao === null) {
-      setActiveSecao(secoes[0].id);
-    }
-  }, [secoes, activeSecao, setActiveSecao]);
-
-  // Wrapped handlers
-  const handleRespostaWrapped = (perguntaId: string, resposta: RespostaValor) => {
-    if (respostasExistentes && perguntas) {
-      handleRespostaBase(perguntaId, resposta, respostasExistentes, perguntas);
-      updateIncompleteSections();
-    }
-  };
-
-  const handleFileUploadWrapped = (perguntaId: string, file: File) => {
-    if (respostasExistentes) {
-      handleFileUploadBase(perguntaId, file, respostasExistentes);
-    }
-  };
-
-  const handleSaveObservacaoWrapped = (perguntaId: string) => {
-    if (respostasExistentes) {
-      handleSaveObservacaoBase(perguntaId, respostasExistentes);
-    }
-  };
-  
-  const saveAllResponses = async (): Promise<void> => {
-    if (respostasExistentes) {
-      await saveAllResponsesBase();
-      return; // Ensure we return void
-    }
-    return Promise.resolve(); // Return a resolved Promise<void> when no responses exist
-  };
 
   return {
     // Data
