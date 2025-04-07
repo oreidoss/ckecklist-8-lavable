@@ -5,6 +5,16 @@ import { Pergunta, Secao, Resposta } from '@/lib/types';
 
 /**
  * Hook to process existing checklist responses
+ * 
+ * @param respostasExistentes Existing responses from database
+ * @param perguntas Questions data array
+ * @param secoes Sections data array
+ * @param respostas Current response values state
+ * @param setRespostas Function to update responses state
+ * @param setProgresso Function to update progress state
+ * @param setCompletedSections Function to update completed sections state
+ * @param updateIncompleteSections Function to update incomplete sections
+ * @returns Functions for processing existing responses
  */
 export const useChecklistProcessor = (
   respostasExistentes: Resposta[] | undefined,
@@ -17,6 +27,9 @@ export const useChecklistProcessor = (
   updateIncompleteSections: () => void
 ) => {
   
+  /**
+   * Process existing responses to update the UI state
+   */
   const processExistingResponses = useCallback(() => {
     if (!respostasExistentes?.length || !perguntas?.length || !secoes?.length) return;
     
@@ -43,11 +56,22 @@ export const useChecklistProcessor = (
     const progresso = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
     setProgresso(progresso);
     
-    // Determine completed sections
+    // Calculate section completion status
+    calculateSectionCompletionStatus(respostasMap);
+    
+  }, [respostasExistentes, perguntas, secoes, respostas, setRespostas, setProgresso]);
+
+  /**
+   * Determine which sections are complete based on answers
+   */
+  const calculateSectionCompletionStatus = useCallback((respostasMap: Record<string, RespostaValor>) => {
+    if (!secoes || !perguntas) return;
+    
     const completedSections: string[] = [];
     
     secoes.forEach(secao => {
       const perguntasSecao = perguntas.filter(p => p.secao_id === secao.id);
+      // A section is complete if all questions have responses
       const todasRespondidas = perguntasSecao.length > 0 && perguntasSecao.every(pergunta => 
         respostasMap[pergunta.id] !== undefined
       );
@@ -60,8 +84,10 @@ export const useChecklistProcessor = (
     
     setCompletedSections(completedSections);
     updateIncompleteSections();
-    
-  }, [respostasExistentes, perguntas, secoes, respostas, setRespostas, setProgresso, setCompletedSections, updateIncompleteSections]);
+  }, [perguntas, secoes, setCompletedSections, updateIncompleteSections]);
 
-  return { processExistingResponses };
+  return { 
+    processExistingResponses,
+    calculateSectionCompletionStatus
+  };
 };

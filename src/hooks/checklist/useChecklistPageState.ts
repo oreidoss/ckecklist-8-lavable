@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 import { useChecklistData } from '@/hooks/checklist/useChecklistData';
@@ -71,14 +72,19 @@ export const useChecklistPageState = (
     respostas
   });
 
-  // Helpers for checklist operations
-  const { hasUnansweredQuestions, isLastPerguntaInSection } = useChecklistHelpers(
+  // Helpers for checklist operations - using our refactored hook
+  const { 
+    hasUnansweredQuestions, 
+    isLastPerguntaInSection,
+    getActiveQuestionCount,
+    getAnsweredQuestionCount
+  } = useChecklistHelpers(
     perguntas,
     respostas,
     activeSecao
   );
 
-  // Process existing responses
+  // Process existing responses - using our refactored hook
   const { processExistingResponses } = useChecklistProcessor(
     respostasExistentes,
     perguntas,
@@ -175,6 +181,10 @@ export const useChecklistPageState = (
     isLastPerguntaInSection,
     saveAndNavigateHomeBase,
     saveAllResponses,
-    updateCompletedSections
+    updateCompletedSections,
+    
+    // New features from refactored hooks
+    getActiveQuestionCount,
+    getAnsweredQuestionCount
   };
 };
