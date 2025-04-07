@@ -21,6 +21,27 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
   setActiveSecao,
   pontuacaoPorSecao = {}
 }) => {
+  const getButtonVariant = (secao: Secao) => {
+    if (activeSecao === secao.id) return "default";
+    
+    // Fully completed sections are green
+    const pontuacao = pontuacaoPorSecao[secao.id] || 0;
+    const totalPontuacaoPossivel = 10; // Assuming a max score of 10
+    const percentCompleted = (pontuacao / totalPontuacaoPossivel) * 100;
+    
+    if (percentCompleted === 100 || completedSections.includes(secao.id)) {
+      return "success"; // Green for fully completed
+    }
+    
+    // Sections started but not completed are yellow
+    if (incompleteSections.includes(secao.id)) {
+      return "warning"; // Yellow for in-progress sections
+    }
+    
+    // Not started sections are outline/white
+    return "outline";
+  };
+
   return (
     <div className="flex flex-wrap gap-2">
       {secoes?.map((secao) => {
@@ -28,17 +49,10 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
         const isIncomplete = incompleteSections.includes(secao.id);
         const pontuacao = pontuacaoPorSecao[secao.id] || 0;
         
-        const getButtonVariant = () => {
-          if (activeSecao === secao.id) return "default";
-          if (isCompleted) return "success"; // Green for completed sections
-          if (isIncomplete) return "warning"; // Yellow for in-progress sections
-          return "outline"; // White/outline for not started
-        };
-
         return (
           <Button
             key={secao.id}
-            variant={getButtonVariant()}
+            variant={getButtonVariant(secao)}
             onClick={() => setActiveSecao(secao.id)}
             className="whitespace-nowrap flex items-center gap-1 relative"
           >
