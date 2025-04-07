@@ -28,20 +28,19 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
         const isIncomplete = incompleteSections.includes(secao.id);
         const pontuacao = pontuacaoPorSecao[secao.id] || 0;
         
+        const getButtonVariant = () => {
+          if (activeSecao === secao.id) return "default";
+          if (isCompleted) return "success";
+          if (isIncomplete) return "warning";
+          return "outline";
+        };
+
         return (
           <Button
             key={secao.id}
-            variant={activeSecao === secao.id ? "default" : "outline"}
+            variant={getButtonVariant()}
             onClick={() => setActiveSecao(secao.id)}
-            className={`whitespace-nowrap flex items-center gap-1 relative ${
-              activeSecao === secao.id 
-                ? 'bg-[#00bfa5] hover:bg-[#00a896]' 
-                : isCompleted 
-                  ? 'bg-[#4ade80] text-white hover:bg-[#22c55e]' 
-                  : isIncomplete
-                    ? 'bg-amber-100 text-amber-700 border-amber-300 hover:bg-amber-200'
-                    : ''
-            }`}
+            className="whitespace-nowrap flex items-center gap-1 relative"
           >
             {isCompleted && <Check className="h-4 w-4" />}
             {isIncomplete && <AlertTriangle className="h-4 w-4" />}
