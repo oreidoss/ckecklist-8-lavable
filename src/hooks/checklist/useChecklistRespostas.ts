@@ -59,7 +59,6 @@ export const useChecklistRespostas = (
       console.log("Updated section scores:", scores);
       setPontuacaoPorSecao(scores);
       
-      // Return the response data for further processing if needed
       return respostasData;
     } catch (error) {
       console.error("Error updating section scores:", error);
@@ -173,7 +172,7 @@ export const useChecklistRespostas = (
   };
   
   // Function to save all responses at once (for use with Next button)
-  const saveAllResponses = async () => {
+  const saveAllResponses = async (): Promise<void> => {
     if (!auditoriaId) return;
     
     setIsSaving(true);
@@ -181,14 +180,15 @@ export const useChecklistRespostas = (
     try {
       // Since responses are already being saved individually when selected,
       // we just need to ensure the section scores are updated
-      const respostasData = await updatePontuacaoPorSecao();
+      await updatePontuacaoPorSecao();
       
       toast({
         title: "Seção salva",
         description: "Todas as respostas desta seção foram salvas com sucesso.",
       });
       
-      return respostasData;
+      // Don't return the data, just return void to match the expected Promise<void> type
+      return;
     } catch (error) {
       console.error("Erro ao salvar respostas:", error);
       toast({

@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 import { useChecklistData } from '@/hooks/checklist/useChecklistData';
@@ -123,11 +122,12 @@ export const useChecklistPageState = (
     }
   };
   
-  const saveAllResponses = async () => {
+  const saveAllResponses = async (): Promise<void> => {
     if (respostasExistentes) {
-      return saveAllResponsesBase();
+      await saveAllResponsesBase();
+      return; // Ensure we return void
     }
-    return Promise.resolve();
+    return Promise.resolve(); // Return a resolved Promise<void> when no responses exist
   };
 
   return {
