@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 import { useChecklistData } from '@/hooks/checklist/useChecklistData';
@@ -137,7 +138,8 @@ export const useChecklistPageState = (
     });
     
     setCompletedSections(completedSections);
-    updateIncompleteSections(); // Call without arguments
+    // Fixed error here: Don't pass any argument to updateIncompleteSections
+    updateIncompleteSections();
     
   }, [respostasExistentes, perguntas, secoes]);
   
