@@ -92,9 +92,12 @@ export const useChecklistPageState = (auditoriaId: string | undefined) => {
     }
   };
   
-  // Process existing responses - only on initial load and when dependencies change
+  // Process existing responses - only on initial load
   useEffect(() => {
     if (!respostasExistentes?.length || !perguntas?.length || !secoes?.length) return;
+    
+    // Skip this effect if we already have respostas
+    if (Object.keys(respostas).length > 0) return;
     
     const respostasMap: Record<string, RespostaValor> = {};
     respostasExistentes.forEach(resposta => {
@@ -124,7 +127,7 @@ export const useChecklistPageState = (auditoriaId: string | undefined) => {
     setCompletedSections(completedSections);
     updateIncompleteSections();
     
-  }, [respostasExistentes, perguntas, secoes, setRespostas, setProgresso, setCompletedSections, updateIncompleteSections]);
+  }, [respostasExistentes, perguntas, secoes]);
   
   // Set initial active section
   useEffect(() => {
