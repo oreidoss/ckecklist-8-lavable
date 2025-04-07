@@ -23,6 +23,8 @@ export const useChecklistScores = (
     if (!auditoriaId || !setPontuacaoPorSecao) return;
     
     try {
+      console.log("Updating section scores for auditoria:", auditoriaId);
+      
       // Fetch all responses
       const { data: respostasData, error: respostasError } = await supabase
         .from('respostas')
@@ -47,6 +49,8 @@ export const useChecklistScores = (
           scores[pergunta.secao_id] = 0;
         }
       });
+
+      console.log(`Found ${respostasData.length} respostas to process`);
       
       // Now calculate the actual scores from responses
       respostasData.forEach(resposta => {
@@ -54,21 +58,31 @@ export const useChecklistScores = (
         if (pergunta && pergunta.secao_id) {
           const secaoId = pergunta.secao_id;
           
+          // Log the data we're working with for debugging
+          console.log(`Processing resposta for pergunta ${resposta.pergunta_id} in secao ${secaoId}:`, {
+            resposta: resposta.resposta,
+            pontuacao_obtida: resposta.pontuacao_obtida
+          });
+          
           // Use the actual score from the response if available
-          // Otherwise calculate it from the response value using pontuacaoMap
           if (resposta.pontuacao_obtida !== null && resposta.pontuacao_obtida !== undefined) {
-            scores[secaoId] = (scores[secaoId] || 0) + resposta.pontuacao_obtida;
-          } else if (resposta.resposta) {
+            const pontuacao = Number(resposta.pontuacao_obtida);
+            scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
+            console.log(`Added pontuacao_obtida ${pontuacao} to secao ${secaoId}, new total: ${scores[secaoId]}`);
+          } 
+          // Otherwise calculate it from the response value using pontuacaoMap
+          else if (resposta.resposta) {
             const pontuacao = pontuacaoMap[resposta.resposta] || 0;
             scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
+            console.log(`Calculated pontuacao ${pontuacao} from resposta "${resposta.resposta}" for secao ${secaoId}, new total: ${scores[secaoId]}`);
           }
         }
       });
       
-      console.log("Updated section scores:", scores);
+      console.log("Final calculated section scores:", scores);
       setPontuacaoPorSecao(scores);
       
-      return;
+      return scores;
     } catch (error) {
       console.error("Error updating section scores:", error);
       return null;

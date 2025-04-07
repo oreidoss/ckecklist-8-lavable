@@ -51,7 +51,9 @@ export const useRespostaHandler = (
     });
     
     // Calculate pontuacao based on the response value
-    const pontuacao = pontuacaoMap[resposta as string] || 0;
+    const pontuacao = pontuacaoMap[resposta] || 0;
+    console.log(`Calculated pontuacao for "${resposta}": ${pontuacao}`);
+    
     const observacao = observacoes[perguntaId] || '';
     const anexo_url = fileUrls[perguntaId] || '';
     
@@ -59,7 +61,11 @@ export const useRespostaHandler = (
     
     try {
       if (respostaExistente) {
-        console.log(`Updating existing response for pergunta ${perguntaId}:`, resposta);
+        console.log(`Updating existing response for pergunta ${perguntaId}:`, {
+          resposta: resposta,
+          pontuacao_obtida: pontuacao
+        });
+        
         const { error } = await supabase
           .from('respostas')
           .update({
@@ -72,7 +78,11 @@ export const useRespostaHandler = (
         
         if (error) throw error;
       } else {
-        console.log(`Creating new response for pergunta ${perguntaId}:`, resposta);
+        console.log(`Creating new response for pergunta ${perguntaId}:`, {
+          resposta: resposta,
+          pontuacao_obtida: pontuacao
+        });
+        
         const { error } = await supabase
           .from('respostas')
           .insert({
@@ -89,17 +99,19 @@ export const useRespostaHandler = (
       
       if (auditoriaId) {
         // Calculate the new total score after this update
-        let pontuacaoTotal = 0;
+        const { data: allRespostas, error: fetchError } = await supabase
+          .from('respostas')
+          .select('*')
+          .eq('auditoria_id', auditoriaId);
         
-        // Add up scores from existing responses (excluding the current one)
-        respostasExistentes?.forEach(r => {
-          if (r.pergunta_id !== perguntaId && r.pontuacao_obtida !== null) {
-            pontuacaoTotal += r.pontuacao_obtida;
+        if (fetchError) throw fetchError;
+        
+        let pontuacaoTotal = 0;
+        allRespostas.forEach(r => {
+          if (r.pontuacao_obtida !== null && r.pontuacao_obtida !== undefined) {
+            pontuacaoTotal += Number(r.pontuacao_obtida);
           }
         });
-        
-        // Add the score for the current response
-        pontuacaoTotal += pontuacao;
         
         console.log(`Updating pontuacao_total for auditoria ${auditoriaId}: ${pontuacaoTotal}`);
         
@@ -113,7 +125,7 @@ export const useRespostaHandler = (
         if (error) throw error;
       }
       
-      // Update section scores in real-time
+      // Update section scores in real-time - important to wait for this to complete
       await updatePontuacaoPorSecao();
       
       // Show success message

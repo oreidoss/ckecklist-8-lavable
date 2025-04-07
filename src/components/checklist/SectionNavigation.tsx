@@ -54,8 +54,8 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
       {secoes?.map((secao) => {
         const isCompleted = completedSections.includes(secao.id);
         const isIncomplete = incompleteSections.includes(secao.id);
-        const pontuacao = pontuacaoPorSecao[secao.id] || 0;
-        const hasPontuacao = pontuacao !== 0;
+        const pontuacao = pontuacaoPorSecao[secao.id];
+        const hasPontuacao = pontuacao !== undefined && pontuacao !== 0;
         
         return (
           <Button
@@ -73,12 +73,12 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
             {secao.nome}
             
             {/* Always show score if it's available */}
-            {pontuacao !== 0 && (
+            {hasPontuacao && (
               <span 
                 className="absolute -top-1 -right-1 bg-white text-black text-xs px-1 py-0 rounded-full border border-gray-300 font-semibold"
                 style={{ fontSize: '10px', minWidth: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
-                {pontuacao.toFixed(1)}
+                {typeof pontuacao === 'number' ? pontuacao.toFixed(1) : pontuacao}
               </span>
             )}
           </Button>
