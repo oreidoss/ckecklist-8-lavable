@@ -6,11 +6,11 @@ import { supabase } from '@/integrations/supabase/client';
 /**
  * Hook to manage saving checklist data
  */
-export const useChecklistSave = (auditoriaId: string | undefined, progresso: number) => {
+export const useChecklistSave = (auditoriaId: string | undefined) => {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  const saveAndNavigateHome = async (respostasExistentes: any[]) => {
+  const saveAndNavigateHome = async (respostasExistentes: any[], progresso: number = 0) => {
     if (isSaving || !auditoriaId) return false;
     
     setIsSaving(true);

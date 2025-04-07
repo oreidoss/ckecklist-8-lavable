@@ -1,5 +1,4 @@
 
-// File: src/hooks/checklist/index.ts
 import { useState, useEffect } from 'react';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 import { useChecklistSections } from './useChecklistSections';

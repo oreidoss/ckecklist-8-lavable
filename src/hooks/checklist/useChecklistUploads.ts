@@ -1,16 +1,15 @@
 
+import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Hook to manage file uploads for a checklist
  */
-export const useChecklistUploads = (
-  auditoriaId: string | undefined,
-  setFileUrls: React.Dispatch<React.SetStateAction<Record<string, string>>>,
-  setUploading: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
-) => {
+export const useChecklistUploads = (auditoriaId: string | undefined) => {
   const { toast } = useToast();
+  const [uploading, setUploading] = useState<Record<string, boolean>>({});
+  const [fileUrls, setFileUrls] = useState<Record<string, string>>({});
 
   const handleFileUpload = async (perguntaId: string, file: File, respostasExistentes: any[]) => {
     if (!auditoriaId || !file) return;
@@ -84,5 +83,9 @@ export const useChecklistUploads = (
     }
   };
 
-  return { handleFileUpload };
+  return { 
+    uploading, 
+    fileUrls, 
+    handleFileUpload 
+  };
 };

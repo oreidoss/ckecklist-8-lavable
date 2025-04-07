@@ -1,16 +1,14 @@
 
+import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Hook to manage checklist observations
  */
-export const useChecklistObservacoes = (
-  auditoriaId: string | undefined,
-  observacoes: Record<string, string>, 
-  setObservacoes: React.Dispatch<React.SetStateAction<Record<string, string>>>
-) => {
+export const useChecklistObservacoes = (auditoriaId: string | undefined) => {
   const { toast } = useToast();
+  const [observacoes, setObservacoes] = useState<Record<string, string>>({});
 
   const handleObservacaoChange = (perguntaId: string, value: string) => {
     setObservacoes(prev => ({ ...prev, [perguntaId]: value }));
@@ -48,5 +46,9 @@ export const useChecklistObservacoes = (
     }
   };
 
-  return { handleObservacaoChange, handleSaveObservacao };
+  return { 
+    observacoes, 
+    handleObservacaoChange, 
+    handleSaveObservacao 
+  };
 };
