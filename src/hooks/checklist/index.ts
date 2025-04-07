@@ -62,7 +62,7 @@ export const useChecklist = (
   );
   
   // Handle sections
-  const { markSectionAsComplete } = useChecklistSections(
+  const { updateCompletedSections, markSectionAsComplete } = useChecklistSections(
     auditoriaId,
     completedSections,
     setCompletedSections
@@ -92,6 +92,7 @@ export const useChecklist = (
     markSectionAsComplete,
     saveAndNavigateHome,
     saveAllResponses,
-    updatePontuacaoPorSecao
+    updatePontuacaoPorSecao,
+    updateCompletedSections
   };
 };

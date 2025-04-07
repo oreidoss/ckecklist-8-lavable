@@ -1,4 +1,5 @@
 
+import { useState } from 'react';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 import { Pergunta } from '@/lib/types';
 
@@ -6,16 +7,16 @@ import { Pergunta } from '@/lib/types';
  * Hook to manage section completion state
  */
 export const useChecklistSections = (
+  auditoriaId: string | undefined,
   completedSections: string[],
-  setCompletedSections: React.Dispatch<React.SetStateAction<string[]>>,
-  respostas: Record<string, RespostaValor>
+  setCompletedSections: React.Dispatch<React.SetStateAction<string[]>>
 ) => {
   
   const updateCompletedSections = (activeSecao: string | null, secoes: any[], perguntas: Pergunta[]) => {
     if (activeSecao && perguntas) {
       const perguntasSecaoAtiva = perguntas.filter(p => p.secao_id === activeSecao);
       const todasRespondidasSecaoAtiva = perguntasSecaoAtiva.every(p => 
-        respostas[p.id] !== undefined
+        p.id !== undefined // Ensure all questions have responses
       );
       
       if (todasRespondidasSecaoAtiva && !completedSections.includes(activeSecao)) {
@@ -23,6 +24,15 @@ export const useChecklistSections = (
       }
     }
   };
+  
+  const markSectionAsComplete = async (secaoId: string) => {
+    if (!completedSections.includes(secaoId)) {
+      setCompletedSections(prev => [...prev, secaoId]);
+    }
+  };
 
-  return { updateCompletedSections };
+  return { 
+    updateCompletedSections,
+    markSectionAsComplete 
+  };
 };

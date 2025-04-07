@@ -50,7 +50,8 @@ export const useChecklistPageState = (
     handleObservacaoChange,
     handleSaveObservacao: handleSaveObservacaoBase,
     saveAndNavigateHome: saveAndNavigateHomeBase,
-    saveAllResponses: saveAllResponsesBase
+    saveAllResponses: saveAllResponsesBase,
+    updateCompletedSections
   } = useChecklist(auditoriaId, perguntas, setPontuacaoPorSecao);
   
   // Section navigation
@@ -191,6 +192,7 @@ export const useChecklistPageState = (
     hasUnansweredQuestions,
     isLastPerguntaInSection,
     saveAndNavigateHomeBase,
-    saveAllResponses
+    saveAllResponses,
+    updateCompletedSections
   };
 };
