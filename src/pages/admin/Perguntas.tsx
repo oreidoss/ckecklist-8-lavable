@@ -13,8 +13,11 @@ import { AddPerguntaDialog } from '@/components/admin/perguntas/AddPerguntaDialo
 import { PerguntasTable } from '@/components/admin/perguntas/PerguntasTable';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useToast } from '@/hooks/use-toast';
 
 const AdminPerguntas: React.FC = () => {
+  const { toast } = useToast();
+  
   const { 
     perguntas,
     secoes,

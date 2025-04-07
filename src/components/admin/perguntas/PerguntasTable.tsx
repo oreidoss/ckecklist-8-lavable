@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Table,
   TableBody,
@@ -32,9 +32,20 @@ export function PerguntasTable({
   onDeletePergunta,
   isSubmitting = false
 }: PerguntasTableProps) {
+  // Track edited pergunta data
+  const [editedPerguntas, setEditedPerguntas] = useState<Record<string, Pergunta>>({});
+  
   const getSecaoNome = (secaoId: string) => {
     const secao = secoes.find(s => s.id === secaoId);
     return secao ? secao.nome : 'Seção não encontrada';
+  };
+
+  const handlePerguntaChange = (pergunta: Pergunta) => {
+    setEditedPerguntas(prev => ({
+      ...prev,
+      [pergunta.id]: pergunta
+    }));
+    onPerguntaChange(pergunta);
   };
 
   if (isLoading) {
@@ -67,27 +78,32 @@ export function PerguntasTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {perguntas.map((pergunta) => (
-          <TableRow key={pergunta.id}>
-            <TableCell>{getSecaoNome(pergunta.secao_id)}</TableCell>
-            <TableCell>{pergunta.texto}</TableCell>
-            <TableCell className="text-right">
-              <div className="flex justify-end space-x-2">
-                <EditPerguntaDialog 
-                  pergunta={pergunta} 
-                  secoes={secoes} 
-                  onPerguntaChange={onPerguntaChange}
-                  onSave={() => onSavePergunta(pergunta)}
-                  isSubmitting={isSubmitting}
-                />
-                <DeletePerguntaDialog 
-                  onDelete={() => onDeletePergunta(pergunta.id)}
-                  isSubmitting={isSubmitting}
-                />
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
+        {perguntas.map((pergunta) => {
+          // Use edited pergunta if available, otherwise use original
+          const currentPergunta = editedPerguntas[pergunta.id] || pergunta;
+          
+          return (
+            <TableRow key={pergunta.id}>
+              <TableCell>{getSecaoNome(currentPergunta.secao_id)}</TableCell>
+              <TableCell>{currentPergunta.texto}</TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end space-x-2">
+                  <EditPerguntaDialog 
+                    pergunta={currentPergunta} 
+                    secoes={secoes} 
+                    onPerguntaChange={handlePerguntaChange}
+                    onSave={() => onSavePergunta(currentPergunta)}
+                    isSubmitting={isSubmitting}
+                  />
+                  <DeletePerguntaDialog 
+                    onDelete={() => onDeletePergunta(pergunta.id)}
+                    isSubmitting={isSubmitting}
+                  />
+                </div>
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );

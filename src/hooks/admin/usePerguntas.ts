@@ -73,6 +73,9 @@ export function usePerguntas() {
     
     try {
       setIsSubmitting(true);
+      
+      console.log("Atualizando pergunta:", pergunta);
+      
       const { error } = await supabase
         .from('perguntas')
         .update({
@@ -90,7 +93,7 @@ export function usePerguntas() {
         title: "Pergunta atualizada",
         description: "A pergunta foi atualizada com sucesso."
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao atualizar pergunta:", error);
       toast({
         title: "Erro ao atualizar",
@@ -136,7 +139,7 @@ export function usePerguntas() {
         title: "Pergunta excluída",
         description: "A pergunta foi excluída com sucesso."
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao excluir pergunta:", error);
       toast({
         title: "Erro ao excluir",

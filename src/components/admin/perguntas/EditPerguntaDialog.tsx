@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Edit } from 'lucide-react';
 import { Pergunta, Secao } from '@/lib/types';
+import { Textarea } from '@/components/ui/textarea';
 
 interface EditPerguntaDialogProps {
   pergunta: Pergunta;
@@ -38,8 +39,35 @@ export function EditPerguntaDialog({
   onSave,
   isSubmitting = false
 }: EditPerguntaDialogProps) {
+  // Create a local state to manage pergunta data during editing
+  const [localPergunta, setLocalPergunta] = useState<Pergunta>(pergunta);
+  const [isOpen, setIsOpen] = useState(false);
+  
+  // Reset local state when dialog opens with the current pergunta
+  const handleOpenChange = (open: boolean) => {
+    if (open) {
+      setLocalPergunta(pergunta);
+    }
+    setIsOpen(open);
+  };
+
+  // Update local state
+  const handleChange = (field: keyof Pergunta, value: string) => {
+    setLocalPergunta(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Submit changes
+  const handleSave = () => {
+    onPerguntaChange(localPergunta);
+    onSave();
+    setIsOpen(false);
+  };
+
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon">
           <Edit className="h-4 w-4" />
@@ -58,11 +86,8 @@ export function EditPerguntaDialog({
               Seção
             </Label>
             <Select 
-              value={pergunta.secao_id.toString()} 
-              onValueChange={(value) => onPerguntaChange({ 
-                ...pergunta, 
-                secao_id: value
-              })}
+              value={localPergunta.secao_id.toString()} 
+              onValueChange={(value) => handleChange('secao_id', value)}
             >
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Selecione uma seção" />
@@ -81,26 +106,22 @@ export function EditPerguntaDialog({
               Pergunta
             </Label>
             <div className="col-span-3">
-              <Input
+              <Textarea
                 id="edit-texto"
-                value={pergunta.texto}
-                onChange={(e) => onPerguntaChange({ 
-                  ...pergunta, 
-                  texto: e.target.value 
-                })}
+                value={localPergunta.texto}
+                onChange={(e) => handleChange('texto', e.target.value)}
+                className="min-h-[100px]"
               />
             </div>
           </div>
         </div>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline" disabled={isSubmitting}>Cancelar</Button>
-          </DialogClose>
-          <DialogClose asChild>
-            <Button onClick={onSave} disabled={isSubmitting}>
-              {isSubmitting ? "Salvando..." : "Salvar Alterações"}
-            </Button>
-          </DialogClose>
+          <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSave} disabled={isSubmitting}>
+            {isSubmitting ? "Salvando..." : "Salvar Alterações"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
