@@ -58,8 +58,12 @@ export const useChecklistRespostas = (
       
       console.log("Updated section scores:", scores);
       setPontuacaoPorSecao(scores);
+      
+      // Return the response data for further processing if needed
+      return respostasData;
     } catch (error) {
       console.error("Error updating section scores:", error);
+      return null;
     }
   };
 
@@ -94,6 +98,7 @@ export const useChecklistRespostas = (
     
     try {
       if (respostaExistente) {
+        console.log(`Updating existing response for pergunta ${perguntaId}:`, resposta);
         const { error } = await supabase
           .from('respostas')
           .update({
@@ -106,6 +111,7 @@ export const useChecklistRespostas = (
         
         if (error) throw error;
       } else {
+        console.log(`Creating new response for pergunta ${perguntaId}:`, resposta);
         const { error } = await supabase
           .from('respostas')
           .insert({
@@ -175,12 +181,14 @@ export const useChecklistRespostas = (
     try {
       // Since responses are already being saved individually when selected,
       // we just need to ensure the section scores are updated
-      await updatePontuacaoPorSecao();
+      const respostasData = await updatePontuacaoPorSecao();
       
       toast({
         title: "Seção salva",
         description: "Todas as respostas desta seção foram salvas com sucesso.",
       });
+      
+      return respostasData;
     } catch (error) {
       console.error("Erro ao salvar respostas:", error);
       toast({

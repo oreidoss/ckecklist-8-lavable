@@ -22,14 +22,18 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
   pontuacaoPorSecao = {}
 }) => {
   const getButtonVariant = (secao: Secao) => {
+    // If it's the active section, use default style
     if (activeSecao === secao.id) return "default";
     
-    // Fully completed sections are green
+    // Check if section has pontuacao but no completions
     const pontuacao = pontuacaoPorSecao[secao.id] || 0;
-    const totalPontuacaoPossivel = 10; // Assuming a max score of 10
-    const percentCompleted = (pontuacao / totalPontuacaoPossivel) * 100;
+    if (pontuacao > 0 && !completedSections.includes(secao.id)) {
+      // This means section has responses but may not be fully completed
+      return "success"; // Green for sections with responses
+    }
     
-    if (percentCompleted === 100 || completedSections.includes(secao.id)) {
+    // Check if section is in completedSections
+    if (completedSections.includes(secao.id)) {
       return "success"; // Green for fully completed
     }
     
@@ -48,6 +52,7 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
         const isCompleted = completedSections.includes(secao.id);
         const isIncomplete = incompleteSections.includes(secao.id);
         const pontuacao = pontuacaoPorSecao[secao.id] || 0;
+        const hasPontuacao = pontuacao !== 0;
         
         return (
           <Button
@@ -56,9 +61,14 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
             onClick={() => setActiveSecao(secao.id)}
             className="whitespace-nowrap flex items-center gap-1 relative"
           >
-            {isCompleted && <Check className="h-4 w-4" />}
-            {isIncomplete && <AlertTriangle className="h-4 w-4" />}
+            {/* Show check icon if completed OR if has pontuacao but not marked as completed */}
+            {(isCompleted || (!isCompleted && hasPontuacao)) && <Check className="h-4 w-4" />}
+            
+            {/* Only show warning icon if incomplete and no pontuacao */}
+            {isIncomplete && !hasPontuacao && <AlertTriangle className="h-4 w-4" />}
+            
             {secao.nome}
+            
             {pontuacao !== 0 && (
               <span 
                 className="absolute -top-1 -right-1 bg-white text-black text-xs px-1 py-0 rounded-full border border-gray-300 font-semibold"

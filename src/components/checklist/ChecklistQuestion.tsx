@@ -24,8 +24,11 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
   
   // When the prop changes, update local state
   useEffect(() => {
-    setLocalResposta(resposta);
-  }, [resposta]);
+    if (resposta !== undefined && resposta !== localResposta) {
+      console.log(`Updating local response for question ${pergunta.id}: ${resposta}`);
+      setLocalResposta(resposta);
+    }
+  }, [resposta, pergunta.id, localResposta]);
   
   const getButtonVariant = (valor: RespostaValor) => {
     return (localResposta === valor) ? "default" : "outline";

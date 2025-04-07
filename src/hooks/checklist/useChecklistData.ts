@@ -30,7 +30,6 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
   const { data: usuarios, isLoading: loadingUsuarios } = useQuery({
     queryKey: ['usuarios'],
     queryFn: async () => {
-      // Try to fetch all users, with improved logging for debugging
       console.log('Fetching usuarios...');
       const { data, error } = await supabase
         .from('usuarios')
@@ -42,7 +41,6 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
         throw error;
       }
       
-      console.log('Fetched usuarios:', data);
       return data || [];
     }
   });
@@ -59,6 +57,7 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
         .single();
       
       if (error) throw error;
+      console.log("Fetched auditoria:", data);
       return data as Auditoria;
     },
     meta: {
@@ -102,14 +101,22 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
     queryFn: async () => {
       if (!auditoriaId) throw new Error('ID da auditoria não fornecido');
       
+      console.log(`Fetching responses for auditoria: ${auditoriaId}`);
       const { data, error } = await supabase
         .from('respostas')
         .select('*')
         .eq('auditoria_id', auditoriaId);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching responses:", error);
+        throw error;
+      }
+      
+      console.log(`Fetched ${data?.length || 0} responses for auditoria ${auditoriaId}`);
       return data as Resposta[];
-    }
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 60000 // 1 minute
   });
 
   const isLoading = loadingAuditoria || loadingUsuarios || loadingSecoes || loadingPerguntas || loadingRespostas;

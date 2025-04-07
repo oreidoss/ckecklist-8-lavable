@@ -20,30 +20,40 @@ export const useChecklistProcessor = (
   const processExistingResponses = useCallback(() => {
     if (!respostasExistentes?.length || !perguntas?.length || !secoes?.length) return;
     
-    // Skip this if we already have respostas
+    // Skip this if we already have respostas loaded to prevent loss of unsaved changes
     if (Object.keys(respostas).length > 0) return;
     
+    console.log("Processing existing responses:", respostasExistentes.length);
+    
+    // Map responses by pergunta_id for easier access
     const respostasMap: Record<string, RespostaValor> = {};
     respostasExistentes.forEach(resposta => {
       if (resposta.pergunta_id && resposta.resposta) {
         respostasMap[resposta.pergunta_id] = resposta.resposta as RespostaValor;
+        console.log(`Mapped response for question ${resposta.pergunta_id}: ${resposta.resposta}`);
       }
     });
     
+    // Set responses all at once to prevent multiple re-renders
     setRespostas(respostasMap);
     
-    const progresso = (Object.keys(respostasMap).length / perguntas.length) * 100;
+    // Calculate progress percentage
+    const answeredCount = Object.keys(respostasMap).length;
+    const totalQuestions = perguntas.length;
+    const progresso = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
     setProgresso(progresso);
     
+    // Determine completed sections
     const completedSections: string[] = [];
     
     secoes.forEach(secao => {
       const perguntasSecao = perguntas.filter(p => p.secao_id === secao.id);
-      const todasRespondidas = perguntasSecao.every(pergunta => 
-        respostasExistentes.some(resp => resp.pergunta_id === pergunta.id)
+      const todasRespondidas = perguntasSecao.length > 0 && perguntasSecao.every(pergunta => 
+        respostasMap[pergunta.id] !== undefined
       );
       
-      if (todasRespondidas && perguntasSecao.length > 0) {
+      // If all questions in this section have answers, mark it as completed
+      if (todasRespondidas) {
         completedSections.push(secao.id);
       }
     });

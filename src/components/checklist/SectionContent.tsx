@@ -47,15 +47,21 @@ const SectionContent: React.FC<SectionContentProps> = ({
 
   return (
     <>
-      {perguntasSecaoAtiva.map((pergunta, index) => (
-        <ChecklistQuestion
-          key={pergunta.id}
-          pergunta={pergunta}
-          index={index}
-          resposta={respostas[pergunta.id]}
-          handleResposta={handleResposta}
-        />
-      ))}
+      {perguntasSecaoAtiva.map((pergunta, index) => {
+        // Find the response in the state first, then fall back to the existing responses if not in state
+        const resposta = respostas[pergunta.id] || 
+          (respostasExistentes?.find(r => r.pergunta_id === pergunta.id)?.resposta as RespostaValor);
+        
+        return (
+          <ChecklistQuestion
+            key={pergunta.id}
+            pergunta={pergunta}
+            index={index}
+            resposta={resposta}
+            handleResposta={handleResposta}
+          />
+        );
+      })}
       
       <ObservacaoField
         perguntaId={lastPerguntaId}
