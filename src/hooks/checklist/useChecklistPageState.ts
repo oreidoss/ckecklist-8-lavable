@@ -5,6 +5,7 @@ import { useChecklistData } from '@/hooks/checklist/useChecklistData';
 import { useChecklist } from '@/hooks/checklist';
 import { useSectionNavigation } from '@/hooks/checklist/useSectionNavigation';
 import { useChecklistHelpers } from '@/hooks/checklist/useChecklistHelpers';
+import { useChecklistProcessor } from '@/hooks/checklist/useChecklistProcessor';
 
 /**
  * Hook that combines all the checklist state management for the Checklist page
@@ -78,6 +79,30 @@ export const useChecklistPageState = (
     activeSecao
   );
 
+  // Process existing responses
+  const { processExistingResponses } = useChecklistProcessor(
+    respostasExistentes,
+    perguntas,
+    secoes,
+    respostas,
+    setRespostas,
+    setProgresso,
+    setCompletedSections,
+    updateIncompleteSections
+  );
+
+  // Process responses on initial load
+  useEffect(() => {
+    processExistingResponses();
+  }, [respostasExistentes, perguntas, secoes]);
+  
+  // Set initial active section
+  useEffect(() => {
+    if (secoes?.length && activeSecao === null) {
+      setActiveSecao(secoes[0].id);
+    }
+  }, [secoes, activeSecao, setActiveSecao]);
+
   // Wrapped handlers
   const handleRespostaWrapped = (perguntaId: string, resposta: RespostaValor) => {
     if (respostasExistentes && perguntas) {
@@ -104,50 +129,6 @@ export const useChecklistPageState = (
     }
     return Promise.resolve();
   };
-  
-  // Process existing responses - only on initial load
-  useEffect(() => {
-    if (!respostasExistentes?.length || !perguntas?.length || !secoes?.length) return;
-    
-    // Skip this effect if we already have respostas
-    if (Object.keys(respostas).length > 0) return;
-    
-    const respostasMap: Record<string, RespostaValor> = {};
-    respostasExistentes.forEach(resposta => {
-      if (resposta.pergunta_id && resposta.resposta) {
-        respostasMap[resposta.pergunta_id] = resposta.resposta as RespostaValor;
-      }
-    });
-    
-    setRespostas(respostasMap);
-    
-    const progresso = (Object.keys(respostasMap).length / perguntas.length) * 100;
-    setProgresso(progresso);
-    
-    const completedSections: string[] = [];
-    
-    secoes.forEach(secao => {
-      const perguntasSecao = perguntas.filter(p => p.secao_id === secao.id);
-      const todasRespondidas = perguntasSecao.every(pergunta => 
-        respostasExistentes.some(resp => resp.pergunta_id === pergunta.id)
-      );
-      
-      if (todasRespondidas && perguntasSecao.length > 0) {
-        completedSections.push(secao.id);
-      }
-    });
-    
-    setCompletedSections(completedSections);
-    updateIncompleteSections();
-    
-  }, [respostasExistentes, perguntas, secoes]);
-  
-  // Set initial active section
-  useEffect(() => {
-    if (secoes?.length && activeSecao === null) {
-      setActiveSecao(secoes[0].id);
-    }
-  }, [secoes, activeSecao, setActiveSecao]);
 
   return {
     // Data
