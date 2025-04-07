@@ -52,7 +52,8 @@ const Checklist: React.FC = () => {
     hasUnansweredQuestions,
     isLastPerguntaInSection,
     saveAndNavigateHomeBase,
-    saveAllResponses
+    saveAllResponses,
+    saveAndNavigateToNextSection
   } = useChecklistPageState(auditoriaId, setPontuacaoPorSecao);
   
   // User selector handlers
@@ -133,6 +134,7 @@ const Checklist: React.FC = () => {
         saveAndNavigateHome={saveAndNavigateHome}
         saveAllResponses={saveAllResponses}
         pontuacaoPorSecao={pontuacaoPorSecao}
+        saveAndNavigateToNextSection={saveAndNavigateToNextSection}
       />
     </>
   );

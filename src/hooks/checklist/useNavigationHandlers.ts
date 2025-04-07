@@ -30,11 +30,20 @@ export const useNavigationHandlers = (
     return false;
   };
 
+  /**
+   * Save responses and then navigate to the next section
+   */
+  const saveAndNavigateToNextSection = async () => {
+    await saveAllResponses();
+    goToNextSection();
+  };
+
   return {
     handleSetActiveSecao,
     goToNextSection,
     goToPreviousSection,
     saveAllResponses,
-    saveAndNavigateHome
+    saveAndNavigateHome,
+    saveAndNavigateToNextSection
   };
 };

@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 import { useChecklistData } from '@/hooks/checklist/useChecklistData';
@@ -108,7 +107,8 @@ export const useChecklistPageState = (
   const {
     handleSetActiveSecao,
     saveAndNavigateHome,
-    saveAllResponses
+    saveAllResponses,
+    saveAndNavigateToNextSection
   } = useNavigationHandlers(
     activeSecao,
     setActiveSecao,
@@ -184,6 +184,9 @@ export const useChecklistPageState = (
     
     // New features from refactored hooks
     getActiveQuestionCount,
-    getAnsweredQuestionCount
+    getAnsweredQuestionCount,
+    
+    // Add new method
+    saveAndNavigateToNextSection
   };
 };

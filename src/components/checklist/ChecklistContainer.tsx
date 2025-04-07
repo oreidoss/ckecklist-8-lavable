@@ -6,7 +6,6 @@ import { Home } from 'lucide-react';
 import ChecklistHeader from '@/components/checklist/ChecklistHeader';
 import ChecklistContent from '@/components/checklist/ChecklistContent';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
-import { analiseService } from '@/lib/services/analiseService';
 
 interface ChecklistContainerProps {
   isLoading: boolean;
@@ -48,6 +47,7 @@ interface ChecklistContainerProps {
   saveAndNavigateHome: () => void;
   saveAllResponses: () => Promise<void>;
   pontuacaoPorSecao?: Record<string, number>;
+  saveAndNavigateToNextSection?: () => Promise<void>;
 }
 
 const ChecklistContainer: React.FC<ChecklistContainerProps> = ({
@@ -89,7 +89,8 @@ const ChecklistContainer: React.FC<ChecklistContainerProps> = ({
   isLastPerguntaInSection,
   saveAndNavigateHome,
   saveAllResponses,
-  pontuacaoPorSecao
+  pontuacaoPorSecao,
+  saveAndNavigateToNextSection
 }) => {
   if (isLoading) {
     return <div className="flex justify-center items-center h-96">Carregando...</div>;
@@ -135,7 +136,7 @@ const ChecklistContainer: React.FC<ChecklistContainerProps> = ({
           handleSaveObservacao={handleSaveObservacao}
           handleFileUpload={handleFileUpload}
           goToPreviousSection={goToPreviousSection}
-          goToNextSection={goToNextSection}
+          goToNextSection={saveAndNavigateToNextSection || goToNextSection}
           hasUnansweredQuestions={hasUnansweredQuestions}
           isLastPerguntaInSection={isLastPerguntaInSection}
           saveAndNavigateHome={saveAndNavigateHome}

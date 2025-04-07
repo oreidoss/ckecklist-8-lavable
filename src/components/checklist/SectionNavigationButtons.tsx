@@ -37,12 +37,20 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
     if (saveResponses) {
       try {
         await saveResponses();
+        // Only navigate after successful save
+        handleNextSection();
       } catch (error) {
         console.error("Error saving responses:", error);
+        toast({
+          title: "Erro",
+          description: "Ocorreu um erro ao salvar as respostas. Tente novamente.",
+          variant: "destructive"
+        });
       }
+    } else {
+      // If no save function provided, just navigate
+      handleNextSection();
     }
-    
-    handleNextSection();
   };
   
   return (
