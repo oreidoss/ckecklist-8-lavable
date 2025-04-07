@@ -33,7 +33,7 @@ const RelatorioView: React.FC<RelatorioViewProps> = ({
   
   const handleExportPDF = () => {
     if (reportRef.current) {
-      exportToPdf(reportRef, undefined, "O relatório completo foi exportado com sucesso!");
+      exportToPdf(reportRef.current, undefined, "O relatório completo foi exportado com sucesso!");
     }
   };
 

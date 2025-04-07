@@ -3,7 +3,6 @@ import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import html2pdf from 'html2pdf.js';
 import { useToast } from '@/hooks/use-toast';
 import { PageTitle } from '@/components/PageTitle';
 import { Button } from '@/components/ui/button';
@@ -26,15 +25,7 @@ import {
 import { InfoLoja } from './InfoLoja';
 import { HistoricoAuditorias } from './HistoricoAuditorias';
 import { AnaliseTendencias } from './AnaliseTendencias';
-
-// PDF export options
-const options = {
-  margin: 1,
-  filename: 'historico-loja-checklist90.pdf',
-  image: { type: 'jpeg', quality: 0.98 },
-  html2canvas: { scale: 2 },
-  jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' }
-};
+import { generatePDF } from '@/utils/pdf';
 
 interface HistoricoLojaProps {
   auditoriasPorLoja: {
@@ -56,29 +47,12 @@ export const HistoricoLoja: React.FC<HistoricoLojaProps> = ({
   const exportarPDF = () => {
     if (!reportRef.current) return;
     
-    // Clone the report element to modify it for PDF
-    const element = reportRef.current.cloneNode(true) as HTMLElement;
+    const options = {
+      filename: 'historico-loja-checklist90.pdf',
+      margin: 1,
+    };
     
-    // Add some styling for the PDF
-    const style = document.createElement('style');
-    style.innerHTML = `
-      body { font-family: 'Helvetica', 'Arial', sans-serif; }
-      .pdf-header { text-align: center; margin-bottom: 20px; }
-      .pdf-logo { font-size: 24px; font-weight: bold; }
-      table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-      th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-      th { background-color: #f2f2f2; }
-      .section-title { margin-top: 20px; font-size: 16px; font-weight: bold; }
-    `;
-    element.appendChild(style);
-    
-    // Convert to PDF and download
-    html2pdf().set(options).from(element).save();
-    
-    toast({
-      title: "PDF Exportado",
-      description: "O histórico foi exportado com sucesso!",
-    });
+    generatePDF(reportRef.current, options, "O histórico foi exportado com sucesso!");
   };
 
   const { loja, auditorias } = auditoriasPorLoja;
