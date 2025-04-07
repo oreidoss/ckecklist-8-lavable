@@ -136,7 +136,7 @@ export const useChecklistPageState = (
     });
     
     setCompletedSections(completedSections);
-    updateIncompleteSections();
+    updateIncompleteSections(); // Call without arguments
     
   }, [respostasExistentes, perguntas, secoes]);
   
