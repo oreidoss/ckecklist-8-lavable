@@ -19,9 +19,9 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        // New variants
-        success: "bg-[#4ade80] text-white hover:bg-[#22c55e]", // Green for completed
-        warning: "bg-amber-100 text-amber-700 border-amber-300 hover:bg-amber-200", // Yellow for in-progress
+        // Updated variants
+        success: "bg-green-500 text-white hover:bg-green-600", // Bright green for completed
+        warning: "bg-amber-300 text-amber-800 hover:bg-amber-400", // Yellow for in-progress
       },
       size: {
         default: "h-10 px-4 py-2",

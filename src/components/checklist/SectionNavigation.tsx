@@ -30,9 +30,9 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
         
         const getButtonVariant = () => {
           if (activeSecao === secao.id) return "default";
-          if (isCompleted) return "success";
-          if (isIncomplete) return "warning";
-          return "outline";
+          if (isCompleted) return "success"; // Green for completed sections
+          if (isIncomplete) return "warning"; // Yellow for in-progress sections
+          return "outline"; // White/outline for not started
         };
 
         return (
