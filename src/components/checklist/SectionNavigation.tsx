@@ -10,7 +10,7 @@ interface SectionNavigationProps {
   completedSections: string[];
   incompleteSections: string[];
   setActiveSecao: (secaoId: string) => void;
-  pontuacaoPorSecao?: Record<string, number>;  // Add this prop to receive section scores
+  pontuacaoPorSecao?: Record<string, number>;
 }
 
 const SectionNavigation: React.FC<SectionNavigationProps> = ({
@@ -19,7 +19,7 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
   completedSections,
   incompleteSections,
   setActiveSecao,
-  pontuacaoPorSecao = {}  // Default to empty object if not provided
+  pontuacaoPorSecao = {}
 }) => {
   return (
     <div className="flex flex-wrap gap-2">
@@ -62,3 +62,4 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
 };
 
 export default SectionNavigation;
+
