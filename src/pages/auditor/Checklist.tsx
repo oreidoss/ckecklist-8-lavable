@@ -5,6 +5,7 @@ import { useChecklistPageState } from '@/hooks/checklist/useChecklistPageState';
 import { useUserSelectorHandlers } from '@/hooks/checklist/useUserSelectorHandlers';
 import ChecklistContainer from '@/components/checklist/ChecklistContainer';
 import { analiseService } from '@/lib/services/analiseService';
+import { supabase } from '@/integrations/supabase/client';
 
 const Checklist: React.FC = () => {
   const { auditoriaId } = useParams<{ auditoriaId: string }>();
@@ -85,14 +86,60 @@ const Checklist: React.FC = () => {
     }
   };
 
-  // Calculate section scores when respostas change
-  useEffect(() => {
+  // Calculate and update section scores when responses change
+  const updateSectionScores = async () => {
     if (auditoriaId) {
+      // First try to get scores from Supabase
+      try {
+        const { data: respostasData, error: respostasError } = await supabase
+          .from('respostas')
+          .select('*')
+          .eq('auditoria_id', auditoriaId);
+
+        if (!respostasError && respostasData) {
+          // We have responses from Supabase
+          // Get perguntas to map to secoes
+          const { data: perguntasData, error: perguntasError } = await supabase
+            .from('perguntas')
+            .select('*');
+            
+          if (!perguntasError && perguntasData) {
+            // Calculate scores by section
+            const scores: Record<string, number> = {};
+            
+            respostasData.forEach(resposta => {
+              const pergunta = perguntasData.find(p => p.id === resposta.pergunta_id);
+              if (pergunta && pergunta.secao_id) {
+                const secaoId = pergunta.secao_id;
+                scores[secaoId] = (scores[secaoId] || 0) + (resposta.pontuacao_obtida || 0);
+              }
+            });
+            
+            console.log("Updated section scores from Supabase:", scores);
+            setPontuacaoPorSecao(scores);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching scores from Supabase:", error);
+      }
+      
+      // Fallback to local storage if Supabase fails
       const scores = analiseService.calcularPontuacaoPorSecao(auditoriaId);
-      console.log("Calculated scores:", scores);
+      console.log("Calculated local scores:", scores);
       setPontuacaoPorSecao(scores);
     }
-  }, [auditoriaId, respostas, respostasExistentes]);
+  };
+
+  // Calculate section scores when component mounts
+  useEffect(() => {
+    updateSectionScores();
+  }, [auditoriaId]);
+
+  // Recalculate scores when responses change
+  useEffect(() => {
+    updateSectionScores();
+  }, [respostas, respostasExistentes]);
 
   return (
     <ChecklistContainer

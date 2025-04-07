@@ -28,7 +28,7 @@ export class AnaliseService {
       const pergunta = perguntas.find(p => p.id === resposta.pergunta_id);
       if (pergunta) {
         const secaoId = pergunta.secao_id;
-        pontuacaoPorSecao[secaoId] += resposta.pontuacao_obtida || 0;
+        pontuacaoPorSecao[secaoId] = (pontuacaoPorSecao[secaoId] || 0) + (resposta.pontuacao_obtida || 0);
       }
     });
     
