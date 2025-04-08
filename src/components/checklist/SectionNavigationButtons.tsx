@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { ArrowLeftCircle, ArrowRightCircle } from 'lucide-react';
+import { ArrowLeftCircle, ArrowRightCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface SectionNavigationButtonsProps {
@@ -22,9 +22,10 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
   saveResponses
 }) => {
   const { toast } = useToast();
+  const [isProcessing, setIsProcessing] = useState(false);
   
   const onNextSectionClick = async () => {
-    if (isLastSection) return;
+    if (isLastSection || isProcessing) return;
     
     if (hasUnansweredQuestions()) {
       toast({
@@ -33,22 +34,25 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
       });
     }
     
-    // Save responses before advancing to next section
+    // Salvar respostas antes de avançar para a próxima seção
     if (saveResponses) {
       try {
+        setIsProcessing(true);
         await saveResponses();
-        // Only navigate after successful save
+        // Apenas navega após salvar com sucesso
         handleNextSection();
       } catch (error) {
-        console.error("Error saving responses:", error);
+        console.error("Erro ao salvar respostas:", error);
         toast({
           title: "Erro",
           description: "Ocorreu um erro ao salvar as respostas. Tente novamente.",
           variant: "destructive"
         });
+      } finally {
+        setIsProcessing(false);
       }
     } else {
-      // If no save function provided, just navigate
+      // Se nenhuma função de salvamento for fornecida, apenas navega
       handleNextSection();
     }
   };
@@ -59,7 +63,7 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
         variant="outline"
         size="sm"
         onClick={handlePreviousSection}
-        disabled={isFirstSection}
+        disabled={isFirstSection || isProcessing}
         className="flex-1 text-xs h-8"
       >
         <ArrowLeftCircle className="mr-1 h-3 w-3" />
@@ -70,11 +74,20 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
         variant="outline"
         size="sm"
         onClick={onNextSectionClick}
-        disabled={isLastSection}
+        disabled={isLastSection || isProcessing}
         className="flex-1 text-xs h-8"
       >
-        Próxima
-        <ArrowRightCircle className="ml-1 h-3 w-3" />
+        {isProcessing ? (
+          <>
+            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+            Salvando...
+          </>
+        ) : (
+          <>
+            Próxima
+            <ArrowRightCircle className="ml-1 h-3 w-3" />
+          </>
+        )}
       </Button>
     </div>
   );

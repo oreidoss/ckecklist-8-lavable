@@ -1,14 +1,15 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Hook to manage section scores in the checklist
+ * Hook para gerenciar pontuações de seções no checklist
  */
 export const useChecklistScores = (
   auditoriaId: string | undefined,
   setPontuacaoPorSecao?: React.Dispatch<React.SetStateAction<Record<string, number>>>
 ) => {
-  // Record mapping response values to numeric scores
+  // Mapeamento de valores de resposta para pontuações numéricas
   const pontuacaoMap: Record<string, number> = {
     'Sim': 1,
     'Não': -1,
@@ -17,15 +18,15 @@ export const useChecklistScores = (
   };
 
   /**
-   * Updates section scores based on existing responses
+   * Atualiza pontuações de seções baseado nas respostas existentes
    */
   const updatePontuacaoPorSecao = async (): Promise<void> => {
     if (!auditoriaId || !setPontuacaoPorSecao) return;
     
     try {
-      console.log("Updating section scores for auditoria:", auditoriaId);
+      console.log("Atualizando pontuações de seção para auditoria:", auditoriaId);
       
-      // Fetch all responses
+      // Buscar TODAS as respostas para esta auditoria
       const { data: respostasData, error: respostasError } = await supabase
         .from('respostas')
         .select('*')
@@ -33,56 +34,66 @@ export const useChecklistScores = (
         
       if (respostasError) throw respostasError;
 
-      // Fetch all perguntas to map them to secoes
+      // Buscar TODAS as perguntas para mapear para seções
       const { data: perguntasData, error: perguntasError } = await supabase
         .from('perguntas')
         .select('*');
         
       if (perguntasError) throw perguntasError;
       
-      // Calculate scores by section
+      // Calcular pontuações por seção
       const scores: Record<string, number> = {};
       
-      // First, initialize all secoes to 0
+      // Primeiro, inicializar todas as seções para 0
       perguntasData.forEach(pergunta => {
         if (pergunta.secao_id && !scores[pergunta.secao_id]) {
           scores[pergunta.secao_id] = 0;
         }
       });
 
-      console.log(`Found ${respostasData.length} respostas to process`);
+      console.log(`Encontradas ${respostasData.length} respostas para processar`);
       
-      // Now calculate the actual scores from responses
+      // Mapear perguntas para suas seções para acesso mais rápido
+      const perguntaPorSecao = perguntasData.reduce((acc, pergunta) => {
+        if (pergunta.secao_id) {
+          if (!acc[pergunta.id]) {
+            acc[pergunta.id] = pergunta.secao_id;
+          }
+        }
+        return acc;
+      }, {} as Record<string, string>);
+      
+      // Processar apenas as respostas atuais
+      const respostasProcessadas = new Set<string>();
+      
+      // Agora calcular as pontuações reais a partir das respostas
       respostasData.forEach(resposta => {
-        const pergunta = perguntasData.find(p => p.id === resposta.pergunta_id);
-        if (pergunta && pergunta.secao_id) {
-          const secaoId = pergunta.secao_id;
+        const perguntaId = resposta.pergunta_id;
+        const secaoId = perguntaPorSecao[perguntaId];
+        
+        if (secaoId) {
+          // Registrar que processamos esta resposta
+          respostasProcessadas.add(perguntaId);
           
-          // Log the data we're working with for debugging
-          console.log(`Processing resposta for pergunta ${resposta.pergunta_id} in secao ${secaoId}:`, {
-            resposta: resposta.resposta,
-            pontuacao_obtida: resposta.pontuacao_obtida
-          });
-          
-          // Use the actual score from the response if available
+          // Usar a pontuação real da resposta se disponível
           if (resposta.pontuacao_obtida !== null && resposta.pontuacao_obtida !== undefined) {
             const pontuacao = Number(resposta.pontuacao_obtida);
             scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
-            console.log(`Added pontuacao_obtida ${pontuacao} to secao ${secaoId}, new total: ${scores[secaoId]}`);
+            console.log(`Adicionada pontuacao_obtida ${pontuacao} à seção ${secaoId}, novo total: ${scores[secaoId]}`);
           } 
-          // Otherwise calculate it from the response value using pontuacaoMap
+          // Caso contrário calcular a partir do valor da resposta usando pontuacaoMap
           else if (resposta.resposta) {
             const pontuacao = pontuacaoMap[resposta.resposta] || 0;
             scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
-            console.log(`Calculated pontuacao ${pontuacao} from resposta "${resposta.resposta}" for secao ${secaoId}, new total: ${scores[secaoId]}`);
+            console.log(`Calculada pontuação ${pontuacao} da resposta "${resposta.resposta}" para seção ${secaoId}, novo total: ${scores[secaoId]}`);
           }
         }
       });
       
-      console.log("Final calculated section scores:", scores);
+      console.log("Pontuações finais calculadas por seção:", scores);
       setPontuacaoPorSecao(scores);
     } catch (error) {
-      console.error("Error updating section scores:", error);
+      console.error("Erro ao atualizar pontuações de seção:", error);
     }
   };
 

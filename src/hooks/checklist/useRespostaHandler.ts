@@ -6,7 +6,7 @@ import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 import { Pergunta } from '@/lib/types';
 
 /**
- * Hook for handling individual question responses
+ * Hook para manipular respostas individuais de perguntas
  */
 export const useRespostaHandler = (
   auditoriaId: string | undefined,
@@ -19,7 +19,7 @@ export const useRespostaHandler = (
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
 
-  // Define pontuacaoMap values - ensure consistent scoring across all hooks
+  // Mapa de pontuação para cada tipo de resposta
   const pontuacaoMap: Record<string, number> = {
     'Sim': 1,
     'Não': -1,
@@ -30,17 +30,17 @@ export const useRespostaHandler = (
   const handleResposta = async (perguntaId: string, resposta: RespostaValor, respostasExistentes: any[], perguntas?: Pergunta[]) => {
     if (!auditoriaId) return;
     
-    console.log(`Handling resposta for pergunta ${perguntaId}: ${resposta}`);
+    console.log(`Manipulando resposta para pergunta ${perguntaId}: ${resposta}`);
     setIsSaving(true);
     
-    // Update local state BEFORE any async operations for immediate UI feedback
+    // Atualiza o estado local ANTES de operações assíncronas para feedback imediato na UI
     setRespostas(prev => {
       const updatedRespostas = {
         ...prev,
         [perguntaId]: resposta
       };
       
-      // Also update progress if we have perguntas
+      // Atualiza progresso se tivermos perguntas
       if (perguntas?.length) {
         const respostasCount = Object.keys(updatedRespostas).length;
         const novoProgresso = (respostasCount / perguntas.length) * 100;
@@ -50,9 +50,9 @@ export const useRespostaHandler = (
       return updatedRespostas;
     });
     
-    // Calculate pontuacao based on the response value
+    // Calcula a pontuação com base no valor da resposta
     const pontuacao = pontuacaoMap[resposta] || 0;
-    console.log(`Calculated pontuacao for "${resposta}": ${pontuacao}`);
+    console.log(`Pontuação calculada para "${resposta}": ${pontuacao}`);
     
     const observacao = observacoes[perguntaId] || '';
     const anexo_url = fileUrls[perguntaId] || '';
@@ -61,7 +61,7 @@ export const useRespostaHandler = (
     
     try {
       if (respostaExistente) {
-        console.log(`Updating existing response for pergunta ${perguntaId}:`, {
+        console.log(`Atualizando resposta existente para pergunta ${perguntaId}:`, {
           resposta: resposta,
           pontuacao_obtida: pontuacao
         });
@@ -78,7 +78,7 @@ export const useRespostaHandler = (
         
         if (error) throw error;
       } else {
-        console.log(`Creating new response for pergunta ${perguntaId}:`, {
+        console.log(`Criando nova resposta para pergunta ${perguntaId}:`, {
           resposta: resposta,
           pontuacao_obtida: pontuacao
         });
@@ -97,38 +97,13 @@ export const useRespostaHandler = (
         if (error) throw error;
       }
       
-      if (auditoriaId) {
-        // Calculate the new total score after this update
-        const { data: allRespostas, error: fetchError } = await supabase
-          .from('respostas')
-          .select('*')
-          .eq('auditoria_id', auditoriaId);
-        
-        if (fetchError) throw fetchError;
-        
-        let pontuacaoTotal = 0;
-        allRespostas.forEach(r => {
-          if (r.pontuacao_obtida !== null && r.pontuacao_obtida !== undefined) {
-            pontuacaoTotal += Number(r.pontuacao_obtida);
-          }
-        });
-        
-        console.log(`Updating pontuacao_total for auditoria ${auditoriaId}: ${pontuacaoTotal}`);
-        
-        const { error } = await supabase
-          .from('auditorias')
-          .update({ 
-            pontuacao_total: pontuacaoTotal,
-          })
-          .eq('id', auditoriaId);
-          
-        if (error) throw error;
-      }
+      // Recalcular pontuação total da auditoria após atualização
+      await updateAuditoriaPontuacaoTotal(auditoriaId);
       
-      // Update section scores in real-time - important to wait for this to complete
+      // Atualizar pontuações por seção em tempo real - importante esperar que isso complete
       await updatePontuacaoPorSecao();
       
-      // Show success message
+      // Mostrar mensagem de sucesso
       toast({
         title: "Resposta salva",
         description: "Sua resposta foi salva com sucesso.",
@@ -142,6 +117,41 @@ export const useRespostaHandler = (
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Função auxiliar para recalcular e atualizar a pontuação total da auditoria
+  const updateAuditoriaPontuacaoTotal = async (auditoriaId: string) => {
+    try {
+      // Buscar todas as respostas atuais para esta auditoria
+      const { data: respostas, error: fetchError } = await supabase
+        .from('respostas')
+        .select('*')
+        .eq('auditoria_id', auditoriaId);
+      
+      if (fetchError) throw fetchError;
+      
+      // Recalcular pontuação total com base nas respostas atuais
+      let pontuacaoTotal = 0;
+      respostas.forEach(r => {
+        if (r.pontuacao_obtida !== null && r.pontuacao_obtida !== undefined) {
+          pontuacaoTotal += Number(r.pontuacao_obtida);
+        }
+      });
+      
+      console.log(`Atualizando pontuacao_total para auditoria ${auditoriaId}: ${pontuacaoTotal}`);
+      
+      // Atualizar auditoria com nova pontuação total
+      const { error } = await supabase
+        .from('auditorias')
+        .update({ 
+          pontuacao_total: pontuacaoTotal,
+        })
+        .eq('id', auditoriaId);
+        
+      if (error) throw error;
+    } catch (error) {
+      console.error("Erro ao atualizar pontuação total da auditoria:", error);
     }
   };
 
