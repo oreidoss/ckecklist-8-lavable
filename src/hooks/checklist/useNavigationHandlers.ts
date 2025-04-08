@@ -14,7 +14,7 @@ export const useNavigationHandlers = (
   saveAllResponses: () => Promise<void>,
   saveAndNavigateHomeBase: (respostasExistentes: any[]) => Promise<boolean>
 ) => {
-  const toast = useToast();
+  const { toast } = useToast();
 
   /**
    * Handle changing the active section
@@ -30,7 +30,20 @@ export const useNavigationHandlers = (
   const saveAndNavigateHome = async (respostasExistentes: any[] | undefined) => {
     console.log("Tentando salvar e navegar para home");
     if (respostasExistentes) {
-      return await saveAndNavigateHomeBase(respostasExistentes);
+      try {
+        // Primeiro salvar todas as respostas
+        await saveAllResponses();
+        console.log("Respostas salvas com sucesso antes de navegar para home");
+        return await saveAndNavigateHomeBase(respostasExistentes);
+      } catch (error) {
+        console.error("Erro ao salvar antes de navegar para home:", error);
+        toast({
+          title: "Erro ao salvar",
+          description: "Ocorreu um erro ao salvar as respostas antes de navegar.",
+          variant: "destructive"
+        });
+        return false;
+      }
     }
     return false;
   };
@@ -41,11 +54,24 @@ export const useNavigationHandlers = (
   const saveAndNavigateToNextSection = async () => {
     console.log("Tentando salvar e navegar para próxima seção");
     try {
+      // Primeiro salvar todas as respostas
       await saveAllResponses();
       console.log("Respostas salvas com sucesso, navegando para próxima seção");
+      
+      // Depois navegar para próxima seção
       goToNextSection();
+      
+      toast({
+        title: "Navegação bem-sucedida",
+        description: "Respostas salvas e navegando para próxima seção.",
+      });
     } catch (error) {
-      console.error("Erro ao salvar respostas:", error);
+      console.error("Erro ao salvar respostas antes de navegar:", error);
+      toast({
+        title: "Erro ao navegar",
+        description: "Ocorreu um erro ao salvar as respostas antes de navegar. Tente novamente.",
+        variant: "destructive"
+      });
     }
   };
 

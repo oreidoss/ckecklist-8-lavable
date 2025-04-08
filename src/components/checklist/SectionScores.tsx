@@ -29,11 +29,11 @@ const SectionScores: React.FC<SectionScoresProps> = ({
     
     try {
       // Consulta direta ao Supabase para cálculo mais preciso de pontuação
+      // Removida ordenação por created_at que não existe
       const { data: respostasData, error: respostasError } = await supabase
         .from('respostas')
         .select('*')
-        .eq('auditoria_id', auditoriaId)
-        .order('created_at', { ascending: false });
+        .eq('auditoria_id', auditoriaId);
         
       if (respostasError) throw respostasError;
       console.log(`Encontradas ${respostasData?.length || 0} respostas para esta auditoria`);
@@ -71,17 +71,20 @@ const SectionScores: React.FC<SectionScoresProps> = ({
         return acc;
       }, {} as Record<string, string>);
       
-      // Mapear respostas por ID da pergunta para que apenas a resposta mais recente seja considerada
+      // Mapear respostas por ID da pergunta para pegar a resposta mais recente
+      // Usamos o ID como indicador de ordem, já que não temos created_at
       const ultimasRespostas = new Map();
       
-      // Garantir que estamos processando apenas a última resposta para cada pergunta
       respostasData.forEach(resposta => {
-        if (!ultimasRespostas.has(resposta.pergunta_id)) {
-          ultimasRespostas.set(resposta.pergunta_id, resposta);
+        const perguntaId = resposta.pergunta_id;
+        // Se ainda não temos uma resposta para esta pergunta ou se o ID atual é maior, atualizar
+        if (!ultimasRespostas.has(perguntaId) || 
+            resposta.id > ultimasRespostas.get(perguntaId).id) {
+          ultimasRespostas.set(perguntaId, resposta);
         }
       });
       
-      console.log(`Usando ${ultimasRespostas.size} respostas únicas das ${respostasData.length} totais`);
+      console.log(`Usando ${ultimasRespostas.size} respostas únicas de ${respostasData.length} totais`);
       
       // Agora processar apenas as respostas mais recentes
       ultimasRespostas.forEach((resposta) => {

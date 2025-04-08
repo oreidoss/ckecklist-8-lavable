@@ -39,14 +39,16 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
     try {
       console.log("Salvando respostas antes de navegar para a próxima seção");
       
-      // Salvar respostas antes de avançar para a próxima seção
+      // Tentar salvar respostas antes de avançar
       if (saveResponses) {
         await saveResponses();
-        console.log("Respostas salvas com sucesso, navegando para próxima seção");
+        console.log("Respostas salvas com sucesso");
       }
       
-      // Apenas navega após salvar com sucesso
+      // Navegar para a próxima seção apenas após salvar com sucesso
+      console.log("Navegando para próxima seção");
       handleNextSection();
+      
     } catch (error) {
       console.error("Erro ao salvar respostas:", error);
       toast({

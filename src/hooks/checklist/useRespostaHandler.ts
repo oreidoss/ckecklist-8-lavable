@@ -28,7 +28,10 @@ export const useRespostaHandler = (
   };
 
   const handleResposta = async (perguntaId: string, resposta: RespostaValor, respostasExistentes: any[], perguntas?: Pergunta[]) => {
-    if (!auditoriaId) return;
+    if (!auditoriaId) {
+      console.error("Não é possível salvar resposta sem auditoriaId");
+      return;
+    }
     
     console.log(`Manipulando resposta para pergunta ${perguntaId}: ${resposta}`);
     setIsSaving(true);
@@ -91,6 +94,11 @@ export const useRespostaHandler = (
           throw error;
         } else {
           console.log("Resposta atualizada com sucesso!");
+          // Notificação de sucesso
+          toast({
+            title: "Resposta salva",
+            description: "Sua resposta foi salva com sucesso.",
+          });
         }
       } else {
         // Criar uma nova resposta no banco de dados
@@ -117,17 +125,22 @@ export const useRespostaHandler = (
           throw error;
         } else {
           console.log("Nova resposta criada com sucesso!");
+          // Notificação de sucesso
+          toast({
+            title: "Resposta salva",
+            description: "Sua resposta foi salva com sucesso.",
+          });
         }
       }
       
-      // Atualizar pontuações por seção imediatamente após salvar resposta
-      await updatePontuacaoPorSecao();
+      try {
+        // Atualize as pontuações após cada alteração de resposta
+        await updatePontuacaoPorSecao();
+        console.log("Pontuações por seção atualizadas após salvar resposta");
+      } catch (error) {
+        console.error("Erro ao atualizar pontuações de seção após salvar resposta:", error);
+      }
       
-      // Mostrar mensagem de sucesso
-      toast({
-        title: "Resposta salva",
-        description: "Sua resposta foi salva com sucesso.",
-      });
     } catch (error) {
       console.error("Erro ao processar resposta:", error);
       toast({
