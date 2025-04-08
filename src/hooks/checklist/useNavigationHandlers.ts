@@ -1,5 +1,6 @@
 
 import { Secao } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 /**
  * Hook for handling navigation between checklist sections
@@ -13,10 +14,13 @@ export const useNavigationHandlers = (
   saveAllResponses: () => Promise<void>,
   saveAndNavigateHomeBase: (respostasExistentes: any[]) => Promise<boolean>
 ) => {
+  const toast = useToast();
+
   /**
    * Handle changing the active section
    */
   const handleSetActiveSecao = (secaoId: string) => {
+    console.log(`Navegando para seção: ${secaoId}`);
     setActiveSecao(secaoId);
   };
 
@@ -24,6 +28,7 @@ export const useNavigationHandlers = (
    * Save all responses and then navigate home
    */
   const saveAndNavigateHome = async (respostasExistentes: any[] | undefined) => {
+    console.log("Tentando salvar e navegar para home");
     if (respostasExistentes) {
       return await saveAndNavigateHomeBase(respostasExistentes);
     }
@@ -34,8 +39,14 @@ export const useNavigationHandlers = (
    * Save responses and then navigate to the next section
    */
   const saveAndNavigateToNextSection = async () => {
-    await saveAllResponses();
-    goToNextSection();
+    console.log("Tentando salvar e navegar para próxima seção");
+    try {
+      await saveAllResponses();
+      console.log("Respostas salvas com sucesso, navegando para próxima seção");
+      goToNextSection();
+    } catch (error) {
+      console.error("Erro ao salvar respostas:", error);
+    }
   };
 
   return {

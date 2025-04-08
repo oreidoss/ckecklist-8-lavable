@@ -34,27 +34,28 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
       });
     }
     
-    // Salvar respostas antes de avançar para a próxima seção
-    if (saveResponses) {
-      try {
-        setIsProcessing(true);
-        console.log("Salvando respostas antes de navegar para a próxima seção");
+    setIsProcessing(true);
+    
+    try {
+      console.log("Salvando respostas antes de navegar para a próxima seção");
+      
+      // Salvar respostas antes de avançar para a próxima seção
+      if (saveResponses) {
         await saveResponses();
-        // Apenas navega após salvar com sucesso
-        handleNextSection();
-      } catch (error) {
-        console.error("Erro ao salvar respostas:", error);
-        toast({
-          title: "Erro",
-          description: "Ocorreu um erro ao salvar as respostas. Tente novamente.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsProcessing(false);
+        console.log("Respostas salvas com sucesso, navegando para próxima seção");
       }
-    } else {
-      // Se nenhuma função de salvamento for fornecida, apenas navega
+      
+      // Apenas navega após salvar com sucesso
       handleNextSection();
+    } catch (error) {
+      console.error("Erro ao salvar respostas:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao salvar as respostas. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
     }
   };
   

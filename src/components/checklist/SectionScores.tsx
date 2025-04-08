@@ -32,7 +32,8 @@ const SectionScores: React.FC<SectionScoresProps> = ({
       const { data: respostasData, error: respostasError } = await supabase
         .from('respostas')
         .select('*')
-        .eq('auditoria_id', auditoriaId);
+        .eq('auditoria_id', auditoriaId)
+        .order('created_at', { ascending: false });
         
       if (respostasError) throw respostasError;
       console.log(`Encontradas ${respostasData?.length || 0} respostas para esta auditoria`);
@@ -75,9 +76,9 @@ const SectionScores: React.FC<SectionScoresProps> = ({
       
       // Garantir que estamos processando apenas a última resposta para cada pergunta
       respostasData.forEach(resposta => {
-        // Para cada pergunta, guardar apenas a resposta mais recente
-        // (assumindo que estamos processando na ordem correta)
-        ultimasRespostas.set(resposta.pergunta_id, resposta);
+        if (!ultimasRespostas.has(resposta.pergunta_id)) {
+          ultimasRespostas.set(resposta.pergunta_id, resposta);
+        }
       });
       
       console.log(`Usando ${ultimasRespostas.size} respostas únicas das ${respostasData.length} totais`);

@@ -50,27 +50,31 @@ export const useRespostaHandler = (
       return updatedRespostas;
     });
     
-    // Calcula a pontuação com base no valor da resposta
-    const pontuacao = pontuacaoMap[resposta] || 0;
-    console.log(`Pontuação calculada para "${resposta}": ${pontuacao}`);
-    
-    const observacao = observacoes[perguntaId] || '';
-    const anexo_url = fileUrls[perguntaId] || '';
-    
-    const respostaExistente = respostasExistentes?.find(r => r.pergunta_id === perguntaId);
-    
     try {
+      // Calcula a pontuação com base no valor da resposta
+      const pontuacao = pontuacaoMap[resposta] || 0;
+      console.log(`Pontuação calculada para "${resposta}": ${pontuacao}`);
+      
+      const observacao = observacoes[perguntaId] || '';
+      const anexo_url = fileUrls[perguntaId] || '';
+      
+      const respostaExistente = respostasExistentes?.find(r => r.pergunta_id === perguntaId);
+      
+      // Log para depuração
       if (respostaExistente) {
+        console.log(`Resposta existente encontrada:`, respostaExistente);
+        console.log(`Alterando resposta de "${respostaExistente.resposta}" para "${resposta}"`);
+        console.log(`Alterando pontuação de ${respostaExistente.pontuacao_obtida} para ${pontuacao}`);
+      }
+      
+      if (respostaExistente) {
+        // Atualizar a resposta existente no banco de dados
         console.log(`Atualizando resposta existente para pergunta ${perguntaId}:`, {
           resposta: resposta,
-          pontuacao_obtida: pontuacao
+          pontuacao_obtida: pontuacao,
+          observacao,
+          anexo_url
         });
-        
-        // Guarde a pontuação antiga para log
-        const pontuacaoAntiga = respostaExistente.pontuacao_obtida !== null ? 
-          Number(respostaExistente.pontuacao_obtida) : 0;
-        
-        console.log(`Alterando pontuação de ${pontuacaoAntiga} para ${pontuacao}`);
         
         const { error } = await supabase
           .from('respostas')
@@ -82,11 +86,19 @@ export const useRespostaHandler = (
           })
           .eq('id', respostaExistente.id);
         
-        if (error) throw error;
+        if (error) {
+          console.error("Erro ao atualizar resposta:", error);
+          throw error;
+        } else {
+          console.log("Resposta atualizada com sucesso!");
+        }
       } else {
+        // Criar uma nova resposta no banco de dados
         console.log(`Criando nova resposta para pergunta ${perguntaId}:`, {
           resposta: resposta,
-          pontuacao_obtida: pontuacao
+          pontuacao_obtida: pontuacao,
+          observacao,
+          anexo_url
         });
         
         const { error } = await supabase
@@ -100,14 +112,16 @@ export const useRespostaHandler = (
             anexo_url: anexo_url
           });
         
-        if (error) throw error;
+        if (error) {
+          console.error("Erro ao criar resposta:", error);
+          throw error;
+        } else {
+          console.log("Nova resposta criada com sucesso!");
+        }
       }
       
-      // É crucial atualizar pontuações por seção ANTES de recalcular a pontuação total
+      // Atualizar pontuações por seção imediatamente após salvar resposta
       await updatePontuacaoPorSecao();
-      
-      // Agora recalcular a pontuação total da auditoria depois que as seções foram atualizadas
-      await updateAuditoriaPontuacaoTotal(auditoriaId);
       
       // Mostrar mensagem de sucesso
       toast({
@@ -123,47 +137,6 @@ export const useRespostaHandler = (
       });
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  // Função auxiliar para recalcular e atualizar a pontuação total da auditoria
-  const updateAuditoriaPontuacaoTotal = async (auditoriaId: string) => {
-    try {
-      // Buscar todas as respostas atuais para esta auditoria
-      const { data: respostas, error: fetchError } = await supabase
-        .from('respostas')
-        .select('*')
-        .eq('auditoria_id', auditoriaId);
-      
-      if (fetchError) throw fetchError;
-      
-      // Mapeamento único por pergunta (garantir que só contabilizamos a resposta mais recente)
-      const uniqueRespostas = new Map();
-      respostas.forEach(r => {
-        uniqueRespostas.set(r.pergunta_id, r);
-      });
-      
-      // Recalcular pontuação total usando apenas as respostas únicas
-      let pontuacaoTotal = 0;
-      uniqueRespostas.forEach(r => {
-        if (r.pontuacao_obtida !== null && r.pontuacao_obtida !== undefined) {
-          pontuacaoTotal += Number(r.pontuacao_obtida);
-        }
-      });
-      
-      console.log(`Atualizando pontuacao_total para auditoria ${auditoriaId}: ${pontuacaoTotal}`);
-      
-      // Atualizar auditoria com nova pontuação total
-      const { error } = await supabase
-        .from('auditorias')
-        .update({ 
-          pontuacao_total: pontuacaoTotal,
-        })
-        .eq('id', auditoriaId);
-        
-      if (error) throw error;
-    } catch (error) {
-      console.error("Erro ao atualizar pontuação total da auditoria:", error);
     }
   };
 

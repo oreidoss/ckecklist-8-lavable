@@ -118,7 +118,7 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
             handlePreviousSection={goToPreviousSection}
             handleNextSection={goToNextSection}
             hasUnansweredQuestions={hasUnansweredQuestions}
-            saveResponses={saveAllResponses}
+            saveResponses={saveAllResponses} 
           />
           
           <ChecklistActions 

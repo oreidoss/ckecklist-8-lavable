@@ -21,7 +21,10 @@ export const useChecklistScores = (
    * Atualiza pontuações de seções baseado nas respostas existentes
    */
   const updatePontuacaoPorSecao = async (): Promise<void> => {
-    if (!auditoriaId || !setPontuacaoPorSecao) return;
+    if (!auditoriaId || !setPontuacaoPorSecao) {
+      console.log("Não é possível atualizar pontuações sem auditoriaId ou setPontuacaoPorSecao");
+      return;
+    }
     
     try {
       console.log("Atualizando pontuações de seção para auditoria:", auditoriaId);
@@ -30,16 +33,27 @@ export const useChecklistScores = (
       const { data: respostasData, error: respostasError } = await supabase
         .from('respostas')
         .select('*')
-        .eq('auditoria_id', auditoriaId);
+        .eq('auditoria_id', auditoriaId)
+        .order('created_at', { ascending: false });
         
-      if (respostasError) throw respostasError;
+      if (respostasError) {
+        console.error("Erro ao buscar respostas:", respostasError);
+        throw respostasError;
+      }
+
+      console.log(`Encontradas ${respostasData?.length || 0} respostas para esta auditoria`);
 
       // Buscar TODAS as perguntas para mapear para seções
       const { data: perguntasData, error: perguntasError } = await supabase
         .from('perguntas')
         .select('*');
         
-      if (perguntasError) throw perguntasError;
+      if (perguntasError) {
+        console.error("Erro ao buscar perguntas:", perguntasError);
+        throw perguntasError;
+      }
+      
+      console.log(`Encontradas ${perguntasData?.length || 0} perguntas totais`);
       
       // Calcular pontuações por seção
       const scores: Record<string, number> = {};
@@ -51,8 +65,6 @@ export const useChecklistScores = (
         }
       });
 
-      console.log(`Encontradas ${respostasData.length} respostas para processar`);
-      
       // Mapear perguntas para suas seções para acesso mais rápido
       const perguntaPorSecao = perguntasData.reduce((acc, pergunta) => {
         if (pergunta.secao_id) {
@@ -66,7 +78,10 @@ export const useChecklistScores = (
       
       // Processar respostas e ficar apenas com a última para cada pergunta
       respostasData.forEach(resposta => {
-        ultimasRespostas.set(resposta.pergunta_id, resposta);
+        // Se já temos uma resposta para esta pergunta, verificar se esta é mais recente
+        if (!ultimasRespostas.has(resposta.pergunta_id)) {
+          ultimasRespostas.set(resposta.pergunta_id, resposta);
+        }
       });
       
       console.log(`Usando ${ultimasRespostas.size} respostas únicas para cálculo`);
@@ -81,13 +96,11 @@ export const useChecklistScores = (
           if (resposta.pontuacao_obtida !== null && resposta.pontuacao_obtida !== undefined) {
             const pontuacao = Number(resposta.pontuacao_obtida);
             scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
-            console.log(`Adicionada pontuacao_obtida ${pontuacao} à seção ${secaoId}, novo total: ${scores[secaoId]}`);
           } 
           // Caso não tenha pontuação salva, calcular com base na resposta
           else if (resposta.resposta) {
             const pontuacao = pontuacaoMap[resposta.resposta] || 0;
             scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
-            console.log(`Calculada pontuação ${pontuacao} da resposta "${resposta.resposta}" para seção ${secaoId}, novo total: ${scores[secaoId]}`);
           }
         }
       });
@@ -96,6 +109,7 @@ export const useChecklistScores = (
       setPontuacaoPorSecao(scores);
     } catch (error) {
       console.error("Erro ao atualizar pontuações de seção:", error);
+      throw error;
     }
   };
 
