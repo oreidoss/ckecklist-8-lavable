@@ -38,6 +38,7 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
     if (saveResponses) {
       try {
         setIsProcessing(true);
+        console.log("Salvando respostas antes de navegar para a próxima seção");
         await saveResponses();
         // Apenas navega após salvar com sucesso
         handleNextSection();

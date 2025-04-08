@@ -56,32 +56,34 @@ export const useChecklistScores = (
       // Mapear perguntas para suas seções para acesso mais rápido
       const perguntaPorSecao = perguntasData.reduce((acc, pergunta) => {
         if (pergunta.secao_id) {
-          if (!acc[pergunta.id]) {
-            acc[pergunta.id] = pergunta.secao_id;
-          }
+          acc[pergunta.id] = pergunta.secao_id;
         }
         return acc;
       }, {} as Record<string, string>);
       
-      // Processar apenas as respostas atuais
-      const respostasProcessadas = new Set<string>();
+      // Criar um mapa das respostas mais recentes para cada pergunta
+      const ultimasRespostas = new Map();
       
-      // Agora calcular as pontuações reais a partir das respostas
+      // Processar respostas e ficar apenas com a última para cada pergunta
       respostasData.forEach(resposta => {
+        ultimasRespostas.set(resposta.pergunta_id, resposta);
+      });
+      
+      console.log(`Usando ${ultimasRespostas.size} respostas únicas para cálculo`);
+      
+      // Agora calcular as pontuações totais por seção
+      ultimasRespostas.forEach((resposta) => {
         const perguntaId = resposta.pergunta_id;
         const secaoId = perguntaPorSecao[perguntaId];
         
         if (secaoId) {
-          // Registrar que processamos esta resposta
-          respostasProcessadas.add(perguntaId);
-          
-          // Usar a pontuação real da resposta se disponível
+          // Adicionar pontuação à seção correspondente
           if (resposta.pontuacao_obtida !== null && resposta.pontuacao_obtida !== undefined) {
             const pontuacao = Number(resposta.pontuacao_obtida);
             scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
             console.log(`Adicionada pontuacao_obtida ${pontuacao} à seção ${secaoId}, novo total: ${scores[secaoId]}`);
           } 
-          // Caso contrário calcular a partir do valor da resposta usando pontuacaoMap
+          // Caso não tenha pontuação salva, calcular com base na resposta
           else if (resposta.resposta) {
             const pontuacao = pontuacaoMap[resposta.resposta] || 0;
             scores[secaoId] = (scores[secaoId] || 0) + pontuacao;

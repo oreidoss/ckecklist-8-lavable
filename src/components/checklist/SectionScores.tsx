@@ -73,11 +73,14 @@ const SectionScores: React.FC<SectionScoresProps> = ({
       // Mapear respostas por ID da pergunta para que apenas a resposta mais recente seja considerada
       const ultimasRespostas = new Map();
       
+      // Garantir que estamos processando apenas a última resposta para cada pergunta
       respostasData.forEach(resposta => {
         // Para cada pergunta, guardar apenas a resposta mais recente
-        // (assumindo que entradas mais recentes estão mais tarde no array)
+        // (assumindo que estamos processando na ordem correta)
         ultimasRespostas.set(resposta.pergunta_id, resposta);
       });
+      
+      console.log(`Usando ${ultimasRespostas.size} respostas únicas das ${respostasData.length} totais`);
       
       // Agora processar apenas as respostas mais recentes
       ultimasRespostas.forEach((resposta) => {
@@ -86,12 +89,6 @@ const SectionScores: React.FC<SectionScoresProps> = ({
           // Obter nome da seção para melhor logging
           const secao = secoes?.find(s => s.id === secaoId);
           const secaoNome = secao ? secao.nome : 'seção desconhecida';
-          
-          console.log(`Processando resposta para seção "${secaoNome}" (${secaoId}):`, {
-            pergunta_id: resposta.pergunta_id,
-            resposta: resposta.resposta,
-            pontuacao_obtida: resposta.pontuacao_obtida
-          });
           
           // Usar pontuacao_obtida se disponível, caso contrário calcular a partir da resposta
           if (resposta.pontuacao_obtida !== null && resposta.pontuacao_obtida !== undefined) {
@@ -110,7 +107,7 @@ const SectionScores: React.FC<SectionScoresProps> = ({
       setPontuacaoPorSecao(scores);
       
       // Atualizar pontuação total da auditoria
-      await updateAuditoriaPontuacaoTotal(auditoriaId, scores);
+      await updateAuditoriaPontuacaoTotal(auditoriaId, ultimasRespostas);
       
     } catch (error) {
       console.error("Erro ao calcular pontuações diretamente:", error);
@@ -125,12 +122,18 @@ const SectionScores: React.FC<SectionScoresProps> = ({
   };
   
   // Função auxiliar para atualizar a pontuação total da auditoria
-  const updateAuditoriaPontuacaoTotal = async (auditoriaId: string, scores: Record<string, number>) => {
+  const updateAuditoriaPontuacaoTotal = async (auditoriaId: string, uniqueRespostas: Map<string, any>) => {
     try {
-      // Calcular pontuação total somando as pontuações de todas as seções
-      const pontuacaoTotal = Object.values(scores).reduce((total, pontuacao) => total + pontuacao, 0);
+      // Calcular pontuação total somando apenas as respostas únicas
+      let pontuacaoTotal = 0;
       
-      console.log(`Atualizando pontuacao_total da auditoria ${auditoriaId}: ${pontuacaoTotal}`);
+      uniqueRespostas.forEach(resposta => {
+        if (resposta.pontuacao_obtida !== null && resposta.pontuacao_obtida !== undefined) {
+          pontuacaoTotal += Number(resposta.pontuacao_obtida);
+        }
+      });
+      
+      console.log(`Atualizando pontuacao_total da auditoria ${auditoriaId}: ${pontuacaoTotal} (de ${uniqueRespostas.size} respostas únicas)`);
       
       const { error } = await supabase
         .from('auditorias')

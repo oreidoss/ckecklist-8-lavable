@@ -22,10 +22,10 @@ export const useSaveResponses = (
     try {
       console.log("Salvando todas as respostas...");
       
-      // Atualizar pontuações da seção
+      // Primeira atualizar pontuações da seção 
       await updatePontuacaoPorSecao();
       
-      // Recalcular pontuação total da auditoria
+      // Depois recalcular pontuação total da auditoria baseado nas seções atualizadas
       await updateAuditoriaPontuacaoTotal(auditoriaId);
       
       toast({
@@ -53,20 +53,30 @@ export const useSaveResponses = (
       // Buscar todas as respostas atuais para esta auditoria
       const { data: respostas, error: fetchError } = await supabase
         .from('respostas')
-        .select('pontuacao_obtida')
+        .select('pergunta_id, pontuacao_obtida')
         .eq('auditoria_id', auditoriaId);
       
       if (fetchError) throw fetchError;
       
-      // Recalcular pontuação total 
-      let pontuacaoTotal = 0;
+      // Mapeamento único por pergunta para garantir que apenas a última resposta seja contabilizada
+      const uniqueRespostas = new Map();
+      
+      // Para cada resposta, armazenar apenas a mais recente por pergunta
       respostas.forEach(r => {
+        uniqueRespostas.set(r.pergunta_id, r);
+      });
+      
+      // Recalcular pontuação total
+      let pontuacaoTotal = 0;
+      
+      // Somar todas as pontuações únicas
+      uniqueRespostas.forEach(r => {
         if (r.pontuacao_obtida !== null && r.pontuacao_obtida !== undefined) {
           pontuacaoTotal += Number(r.pontuacao_obtida);
         }
       });
       
-      console.log(`Recalculando pontuacao_total para auditoria ${auditoriaId}: ${pontuacaoTotal}`);
+      console.log(`Recalculando pontuacao_total para auditoria ${auditoriaId}: ${pontuacaoTotal} (de ${uniqueRespostas.size} respostas únicas)`);
       
       // Atualizar auditoria com nova pontuação total
       const { error } = await supabase
