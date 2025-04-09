@@ -77,7 +77,10 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
   if (!activeSecaoObj) return null;
   
   // Use saveAndNavigateToNextSection if available, otherwise use goToNextSection
-  const handleNextSection = saveAndNavigateToNextSection || goToNextSection;
+  const handleNextSection = saveAndNavigateToNextSection || (() => {
+    goToNextSection();
+    return undefined;
+  });
   
   return (
     <>

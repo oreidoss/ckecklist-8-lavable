@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Resposta } from '@/lib/types';
 
 /**
  * Hook para lidar com o salvamento em lote de respostas
@@ -48,12 +49,12 @@ export const useSaveResponses = (
       let pontuacaoTotal = 0;
       
       // Vamos criar um mapa para garantir que contamos apenas a última resposta de cada pergunta
-      const uniqueRespostas = new Map();
+      const uniqueRespostas = new Map<string, Resposta>();
       
       // Usar created_at para determinar a resposta mais recente
-      respostas.forEach(r => {
+      (respostas as Resposta[]).forEach(r => {
         if (!uniqueRespostas.has(r.pergunta_id) || 
-            new Date(r.created_at) > new Date(uniqueRespostas.get(r.pergunta_id).created_at)) {
+            new Date(r.created_at) > new Date((uniqueRespostas.get(r.pergunta_id) as Resposta).created_at)) {
           uniqueRespostas.set(r.pergunta_id, r);
         }
       });

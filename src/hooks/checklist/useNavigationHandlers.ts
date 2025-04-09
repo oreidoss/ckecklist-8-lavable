@@ -51,7 +51,7 @@ export const useNavigationHandlers = (
   /**
    * Save responses and then navigate to the next section
    */
-  const saveAndNavigateToNextSection = async () => {
+  const saveAndNavigateToNextSection = async (): Promise<boolean> => {
     console.log("Tentando salvar e navegar para próxima seção");
     try {
       // Primeiro salvar todas as respostas

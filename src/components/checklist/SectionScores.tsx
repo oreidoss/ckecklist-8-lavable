@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Resposta } from '@/lib/types';
 
 interface SectionScoresProps {
   auditoriaId?: string;
@@ -74,11 +75,11 @@ const SectionScores: React.FC<SectionScoresProps> = ({
       // Mapear respostas por ID da pergunta para pegar a resposta mais recente usando created_at
       const ultimasRespostas = new Map();
       
-      respostasData.forEach(resposta => {
+      respostasData.forEach((resposta: Resposta) => {
         const perguntaId = resposta.pergunta_id;
         // Se ainda não temos uma resposta para esta pergunta ou se a data da resposta atual é mais recente, atualizar
         if (!ultimasRespostas.has(perguntaId) || 
-            new Date(resposta.created_at) > new Date(ultimasRespostas.get(perguntaId).created_at)) {
+            new Date(resposta.created_at) > new Date((ultimasRespostas.get(perguntaId) as Resposta).created_at)) {
           ultimasRespostas.set(perguntaId, resposta);
         }
       });

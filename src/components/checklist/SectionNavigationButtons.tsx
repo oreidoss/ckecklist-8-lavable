@@ -8,7 +8,7 @@ interface SectionNavigationButtonsProps {
   isFirstSection: boolean;
   isLastSection: boolean;
   handlePreviousSection: () => void;
-  handleNextSection: () => Promise<boolean> | (() => void);
+  handleNextSection: () => Promise<boolean> | void;
   hasUnansweredQuestions: () => boolean;
   saveResponses?: () => Promise<void>;
 }

@@ -76,9 +76,14 @@ const Checklist: React.FC = () => {
 
   const saveAndNavigateHome = async () => {
     if (respostasExistentes) {
-      const success = await saveAndNavigateHomeBase(respostasExistentes);
-      if (success) {
-        navigate('/');
+      try {
+        const success = await saveAndNavigateHomeBase(respostasExistentes);
+        if (success) {
+          navigate('/');
+        }
+        return;
+      } catch (error) {
+        console.error("Error navigating home:", error);
       }
     }
   };

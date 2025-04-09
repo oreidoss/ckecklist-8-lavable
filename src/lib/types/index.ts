@@ -46,17 +46,17 @@ export interface Resposta {
   pergunta_id: string;
   resposta: string;
   pontuacao_obtida: number;
-  observacao?: string; // Added observacao as optional property
-  anexo_url?: string; // Added anexo_url field for file/photo references
+  observacao?: string;
+  anexo_url?: string;
+  created_at: string; // Added created_at field to match database schema
 }
 
 export interface RespostaFormData {
   pergunta_id: string;
   resposta: string;
   pontuacao_obtida: number;
-  observacao?: string; // Added observacao as optional property
-  anexo_url?: string; // Added anexo_url field for file uploads
+  observacao?: string;
+  anexo_url?: string;
 }
 
 // Add any other required types below
-
