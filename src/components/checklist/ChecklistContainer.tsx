@@ -47,7 +47,7 @@ interface ChecklistContainerProps {
   saveAndNavigateHome: () => void;
   saveAllResponses: () => Promise<void>;
   pontuacaoPorSecao?: Record<string, number>;
-  saveAndNavigateToNextSection?: () => Promise<void>;
+  saveAndNavigateToNextSection?: () => Promise<boolean>;
 }
 
 const ChecklistContainer: React.FC<ChecklistContainerProps> = ({

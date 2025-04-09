@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 import { useChecklistData } from '@/hooks/checklist/useChecklistData';
@@ -107,7 +106,7 @@ export const useChecklistPageState = (
   // Navigation handlers (extracted to a new hook)
   const {
     handleSetActiveSecao,
-    saveAndNavigateHome,
+    saveAndNavigateHome: saveAndNavigateHomeBase,
     saveAllResponses,
     saveAndNavigateToNextSection
   } = useNavigationHandlers(
