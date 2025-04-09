@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 import { useChecklistData } from '@/hooks/checklist/useChecklistData';
@@ -52,7 +53,7 @@ export const useChecklistPageState = (
     handleFileUpload: handleFileUploadBase,
     handleObservacaoChange,
     handleSaveObservacao: handleSaveObservacaoBase,
-    saveAndNavigateHome: saveAndNavigateHomeBase,
+    saveAndNavigateHome: saveAndNavigateHomeFromChecklist,
     saveAllResponses: saveAllResponsesBase,
     updateCompletedSections
   } = useChecklist(auditoriaId, perguntas, setPontuacaoPorSecao);
@@ -116,7 +117,7 @@ export const useChecklistPageState = (
     goToNextSection,
     goToPreviousSection,
     saveAllResponsesBase,
-    saveAndNavigateHomeBase
+    saveAndNavigateHomeFromChecklist
   );
 
   // Process responses on initial load
