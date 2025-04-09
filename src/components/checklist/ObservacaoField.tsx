@@ -1,42 +1,46 @@
 
 import React from 'react';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
 
 interface ObservacaoFieldProps {
   perguntaId: string;
   observacao: string;
-  handleObservacaoChange: (perguntaId: string, value: string) => void;
-  handleSaveObservacao: (perguntaId: string) => void;
+  onChange: (perguntaId: string, value: string) => void;
+  onSave: (perguntaId: string) => void;
+  disabled?: boolean;
 }
 
 const ObservacaoField: React.FC<ObservacaoFieldProps> = ({
   perguntaId,
   observacao,
-  handleObservacaoChange,
-  handleSaveObservacao
+  onChange,
+  onSave,
+  disabled = false
 }) => {
   return (
-    <div className="border rounded-lg p-1 bg-gray-50">
-      <h3 className="text-xs font-medium mb-1">Observações</h3>
-      <div className="flex gap-1">
-        <Input
-          type="text"
-          placeholder="Adicione uma observação"
-          className="flex-1 text-xs h-7"
-          value={observacao}
-          onChange={(e) => handleObservacaoChange(perguntaId, e.target.value)}
-        />
-        <Button 
-          variant="outline" 
+    <div className="mt-2 space-y-1">
+      <textarea
+        className="w-full p-2 text-xs border rounded focus:outline-none focus:ring-2 focus:ring-[#00bfa5]"
+        rows={2}
+        value={observacao}
+        onChange={(e) => onChange(perguntaId, e.target.value)}
+        placeholder="Digite sua observação aqui..."
+        disabled={disabled}
+      />
+      
+      {!disabled && (
+        <Button
+          type="button"
+          variant="outline"
           size="sm"
-          onClick={() => handleSaveObservacao(perguntaId)}
-          className="bg-green-50 hover:bg-green-100 text-green-600 h-7 px-2"
+          onClick={() => onSave(perguntaId)}
+          className="text-xs h-7 border-[#00bfa5] text-[#00bfa5] py-0"
         >
-          <Save className="h-3 w-3" />
+          <Save className="h-3 w-3 mr-1" />
+          Salvar observação
         </Button>
-      </div>
+      )}
     </div>
   );
 };

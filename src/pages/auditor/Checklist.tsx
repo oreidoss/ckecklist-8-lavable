@@ -34,6 +34,7 @@ const Checklist: React.FC = () => {
     uploading,
     fileUrls,
     isSaving,
+    isEditingActive,
     
     setSupervisor,
     setGerente,
@@ -53,7 +54,8 @@ const Checklist: React.FC = () => {
     isLastPerguntaInSection,
     saveAndNavigateHomeBase,
     saveAllResponses,
-    saveAndNavigateToNextSection
+    saveAndNavigateToNextSection,
+    toggleEditMode
   } = useChecklistPageState(auditoriaId, setPontuacaoPorSecao);
   
   // User selector handlers
@@ -119,6 +121,8 @@ const Checklist: React.FC = () => {
         completedSections={completedSections}
         incompleteSections={incompleteSections}
         isSaving={isSaving}
+        isEditingActive={isEditingActive}
+        toggleEditMode={toggleEditMode}
         usuarios={usuarios || []}
         setIsEditingSupervisor={setIsEditingSupervisor}
         setIsEditingGerente={setIsEditingGerente}

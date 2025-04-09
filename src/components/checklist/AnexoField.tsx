@@ -1,67 +1,85 @@
 
 import React, { useRef } from 'react';
-import { Button } from "@/components/ui/button";
-import { Paperclip, Upload } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Upload, Paperclip, Loader2 } from 'lucide-react';
 
 interface AnexoFieldProps {
   perguntaId: string;
-  anexoUrl: string;
+  fileUrl: string;
   isUploading: boolean;
-  handleFileUpload: (perguntaId: string, file: File) => void;
+  onFileUpload: (perguntaId: string, file: File) => void;
+  disabled?: boolean;
 }
 
 const AnexoField: React.FC<AnexoFieldProps> = ({
   perguntaId,
-  anexoUrl,
+  fileUrl,
   isUploading,
-  handleFileUpload
+  onFileUpload,
+  disabled = false
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && perguntaId) {
-      handleFileUpload(perguntaId, file);
+  const handleClick = () => {
+    if (fileInputRef.current && !disabled) {
+      fileInputRef.current.click();
     }
   };
 
-  const triggerFileInput = () => {
-    fileInputRef.current?.click();
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && !disabled) {
+      onFileUpload(perguntaId, file);
+    }
   };
 
   return (
-    <div className="border rounded-lg p-1 bg-gray-50">
-      <h3 className="text-xs font-medium mb-1">Anexo/Foto</h3>
-      <div className="flex gap-1">
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileInputChange}
-          className="hidden"
-          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-        />
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={triggerFileInput}
-          disabled={isUploading}
-          className="flex-1 text-xs h-7"
-        >
-          {isUploading ? (
-            <Upload className="h-3 w-3 animate-spin mr-1" />
-          ) : (
+    <div className="mt-2 space-y-1">
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        className="hidden"
+        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+        disabled={disabled}
+      />
+      
+      <div className="flex">
+        {!disabled && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleClick}
+            disabled={isUploading || disabled}
+            className="text-xs h-7 border-[#00bfa5] text-[#00bfa5] py-0"
+          >
+            {isUploading ? (
+              <>
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                Enviando...
+              </>
+            ) : (
+              <>
+                <Upload className="h-3 w-3 mr-1" />
+                Enviar arquivo
+              </>
+            )}
+          </Button>
+        )}
+        
+        {fileUrl && (
+          <a
+            href={fileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-2 flex items-center text-xs text-blue-600 hover:underline"
+          >
             <Paperclip className="h-3 w-3 mr-1" />
-          )}
-          {isUploading ? 'Enviando...' : anexoUrl ? 'Alterar anexo' : 'Adicionar anexo'}
-        </Button>
-      </div>
-      {anexoUrl && (
-        <div className="mt-1 text-[10px] text-blue-500 truncate">
-          <a href={anexoUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
-            {anexoUrl.split('/').pop()}
+            Ver anexo
           </a>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

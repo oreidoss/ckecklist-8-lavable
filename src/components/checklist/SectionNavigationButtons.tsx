@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { ArrowLeftCircle, ArrowRightCircle, Loader2 } from 'lucide-react';
+import { ArrowLeftCircle, ArrowRightCircle, Save, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface SectionNavigationButtonsProps {
@@ -11,6 +11,7 @@ interface SectionNavigationButtonsProps {
   handleNextSection: () => Promise<boolean> | void;
   hasUnansweredQuestions: () => boolean;
   saveResponses?: () => Promise<void>;
+  showSaveButton?: boolean;
 }
 
 const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
@@ -19,10 +20,12 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
   handlePreviousSection,
   handleNextSection,
   hasUnansweredQuestions,
-  saveResponses
+  saveResponses,
+  showSaveButton = true
 }) => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const onNextSectionClick = async () => {
     if (isLastSection || isProcessing) return;
@@ -69,6 +72,29 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
       setIsProcessing(false);
     }
   };
+
+  const onSaveClick = async () => {
+    if (isSaving || !saveResponses) return;
+    
+    setIsSaving(true);
+    
+    try {
+      await saveResponses();
+      toast({
+        title: "Respostas salvas",
+        description: "Todas as respostas desta seção foram salvas com sucesso.",
+      });
+    } catch (error) {
+      console.error("Erro ao salvar respostas:", error);
+      toast({
+        title: "Erro",
+        description: "Ocorreu um erro ao salvar as respostas. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
   
   return (
     <div className="flex gap-1">
@@ -76,18 +102,40 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
         variant="outline"
         size="sm"
         onClick={handlePreviousSection}
-        disabled={isFirstSection || isProcessing}
+        disabled={isFirstSection || isProcessing || isSaving}
         className="flex-1 text-xs h-8"
       >
         <ArrowLeftCircle className="mr-1 h-3 w-3" />
         Anterior
       </Button>
       
+      {showSaveButton && saveResponses && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onSaveClick}
+          disabled={isSaving}
+          className="flex-1 text-xs h-8"
+        >
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+              Salvando...
+            </>
+          ) : (
+            <>
+              <Save className="mr-1 h-3 w-3" />
+              Salvar
+            </>
+          )}
+        </Button>
+      )}
+      
       <Button
         variant="outline"
         size="sm"
         onClick={onNextSectionClick}
-        disabled={isLastSection || isProcessing}
+        disabled={isLastSection || isProcessing || isSaving}
         className="flex-1 text-xs h-8"
       >
         {isProcessing ? (

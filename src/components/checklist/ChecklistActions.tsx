@@ -8,12 +8,14 @@ interface ChecklistActionsProps {
   auditoriaId: string | undefined;
   saveAndNavigateHome: () => void;
   isSaving: boolean;
+  isEditingActive?: boolean;
 }
 
 const ChecklistActions: React.FC<ChecklistActionsProps> = ({
   auditoriaId,
   saveAndNavigateHome,
-  isSaving
+  isSaving,
+  isEditingActive = true
 }) => {
   const navigate = useNavigate();
 
@@ -24,16 +26,18 @@ const ChecklistActions: React.FC<ChecklistActionsProps> = ({
 
   return (
     <div className="flex gap-1">
-      <Button
-        variant="default"
-        size="sm"
-        onClick={saveAndNavigateHome}
-        disabled={isSaving}
-        className="flex-1 text-xs h-8"
-      >
-        <Save className="mr-1 h-3 w-3" />
-        Salvar
-      </Button>
+      {isEditingActive && (
+        <Button
+          variant="default"
+          size="sm"
+          onClick={saveAndNavigateHome}
+          disabled={isSaving}
+          className="flex-1 text-xs h-8"
+        >
+          <Save className="mr-1 h-3 w-3" />
+          Salvar
+        </Button>
+      )}
       
       <Button
         variant="outline"

@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 import { useChecklistData } from '@/hooks/checklist/useChecklistData';
 import { useChecklist } from '@/hooks/checklist';
@@ -9,6 +9,7 @@ import { useChecklistProcessor } from '@/hooks/checklist/useChecklistProcessor';
 import { useSectionState } from '@/hooks/checklist/useSectionState';
 import { useResponseHandlers } from '@/hooks/checklist/useResponseHandlers';
 import { useNavigationHandlers } from '@/hooks/checklist/useNavigationHandlers';
+import { useToast } from '@/hooks/use-toast';
 
 /**
  * Hook that combines all the checklist state management for the Checklist page
@@ -17,6 +18,10 @@ export const useChecklistPageState = (
   auditoriaId: string | undefined,
   setPontuacaoPorSecao?: React.Dispatch<React.SetStateAction<Record<string, number>>>
 ) => {
+  // Estado para controlar o modo de edição por seção
+  const [editingSections, setEditingSections] = useState<Record<string, boolean>>({});
+  const { toast } = useToast();
+  
   // Fetch all data
   const {
     usuarios,
@@ -132,9 +137,76 @@ export const useChecklistPageState = (
     updateIncompleteSections
   );
   
+  // Verificar se a seção atual está em modo de edição
+  const isEditingActive = activeSecao ? editingSections[activeSecao] === true : false;
+  
+  // Alternar modo de edição para a seção atual
+  const toggleEditMode = (secaoId?: string) => {
+    const secao = secaoId || activeSecao;
+    if (!secao) return;
+    
+    setEditingSections(prev => ({
+      ...prev,
+      [secao]: !prev[secao]
+    }));
+    
+    toast({
+      title: editingSections[secao] ? "Modo visualização ativado" : "Modo edição ativado",
+      description: editingSections[secao] 
+        ? "As respostas desta seção agora estão em modo visualização."
+        : "Você agora pode editar as respostas desta seção.",
+    });
+  };
+  
+  // Método para salvar e navegar para próxima seção com opções adicionais
+  const enhancedSaveAndNavigateToNextSection = async (): Promise<boolean> => {
+    try {
+      // Salvar respostas da seção atual
+      const success = await saveAndNavigateToNextSection();
+      
+      if (success && activeSecao) {
+        // Desativar modo de edição para a seção atual após salvar
+        setEditingSections(prev => ({
+          ...prev,
+          [activeSecao]: false
+        }));
+        
+        // Se a próxima seção já foi completada, não ativa o modo de edição automaticamente
+        if (secoes) {
+          const currentIndex = secoes.findIndex(s => s.id === activeSecao);
+          if (currentIndex < secoes.length - 1) {
+            const nextSecaoId = secoes[currentIndex + 1].id;
+            // Se a próxima seção não tem respostas, ativar modo de edição automaticamente
+            if (!completedSections.includes(nextSecaoId)) {
+              setEditingSections(prev => ({
+                ...prev,
+                [nextSecaoId]: true
+              }));
+            }
+          }
+        }
+      }
+      
+      return success;
+    } catch (error) {
+      console.error("Erro ao salvar e navegar:", error);
+      return false;
+    }
+  };
+  
   useEffect(() => {
     processExistingResponses();
-  }, [respostasExistentes, perguntas, secoes]);
+    
+    // Inicializar o estado de edição para novas seções
+    // Se a seção não tem respostas ainda, ativar modo de edição
+    if (secoes && completedSections) {
+      const initialEditState: Record<string, boolean> = {};
+      secoes.forEach(secao => {
+        initialEditState[secao.id] = !completedSections.includes(secao.id);
+      });
+      setEditingSections(initialEditState);
+    }
+  }, [respostasExistentes, perguntas, secoes, completedSections]);
 
   return {
     // Data
@@ -160,12 +232,15 @@ export const useChecklistPageState = (
     uploading,
     fileUrls,
     isSaving,
+    editingSections,
+    isEditingActive,
     
     // Setters
     setSupervisor,
     setGerente,
     setIsEditingSupervisor,
     setIsEditingGerente,
+    setEditingSections,
     
     // Methods
     refetchAuditoria,
@@ -182,12 +257,13 @@ export const useChecklistPageState = (
     saveAndNavigateHomeBase,
     saveAllResponses,
     updateCompletedSections,
+    toggleEditMode,
     
     // New features from refactored hooks
     getActiveQuestionCount,
     getAnsweredQuestionCount,
     
-    // Add new method
-    saveAndNavigateToNextSection
+    // Enhanced methods
+    saveAndNavigateToNextSection: enhancedSaveAndNavigateToNextSection
   };
 };

@@ -20,6 +20,8 @@ interface ChecklistContentProps {
   completedSections: string[];
   incompleteSections: string[];
   isSaving: boolean;
+  isEditingActive?: boolean;
+  toggleEditMode?: () => void;
   getPerguntasBySecao: (secaoId: string) => any[];
   handleSetActiveSecao: (secaoId: string) => void;
   handleResposta: (perguntaId: string, resposta: RespostaValor) => void;
@@ -48,6 +50,8 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
   completedSections,
   incompleteSections,
   isSaving,
+  isEditingActive = true,
+  toggleEditMode,
   getPerguntasBySecao,
   handleSetActiveSecao,
   handleResposta,
@@ -73,13 +77,14 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
   const isLastSection = secaoIndex === totalSecoes - 1;
 
   console.log("ChecklistContent - pontuacaoPorSecao:", pontuacaoPorSecao);
+  console.log("ChecklistContent - isEditingActive:", isEditingActive);
 
   if (!activeSecaoObj) return null;
   
   // Use saveAndNavigateToNextSection if available, otherwise use goToNextSection
   const handleNextSection = saveAndNavigateToNextSection || (() => {
     goToNextSection();
-    return undefined;
+    return Promise.resolve(true);
   });
   
   return (
@@ -101,7 +106,7 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
           Seção {secaoIndex + 1} de {totalSecoes}
         </div>
         
-        {hasUnansweredQuestions() && <SectionWarning />}
+        {hasUnansweredQuestions() && isEditingActive && <SectionWarning />}
         
         <div className="space-y-1">
           <SectionContent
@@ -116,6 +121,8 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
             handleSaveObservacao={handleSaveObservacao}
             handleFileUpload={handleFileUpload}
             isLastPerguntaInSection={isLastPerguntaInSection}
+            isEditingActive={isEditingActive}
+            toggleEditMode={toggleEditMode}
           />
         </div>
         
@@ -126,13 +133,15 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
             handlePreviousSection={goToPreviousSection}
             handleNextSection={handleNextSection}
             hasUnansweredQuestions={hasUnansweredQuestions}
-            saveResponses={saveAllResponses} 
+            saveResponses={saveAllResponses}
+            showSaveButton={isEditingActive}
           />
           
           <ChecklistActions 
             auditoriaId={auditoriaId}
             saveAndNavigateHome={saveAndNavigateHome}
             isSaving={isSaving}
+            isEditingActive={isEditingActive}
           />
         </div>
       </div>

@@ -1,13 +1,11 @@
 
 import React from 'react';
-import { Pergunta } from '@/lib/types';
-import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
-import ChecklistQuestion from './ChecklistQuestion';
-import ObservacaoField from './ObservacaoField';
-import AnexoField from './AnexoField';
+import ChecklistQuestion, { RespostaValor } from '@/components/checklist/ChecklistQuestion';
+import { Button } from "@/components/ui/button";
+import { Pencil } from 'lucide-react';
 
 interface SectionContentProps {
-  perguntasSecaoAtiva: Pergunta[];
+  perguntasSecaoAtiva: any[];
   respostas: Record<string, RespostaValor>;
   observacoes: Record<string, string>;
   fileUrls: Record<string, string>;
@@ -18,6 +16,8 @@ interface SectionContentProps {
   handleSaveObservacao: (perguntaId: string) => void;
   handleFileUpload: (perguntaId: string, file: File) => void;
   isLastPerguntaInSection: (perguntaId: string) => boolean;
+  isEditingActive?: boolean;
+  toggleEditMode?: () => void;
 }
 
 const SectionContent: React.FC<SectionContentProps> = ({
@@ -31,51 +31,47 @@ const SectionContent: React.FC<SectionContentProps> = ({
   handleObservacaoChange,
   handleSaveObservacao,
   handleFileUpload,
-  isLastPerguntaInSection
+  isLastPerguntaInSection,
+  isEditingActive = true,
+  toggleEditMode
 }) => {
-  const lastPerguntaId = perguntasSecaoAtiva.length > 0 
-    ? perguntasSecaoAtiva[perguntasSecaoAtiva.length - 1].id 
-    : '';
-    
-  const sectionObservacao = observacoes[lastPerguntaId] || 
-    (respostasExistentes?.find(r => r.pergunta_id === lastPerguntaId)?.observacao || '');
-
-  const anexoUrl = fileUrls[lastPerguntaId] || 
-    (respostasExistentes?.find(r => r.pergunta_id === lastPerguntaId)?.anexo_url || '');
-    
-  const isUploading = uploading[lastPerguntaId] || false;
-
+  // Verifica se alguma pergunta já foi respondida
+  const hasResponses = perguntasSecaoAtiva.some(pergunta => 
+    respostas[pergunta.id] !== undefined
+  );
+  
   return (
     <>
-      {perguntasSecaoAtiva.map((pergunta, index) => {
-        // Find the response in the state first, then fall back to the existing responses if not in state
-        const resposta = respostas[pergunta.id] || 
-          (respostasExistentes?.find(r => r.pergunta_id === pergunta.id)?.resposta as RespostaValor);
-        
-        return (
-          <ChecklistQuestion
-            key={pergunta.id}
-            pergunta={pergunta}
-            index={index}
-            resposta={resposta}
-            handleResposta={handleResposta}
-          />
-        );
-      })}
+      {hasResponses && !isEditingActive && toggleEditMode && (
+        <div className="flex justify-end mb-2">
+          <Button 
+            onClick={toggleEditMode}
+            variant="outline"
+            size="sm"
+            className="text-xs"
+          >
+            <Pencil className="mr-1 h-3 w-3" />
+            Editar Respostas
+          </Button>
+        </div>
+      )}
       
-      <ObservacaoField
-        perguntaId={lastPerguntaId}
-        observacao={sectionObservacao}
-        handleObservacaoChange={handleObservacaoChange}
-        handleSaveObservacao={handleSaveObservacao}
-      />
-      
-      <AnexoField
-        perguntaId={lastPerguntaId}
-        anexoUrl={anexoUrl}
-        isUploading={isUploading}
-        handleFileUpload={handleFileUpload}
-      />
+      {perguntasSecaoAtiva.map((pergunta) => (
+        <ChecklistQuestion
+          key={pergunta.id}
+          pergunta={pergunta}
+          resposta={respostas[pergunta.id]}
+          observacao={observacoes[pergunta.id] || ''}
+          fileUrl={fileUrls[pergunta.id] || ''}
+          isUploading={uploading[pergunta.id] || false}
+          onResponder={handleResposta}
+          onObservacaoChange={handleObservacaoChange}
+          onSaveObservacao={handleSaveObservacao}
+          onFileUpload={handleFileUpload}
+          isLastPergunta={isLastPerguntaInSection(pergunta.id)}
+          disabled={!isEditingActive && hasResponses}
+        />
+      ))}
     </>
   );
 };

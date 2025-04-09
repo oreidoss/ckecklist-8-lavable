@@ -28,6 +28,8 @@ interface ChecklistContainerProps {
   incompleteSections: string[];
   isSaving: boolean;
   usuarios: any[];
+  isEditingActive?: boolean;
+  toggleEditMode?: () => void;
   setIsEditingSupervisor: (value: boolean) => void;
   setIsEditingGerente: (value: boolean) => void;
   setSupervisor: (value: string) => void;
@@ -71,6 +73,8 @@ const ChecklistContainer: React.FC<ChecklistContainerProps> = ({
   incompleteSections,
   isSaving,
   usuarios,
+  isEditingActive,
+  toggleEditMode,
   setIsEditingSupervisor,
   setIsEditingGerente,
   setSupervisor,
@@ -129,6 +133,8 @@ const ChecklistContainer: React.FC<ChecklistContainerProps> = ({
           completedSections={completedSections}
           incompleteSections={incompleteSections}
           isSaving={isSaving}
+          isEditingActive={isEditingActive}
+          toggleEditMode={toggleEditMode}
           getPerguntasBySecao={getPerguntasBySecao}
           handleSetActiveSecao={handleSetActiveSecao}
           handleResposta={handleResposta}
@@ -136,12 +142,13 @@ const ChecklistContainer: React.FC<ChecklistContainerProps> = ({
           handleSaveObservacao={handleSaveObservacao}
           handleFileUpload={handleFileUpload}
           goToPreviousSection={goToPreviousSection}
-          goToNextSection={saveAndNavigateToNextSection || goToNextSection}
+          goToNextSection={goToNextSection}
           hasUnansweredQuestions={hasUnansweredQuestions}
           isLastPerguntaInSection={isLastPerguntaInSection}
           saveAndNavigateHome={saveAndNavigateHome}
           saveAllResponses={saveAllResponses}
           pontuacaoPorSecao={pontuacaoPorSecao}
+          saveAndNavigateToNextSection={saveAndNavigateToNextSection}
         />
       )}
       
