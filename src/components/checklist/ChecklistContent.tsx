@@ -81,11 +81,19 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
 
   if (!activeSecaoObj) return null;
   
-  // Use saveAndNavigateToNextSection if available, otherwise use goToNextSection
-  const handleNextSection = saveAndNavigateToNextSection || (() => {
-    goToNextSection();
-    return Promise.resolve(true);
-  });
+  // Use saveAndNavigateToNextSection if available
+  const handleNextSection = async () => {
+    console.log("ChecklistContent: handleNextSection chamado");
+    
+    if (saveAndNavigateToNextSection) {
+      console.log("Usando saveAndNavigateToNextSection");
+      return await saveAndNavigateToNextSection();
+    } else {
+      console.log("Usando goToNextSection direto");
+      goToNextSection();
+      return true;
+    }
+  };
   
   return (
     <>

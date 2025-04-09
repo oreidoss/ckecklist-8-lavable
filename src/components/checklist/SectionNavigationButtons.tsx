@@ -41,24 +41,20 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
     setIsProcessing(true);
     
     try {
-      console.log("Navegando para próxima seção com salvamento");
+      console.log("Navegando para próxima seção");
       
-      // Check if handleNextSection is a function that returns a Promise
+      // Chamar função de navegação
       if (typeof handleNextSection === 'function') {
         const result = handleNextSection();
         
         if (result instanceof Promise) {
-          // Wait for the Promise to resolve
-          const success = await result;
-          console.log("Resultado da navegação:", success);
-          
-          if (!success) {
-            throw new Error("Falha ao navegar para próxima seção");
-          }
+          await result;
+          console.log("Navegação para próxima seção concluída");
         } else {
-          // Function doesn't return a Promise, just call it
-          console.log("Função de navegação não retorna Promise, chamando diretamente");
+          console.log("Função de navegação executada sem Promise");
         }
+      } else {
+        console.error("handleNextSection não é uma função");
       }
       
     } catch (error) {

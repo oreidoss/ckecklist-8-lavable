@@ -40,12 +40,21 @@ const SectionContent: React.FC<SectionContentProps> = ({
     respostas[pergunta.id] !== undefined
   );
   
+  const handleToggleEditMode = () => {
+    if (toggleEditMode) {
+      console.log("Botão de edição clicado");
+      toggleEditMode();
+    } else {
+      console.log("toggleEditMode não foi fornecido");
+    }
+  };
+  
   return (
     <>
       {hasResponses && !isEditingActive && toggleEditMode && (
         <div className="flex justify-end mb-2">
           <Button 
-            onClick={toggleEditMode}
+            onClick={handleToggleEditMode}
             variant="outline"
             size="sm"
             className="text-xs"
@@ -69,7 +78,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
           onSaveObservacao={handleSaveObservacao}
           onFileUpload={handleFileUpload}
           isLastPergunta={isLastPerguntaInSection(pergunta.id)}
-          disabled={!isEditingActive && hasResponses}
+          disabled={!isEditingActive}
         />
       ))}
     </>

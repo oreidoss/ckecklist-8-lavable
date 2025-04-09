@@ -59,7 +59,17 @@ export const useNavigationHandlers = (
       console.log("Respostas salvas com sucesso, navegando para próxima seção");
       
       // Depois navegar para próxima seção
-      goToNextSection();
+      if (secoes && activeSecao) {
+        const currentIndex = secoes.findIndex(s => s.id === activeSecao);
+        if (currentIndex < secoes.length - 1) {
+          const nextSecaoId = secoes[currentIndex + 1].id;
+          setActiveSecao(nextSecaoId);
+          window.scrollTo(0, 0);
+          console.log(`Navegado para próxima seção: ${nextSecaoId}`);
+        }
+      } else {
+        goToNextSection();
+      }
       
       toast({
         title: "Navegação bem-sucedida",

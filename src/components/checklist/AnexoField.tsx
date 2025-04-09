@@ -30,6 +30,11 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
     const file = event.target.files?.[0];
     if (file && !disabled) {
       onFileUpload(perguntaId, file);
+      
+      // Limpar input para permitir selecionar o mesmo arquivo novamente
+      if (event.target) {
+        event.target.value = '';
+      }
     }
   };
 

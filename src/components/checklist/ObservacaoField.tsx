@@ -21,7 +21,9 @@ const ObservacaoField: React.FC<ObservacaoFieldProps> = ({
   return (
     <div className="mt-2 space-y-1">
       <textarea
-        className="w-full p-2 text-xs border rounded focus:outline-none focus:ring-2 focus:ring-[#00bfa5]"
+        className={`w-full p-2 text-xs border rounded focus:outline-none focus:ring-2 ${
+          disabled ? 'bg-gray-100' : 'focus:ring-[#00bfa5]'
+        }`}
         rows={2}
         value={observacao}
         onChange={(e) => onChange(perguntaId, e.target.value)}
