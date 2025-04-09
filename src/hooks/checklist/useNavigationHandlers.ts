@@ -65,6 +65,8 @@ export const useNavigationHandlers = (
         title: "Navegação bem-sucedida",
         description: "Respostas salvas e navegando para próxima seção.",
       });
+      
+      return true;
     } catch (error) {
       console.error("Erro ao salvar respostas antes de navegar:", error);
       toast({
@@ -72,6 +74,7 @@ export const useNavigationHandlers = (
         description: "Ocorreu um erro ao salvar as respostas antes de navegar. Tente novamente.",
         variant: "destructive"
       });
+      return false;
     }
   };
 

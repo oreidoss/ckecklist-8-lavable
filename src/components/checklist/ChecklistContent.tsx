@@ -33,7 +33,7 @@ interface ChecklistContentProps {
   saveAndNavigateHome: () => void;
   saveAllResponses: () => Promise<void>;
   pontuacaoPorSecao?: Record<string, number>;
-  saveAndNavigateToNextSection?: () => Promise<void>;
+  saveAndNavigateToNextSection?: () => Promise<boolean>;
 }
 
 const ChecklistContent: React.FC<ChecklistContentProps> = ({
@@ -76,7 +76,7 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
 
   if (!activeSecaoObj) return null;
   
-  // Determine which function to use for navigation
+  // Use saveAndNavigateToNextSection if available, otherwise use goToNextSection
   const handleNextSection = saveAndNavigateToNextSection || goToNextSection;
   
   return (

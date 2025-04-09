@@ -8,7 +8,7 @@ interface SectionNavigationButtonsProps {
   isFirstSection: boolean;
   isLastSection: boolean;
   handlePreviousSection: () => void;
-  handleNextSection: () => void;
+  handleNextSection: () => Promise<boolean> | (() => void);
   hasUnansweredQuestions: () => boolean;
   saveResponses?: () => Promise<void>;
 }
@@ -27,6 +27,7 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
   const onNextSectionClick = async () => {
     if (isLastSection || isProcessing) return;
     
+    // Warn if questions are unanswered
     if (hasUnansweredQuestions()) {
       toast({
         title: "Perguntas não respondidas",
@@ -37,20 +38,28 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
     setIsProcessing(true);
     
     try {
-      console.log("Salvando respostas antes de navegar para a próxima seção");
+      console.log("Navegando para próxima seção com salvamento");
       
-      // Tentar salvar respostas antes de avançar
-      if (saveResponses) {
-        await saveResponses();
-        console.log("Respostas salvas com sucesso");
+      // Check if handleNextSection is a function that returns a Promise
+      if (typeof handleNextSection === 'function') {
+        const result = handleNextSection();
+        
+        if (result instanceof Promise) {
+          // Wait for the Promise to resolve
+          const success = await result;
+          console.log("Resultado da navegação:", success);
+          
+          if (!success) {
+            throw new Error("Falha ao navegar para próxima seção");
+          }
+        } else {
+          // Function doesn't return a Promise, just call it
+          console.log("Função de navegação não retorna Promise, chamando diretamente");
+        }
       }
       
-      // Navegar para a próxima seção apenas após salvar com sucesso
-      console.log("Navegando para próxima seção");
-      handleNextSection();
-      
     } catch (error) {
-      console.error("Erro ao salvar respostas:", error);
+      console.error("Erro ao navegar para próxima seção:", error);
       toast({
         title: "Erro",
         description: "Ocorreu um erro ao salvar as respostas. Tente novamente.",

@@ -105,6 +105,7 @@ export type Database = {
         Row: {
           anexo_url: string | null
           auditoria_id: string | null
+          created_at: string
           id: string
           observacao: string | null
           pergunta_id: string | null
@@ -114,6 +115,7 @@ export type Database = {
         Insert: {
           anexo_url?: string | null
           auditoria_id?: string | null
+          created_at?: string
           id?: string
           observacao?: string | null
           pergunta_id?: string | null
@@ -123,6 +125,7 @@ export type Database = {
         Update: {
           anexo_url?: string | null
           auditoria_id?: string | null
+          created_at?: string
           id?: string
           observacao?: string | null
           pergunta_id?: string | null

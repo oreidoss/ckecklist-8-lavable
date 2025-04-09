@@ -30,11 +30,12 @@ export const useSaveResponses = (
       await updatePontuacaoPorSecao();
       console.log("Pontuações por seção atualizadas com sucesso");
       
-      // Vamos buscar todas as respostas atuais
+      // Vamos buscar todas as respostas atuais após criar ou atualizar
       const { data: respostas, error: fetchError } = await supabase
         .from('respostas')
         .select('*')
-        .eq('auditoria_id', auditoriaId);
+        .eq('auditoria_id', auditoriaId)
+        .order('created_at', { ascending: false }); // Ordenar pela data de criação para garantir que temos as mais recentes
         
       if (fetchError) {
         console.error("Erro ao buscar respostas:", fetchError);
@@ -49,10 +50,10 @@ export const useSaveResponses = (
       // Vamos criar um mapa para garantir que contamos apenas a última resposta de cada pergunta
       const uniqueRespostas = new Map();
       
-      // Como não temos created_at, vamos usar o ID como indicador de qual é a resposta mais recente
+      // Usar created_at para determinar a resposta mais recente
       respostas.forEach(r => {
         if (!uniqueRespostas.has(r.pergunta_id) || 
-            r.id > uniqueRespostas.get(r.pergunta_id).id) {
+            new Date(r.created_at) > new Date(uniqueRespostas.get(r.pergunta_id).created_at)) {
           uniqueRespostas.set(r.pergunta_id, r);
         }
       });
