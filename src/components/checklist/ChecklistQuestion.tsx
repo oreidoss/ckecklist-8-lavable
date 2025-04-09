@@ -54,18 +54,23 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
     }
   };
   
+  // Função para alternar o estado de observações
   const toggleObservacoes = () => {
     setShowObservacoes(!showObservacoes);
     if (showAnexos) setShowAnexos(false);
   };
   
+  // Função para alternar o estado de anexos
   const toggleAnexos = () => {
     setShowAnexos(!showAnexos);
     if (showObservacoes) setShowObservacoes(false);
   };
 
+  // Log para depuração da resposta atual
+  console.log(`Pergunta: ${pergunta.texto} - Resposta: ${resposta} - Disabled: ${disabled}`);
+
   return (
-    <div className="bg-gray-50 p-2 rounded-md">
+    <div className="bg-gray-50 p-2 rounded-md mb-2">
       <div className="text-xs mb-2">{pergunta.texto}</div>
       
       <div className="flex flex-wrap gap-1">

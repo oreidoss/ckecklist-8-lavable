@@ -75,11 +75,15 @@ const SectionScores: React.FC<SectionScoresProps> = ({
       // Mapear respostas por ID da pergunta para pegar a resposta mais recente usando created_at
       const ultimasRespostas = new Map();
       
-      respostasData.forEach((resposta: Resposta) => {
+      // Ordenar as respostas por data, mais recentes primeiro
+      const respostasOrdenadas = [...respostasData].sort((a, b) => {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      
+      // Pegar apenas a resposta mais recente para cada pergunta
+      respostasOrdenadas.forEach((resposta: Resposta) => {
         const perguntaId = resposta.pergunta_id;
-        // Se ainda não temos uma resposta para esta pergunta ou se a data da resposta atual é mais recente, atualizar
-        if (!ultimasRespostas.has(perguntaId) || 
-            new Date(resposta.created_at) > new Date((ultimasRespostas.get(perguntaId) as Resposta).created_at)) {
+        if (!ultimasRespostas.has(perguntaId)) {
           ultimasRespostas.set(perguntaId, resposta);
         }
       });
@@ -100,7 +104,7 @@ const SectionScores: React.FC<SectionScoresProps> = ({
             scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
             console.log(`  Adicionada pontuacao_obtida ${pontuacao} à seção "${secaoNome}", novo total: ${scores[secaoId]}`);
           } else if (resposta.resposta) {
-            const pontuacao = pontuacaoMap[resposta.resposta] || 0;
+            const pontuacao = pontuacaoMap[resposta.resposta] !== undefined ? pontuacaoMap[resposta.resposta] : 0;
             scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
             console.log(`  Calculada pontuação ${pontuacao} da resposta "${resposta.resposta}" para seção "${secaoNome}", novo total: ${scores[secaoId]}`);
           }
@@ -128,12 +132,24 @@ const SectionScores: React.FC<SectionScoresProps> = ({
   // Função auxiliar para atualizar a pontuação total da auditoria
   const updateAuditoriaPontuacaoTotal = async (auditoriaId: string, uniqueRespostas: Map<string, any>) => {
     try {
+      // Mapeamento direto de pontuação
+      const pontuacaoMap: Record<string, number> = {
+        'Sim': 1,
+        'Não': -1,
+        'Regular': 0.5,
+        'N/A': 0
+      };
+      
       // Calcular pontuação total somando apenas as respostas únicas
       let pontuacaoTotal = 0;
       
       uniqueRespostas.forEach(resposta => {
         if (resposta.pontuacao_obtida !== null && resposta.pontuacao_obtida !== undefined) {
           pontuacaoTotal += Number(resposta.pontuacao_obtida);
+        } else if (resposta.resposta) {
+          // Se não tiver pontuacao_obtida, calcular com base na resposta
+          const pontuacao = pontuacaoMap[resposta.resposta] !== undefined ? pontuacaoMap[resposta.resposta] : 0;
+          pontuacaoTotal += pontuacao;
         }
       });
       

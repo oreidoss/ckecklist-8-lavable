@@ -32,7 +32,7 @@ export const useChecklistScores = (
     try {
       console.log("Atualizando pontuações de seção para auditoria:", auditoriaId);
       
-      // Buscar TODAS as respostas para esta auditoria sem orderBy (created_at não existe)
+      // Buscar TODAS as respostas para esta auditoria
       const { data: respostasData, error: respostasError } = await supabase
         .from('respostas')
         .select('*')
@@ -75,45 +75,52 @@ export const useChecklistScores = (
         return acc;
       }, {} as Record<string, string>);
       
-      // Criar um mapa das respostas - usamos o último ID como indicador da resposta mais recente
-      const ultimasRespostaPorPergunta = new Map();
+      // Mapeamento de perguntaId -> respostaId mais recente
+      const ultimasRespostasPorPergunta = new Map<string, any>();
       
-      // Como não temos created_at, vamos usar o ID como indicador da ordem
-      // assumindo que IDs maiores são criados mais recentemente
-      respostasData.forEach(resposta => {
+      // Ordenar as respostas para garantir que pegamos as mais recentes
+      // Como estamos usando o created_at, podemos ordenar pelo timestamp
+      const respostasOrdenadas = [...respostasData].sort((a, b) => {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      
+      // Selecionar apenas a resposta mais recente para cada pergunta
+      respostasOrdenadas.forEach(resposta => {
         const perguntaId = resposta.pergunta_id;
-        // Se ainda não temos uma resposta para esta pergunta ou se o ID é maior, atualizar
-        if (!ultimasRespostaPorPergunta.has(perguntaId) || 
-            resposta.id > ultimasRespostaPorPergunta.get(perguntaId).id) {
-          ultimasRespostaPorPergunta.set(perguntaId, resposta);
+        if (!ultimasRespostasPorPergunta.has(perguntaId)) {
+          ultimasRespostasPorPergunta.set(perguntaId, resposta);
         }
       });
       
-      console.log(`Usando ${ultimasRespostaPorPergunta.size} respostas únicas para cálculo`);
+      console.log(`Usando ${ultimasRespostasPorPergunta.size} respostas únicas (mais recentes) para cálculo`);
       
-      // Agora calcular as pontuações totais por seção
-      ultimasRespostaPorPergunta.forEach((resposta) => {
+      // Agora calcular as pontuações totais por seção usando apenas as respostas mais recentes
+      ultimasRespostasPorPergunta.forEach((resposta) => {
         const perguntaId = resposta.pergunta_id;
         const secaoId = perguntaPorSecao[perguntaId];
         
         if (secaoId) {
           // Adicionar pontuação à seção correspondente
           if (resposta.pontuacao_obtida !== null && resposta.pontuacao_obtida !== undefined) {
+            // Garantir que a pontuação seja tratada como número
             const pontuacao = Number(resposta.pontuacao_obtida);
             scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
-            console.log(`Adicionando pontuação ${pontuacao} para pergunta ${perguntaId} na seção ${secaoId}`);
+            console.log(`Adicionando pontuação ${pontuacao} para pergunta ${perguntaId} na seção ${secaoId}, novo total: ${scores[secaoId]}`);
           } 
           // Caso não tenha pontuação salva, calcular com base na resposta
           else if (resposta.resposta) {
-            const pontuacao = pontuacaoMap[resposta.resposta] || 0;
+            const pontuacao = pontuacaoMap[resposta.resposta] !== undefined ? pontuacaoMap[resposta.resposta] : 0;
             scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
-            console.log(`Calculando pontuação ${pontuacao} para resposta "${resposta.resposta}" na seção ${secaoId}`);
+            console.log(`Calculando pontuação ${pontuacao} para resposta "${resposta.resposta}" na seção ${secaoId}, novo total: ${scores[secaoId]}`);
           }
         }
       });
       
       console.log("Pontuações finais calculadas por seção:", scores);
       setPontuacaoPorSecao(scores);
+      
+      // Atualizar pontuação total da auditoria
+      await updateAuditoriaPontuacaoTotal(auditoriaId, ultimasRespostasPorPergunta);
     } catch (error) {
       console.error("Erro ao atualizar pontuações de seção:", error);
       toast({
@@ -122,6 +129,38 @@ export const useChecklistScores = (
         variant: "destructive"
       });
       throw error;
+    }
+  };
+  
+  /**
+   * Atualiza a pontuação total da auditoria baseada nas respostas mais recentes
+   */
+  const updateAuditoriaPontuacaoTotal = async (auditoriaId: string, ultimasRespostas: Map<string, any>) => {
+    try {
+      // Calcular pontuação total somando apenas as respostas únicas mais recentes
+      let pontuacaoTotal = 0;
+      
+      ultimasRespostas.forEach(resposta => {
+        if (resposta.pontuacao_obtida !== null && resposta.pontuacao_obtida !== undefined) {
+          // Garantir que a pontuação seja tratada como número
+          pontuacaoTotal += Number(resposta.pontuacao_obtida);
+        } else if (resposta.resposta) {
+          // Caso não tenha pontuação_obtida, calcular com base na resposta
+          const pontuacao = pontuacaoMap[resposta.resposta] !== undefined ? pontuacaoMap[resposta.resposta] : 0;
+          pontuacaoTotal += pontuacao;
+        }
+      });
+      
+      console.log(`Atualizando pontuacao_total da auditoria ${auditoriaId}: ${pontuacaoTotal} (de ${ultimasRespostas.size} respostas únicas)`);
+      
+      const { error } = await supabase
+        .from('auditorias')
+        .update({ pontuacao_total: pontuacaoTotal })
+        .eq('id', auditoriaId);
+        
+      if (error) throw error;
+    } catch (error) {
+      console.error("Erro ao atualizar pontuação total da auditoria:", error);
     }
   };
 

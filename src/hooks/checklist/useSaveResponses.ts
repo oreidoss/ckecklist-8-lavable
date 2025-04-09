@@ -14,6 +14,14 @@ export const useSaveResponses = (
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
+  // Mapeamento de valores de resposta para pontuações numéricas
+  const pontuacaoMap: Record<string, number> = {
+    'Sim': 1,
+    'Não': -1,
+    'Regular': 0.5,
+    'N/A': 0
+  };
+
   // Função para salvar todas as respostas de uma vez (para uso com botão Próximo/Salvar)
   const saveAllResponses = async (): Promise<void> => {
     if (!auditoriaId) {
@@ -52,9 +60,14 @@ export const useSaveResponses = (
       const uniqueRespostas = new Map<string, Resposta>();
       
       // Usar created_at para determinar a resposta mais recente
-      (respostas as Resposta[]).forEach(r => {
-        if (!uniqueRespostas.has(r.pergunta_id) || 
-            new Date(r.created_at) > new Date((uniqueRespostas.get(r.pergunta_id) as Resposta).created_at)) {
+      // Ordenar as respostas para garantir que pegamos as mais recentes primeiro
+      const respostasOrdenadas = [...(respostas as Resposta[])].sort((a, b) => {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      
+      // Pegar apenas a resposta mais recente para cada pergunta
+      respostasOrdenadas.forEach(r => {
+        if (!uniqueRespostas.has(r.pergunta_id)) {
           uniqueRespostas.set(r.pergunta_id, r);
         }
       });
@@ -64,8 +77,14 @@ export const useSaveResponses = (
       // Agora podemos somar as pontuações usando apenas as respostas únicas
       uniqueRespostas.forEach(r => {
         if (r.pontuacao_obtida !== null && r.pontuacao_obtida !== undefined) {
-          pontuacaoTotal += Number(r.pontuacao_obtida);
-          console.log(`Adicionando pontuação ${r.pontuacao_obtida} para pergunta ${r.pergunta_id}, novo total: ${pontuacaoTotal}`);
+          const pontuacao = Number(r.pontuacao_obtida);
+          pontuacaoTotal += pontuacao;
+          console.log(`Adicionando pontuação ${pontuacao} para pergunta ${r.pergunta_id}, novo total: ${pontuacaoTotal}`);
+        } else if (r.resposta) {
+          // Se não tiver pontuacao_obtida, calcular com base na resposta
+          const pontuacao = pontuacaoMap[r.resposta] !== undefined ? pontuacaoMap[r.resposta] : 0;
+          pontuacaoTotal += pontuacao;
+          console.log(`Calculando pontuação ${pontuacao} para resposta "${r.resposta}" na pergunta ${r.pergunta_id}, novo total: ${pontuacaoTotal}`);
         }
       });
       

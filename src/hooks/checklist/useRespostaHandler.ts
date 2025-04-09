@@ -54,8 +54,12 @@ export const useRespostaHandler = (
     });
     
     try {
-      // Calcula a pontuação com base no valor da resposta
-      const pontuacao = pontuacaoMap[resposta] || 0;
+      // Calcula a pontuação com base no valor da resposta com verificação adicional
+      let pontuacao = 0;
+      if (resposta !== null) {
+        pontuacao = pontuacaoMap[resposta] !== undefined ? pontuacaoMap[resposta] : 0;
+      }
+      
       console.log(`Pontuação calculada para "${resposta}": ${pontuacao}`);
       
       const observacao = observacoes[perguntaId] || '';
@@ -96,8 +100,8 @@ export const useRespostaHandler = (
           console.log("Resposta atualizada com sucesso!");
           // Notificação de sucesso
           toast({
-            title: "Resposta salva",
-            description: "Sua resposta foi salva com sucesso.",
+            title: "Resposta atualizada",
+            description: `Resposta "${resposta}" registrada com pontuação ${pontuacao}.`,
           });
         }
       } else {
@@ -128,7 +132,7 @@ export const useRespostaHandler = (
           // Notificação de sucesso
           toast({
             title: "Resposta salva",
-            description: "Sua resposta foi salva com sucesso.",
+            description: `Resposta "${resposta}" registrada com pontuação ${pontuacao}.`,
           });
         }
       }
