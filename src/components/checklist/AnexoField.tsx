@@ -7,7 +7,7 @@ interface AnexoFieldProps {
   perguntaId: string;
   fileUrl: string;
   isUploading: boolean;
-  onFileUpload: (perguntaId: string, file: File) => void;
+  onFileUpload: (file: File) => void;
   disabled?: boolean;
 }
 
@@ -29,7 +29,7 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && !disabled) {
-      onFileUpload(perguntaId, file);
+      onFileUpload(file);
       
       // Limpar input para permitir selecionar o mesmo arquivo novamente
       if (event.target) {
