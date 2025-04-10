@@ -1,8 +1,8 @@
 
+import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 import { Pergunta, Secao } from '@/lib/types';
-import { useState } from 'react';
 
 /**
  * Hook for managing responses and related actions in the checklist
@@ -22,10 +22,11 @@ export const useChecklistResponses = (
   setProgresso: React.Dispatch<React.SetStateAction<number>>,
   updateIncompleteSections: () => void,
   goToNextSection: () => void,
-  toast: ReturnType<typeof useToast>,
+  toastHook: ReturnType<typeof useToast>,
   setPontuacaoPorSecao?: React.Dispatch<React.SetStateAction<Record<string, number>>>
 ) => {
   const [isSaving, setIsSaving] = useState(false);
+  const { toast } = toastHook;
 
   // These functions would normally be imported from their respective hooks
   // But for this refactoring, we'll implement simplified versions

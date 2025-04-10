@@ -21,6 +21,8 @@ interface ChecklistContentProps {
   incompleteSections: string[];
   isSaving: boolean;
   isEditingActive?: boolean;
+  editingSections: Record<string, boolean>;
+  setEditingSections: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   toggleEditMode?: () => void;
   getPerguntasBySecao: (secaoId: string) => any[];
   handleSetActiveSecao: (secaoId: string) => void;
@@ -51,6 +53,8 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
   incompleteSections,
   isSaving,
   isEditingActive = true,
+  editingSections,
+  setEditingSections,
   toggleEditMode,
   getPerguntasBySecao,
   handleSetActiveSecao,

@@ -47,7 +47,7 @@ export const useChecklistPageState = (
     isEditingActive,
     toggleEditMode,
     getPerguntasBySecao
-  } = useSectionManagement(secoes);
+  } = useSectionManagement(secoes, []);
 
   // Section navigation and completion tracking
   const {
@@ -74,7 +74,7 @@ export const useChecklistPageState = (
     activeSecao, 
     setActiveSecao,
     editingSections,
-    setEditingSections, 
+    setEditingSections,
     setPontuacaoPorSecao
   );
 
@@ -167,6 +167,8 @@ export const useChecklistPageState = (
     fileUrls,
     isSaving,
     isEditingActive,
+    editingSections,
+    setEditingSections,
     
     // Setters
     setSupervisor,

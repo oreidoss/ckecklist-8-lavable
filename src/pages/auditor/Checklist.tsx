@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useChecklistPageState } from '@/hooks/checklist/useChecklistPageState';
@@ -34,6 +35,8 @@ const Checklist: React.FC = () => {
     fileUrls,
     isSaving,
     isEditingActive,
+    editingSections,
+    setEditingSections,
     
     setSupervisor,
     setGerente,
@@ -121,6 +124,8 @@ const Checklist: React.FC = () => {
         incompleteSections={incompleteSections}
         isSaving={isSaving}
         isEditingActive={isEditingActive}
+        editingSections={editingSections}
+        setEditingSections={setEditingSections}
         toggleEditMode={toggleEditMode}
         usuarios={usuarios || []}
         setIsEditingSupervisor={setIsEditingSupervisor}
