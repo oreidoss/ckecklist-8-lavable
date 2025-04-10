@@ -39,7 +39,9 @@ const SectionContent: React.FC<SectionContentProps> = ({
   // Debug para verificar as perguntas
   useEffect(() => {
     console.log("Perguntas da seção ativa:", perguntasSecaoAtiva);
-  }, [perguntasSecaoAtiva]);
+    console.log("Respostas atuais:", respostas);
+    console.log("Estado de edição:", isEditingActive);
+  }, [perguntasSecaoAtiva, respostas, isEditingActive]);
 
   // Verifica se alguma pergunta já foi respondida
   const hasResponses = perguntasSecaoAtiva.some(pergunta => 
@@ -87,10 +89,13 @@ const SectionContent: React.FC<SectionContentProps> = ({
           observacao={observacoes[pergunta.id] || ''}
           fileUrl={fileUrls[pergunta.id] || ''}
           isUploading={uploading[pergunta.id] || false}
-          onResponder={handleResposta}
-          onObservacaoChange={handleObservacaoChange}
-          onSaveObservacao={handleSaveObservacao}
-          onFileUpload={handleFileUpload}
+          onResponder={(resposta) => {
+            console.log(`Respondendo pergunta ${pergunta.id} com: ${resposta}`);
+            handleResposta(pergunta.id, resposta);
+          }}
+          onObservacaoChange={(value) => handleObservacaoChange(pergunta.id, value)}
+          onSaveObservacao={() => handleSaveObservacao(pergunta.id)}
+          onFileUpload={(file) => handleFileUpload(pergunta.id, file)}
           isLastPergunta={isLastPerguntaInSection(pergunta.id)}
           disabled={!isEditingActive}
         />

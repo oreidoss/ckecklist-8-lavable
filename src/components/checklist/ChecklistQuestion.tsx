@@ -12,10 +12,10 @@ interface ChecklistQuestionProps {
   observacao: string;
   fileUrl: string;
   isUploading: boolean;
-  onResponder: (perguntaId: string, resposta: RespostaValor) => void;
-  onObservacaoChange: (perguntaId: string, value: string) => void;
-  onSaveObservacao: (perguntaId: string) => void;
-  onFileUpload: (perguntaId: string, file: File) => void;
+  onResponder: (resposta: RespostaValor) => void;
+  onObservacaoChange: (value: string) => void;
+  onSaveObservacao: () => void;
+  onFileUpload: (file: File) => void;
   isLastPergunta: boolean;
   disabled?: boolean;
 }
@@ -66,8 +66,16 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
     if (showObservacoes) setShowObservacoes(false);
   };
 
+  // Função para lidar com o clique no botão de resposta
+  const handleRespostaClick = (valor: RespostaValor) => {
+    console.log(`Clicando em resposta ${valor} para pergunta ${pergunta.id}, disabled=${disabled}`);
+    if (!disabled) {
+      onResponder(valor);
+    }
+  };
+
   // Log para depuração da resposta atual
-  console.log(`Pergunta: ${pergunta.texto} - Resposta: ${resposta} - Disabled: ${disabled}`);
+  console.log(`Pergunta: ${pergunta.texto} - Resposta atual: ${resposta} - Disabled: ${disabled}`);
 
   return (
     <div className="bg-gray-50 p-2 rounded-md mb-2">
@@ -81,7 +89,7 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
               key={valor}
               variant={getButtonVariant(valor as RespostaValor)}
               className={`px-2 py-0 h-7 text-xs flex-1 ${getButtonColor(valor as RespostaValor)}`}
-              onClick={() => !disabled && onResponder(pergunta.id, valor as RespostaValor)}
+              onClick={() => handleRespostaClick(valor as RespostaValor)}
               disabled={disabled}
             >
               {valor}
@@ -95,6 +103,7 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
             variant="outline"
             className="px-2 py-0 h-7 text-xs"
             onClick={toggleObservacoes}
+            disabled={disabled}
           >
             Obs
           </Button>
@@ -103,6 +112,7 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
             variant="outline"
             className="px-2 py-0 h-7 text-xs"
             onClick={toggleAnexos}
+            disabled={disabled}
           >
             Anexo
           </Button>

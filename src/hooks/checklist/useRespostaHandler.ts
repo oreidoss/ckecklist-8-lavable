@@ -27,13 +27,13 @@ export const useRespostaHandler = (
     'N/A': 0
   };
 
-  const handleResposta = async (perguntaId: string, resposta: RespostaValor, respostasExistentes: any[], perguntas?: Pergunta[]) => {
+  const handleResposta = async (perguntaId: string, resposta: RespostaValor, respostasExistentes: any[] = [], perguntas?: Pergunta[]) => {
+    console.log(`handleResposta chamado para pergunta ${perguntaId} com valor ${resposta}`);
     if (!auditoriaId) {
       console.error("Não é possível salvar resposta sem auditoriaId");
       return;
     }
     
-    console.log(`Manipulando resposta para pergunta ${perguntaId}: ${resposta}`);
     setIsSaving(true);
     
     // Atualiza o estado local ANTES de operações assíncronas para feedback imediato na UI
@@ -72,6 +72,8 @@ export const useRespostaHandler = (
         console.log(`Resposta existente encontrada:`, respostaExistente);
         console.log(`Alterando resposta de "${respostaExistente.resposta}" para "${resposta}"`);
         console.log(`Alterando pontuação de ${respostaExistente.pontuacao_obtida} para ${pontuacao}`);
+      } else {
+        console.log(`Nenhuma resposta existente encontrada para pergunta ${perguntaId}, criando nova resposta`);
       }
       
       if (respostaExistente) {
