@@ -22,11 +22,10 @@ export const useChecklistResponses = (
   setProgresso: React.Dispatch<React.SetStateAction<number>>,
   updateIncompleteSections: () => void,
   goToNextSection: () => void,
-  toastHook: ReturnType<typeof useToast>,
+  toastObj: ReturnType<typeof useToast>,
   setPontuacaoPorSecao?: React.Dispatch<React.SetStateAction<Record<string, number>>>
 ) => {
   const [isSaving, setIsSaving] = useState(false);
-  const { toast } = toastHook;
 
   // These functions would normally be imported from their respective hooks
   // But for this refactoring, we'll implement simplified versions
@@ -120,7 +119,7 @@ export const useChecklistResponses = (
           // Go to next section
           goToNextSection();
           
-          toast({
+          toastObj.toast({
             title: "Navegação bem-sucedida",
             description: "Respostas salvas e navegando para próxima seção."
           });
@@ -132,7 +131,7 @@ export const useChecklistResponses = (
       return true;
     } catch (error) {
       console.error("Error navigating to next section:", error);
-      toast({
+      toastObj.toast({
         title: "Erro ao navegar",
         description: "Ocorreu um erro ao salvar as respostas. Tente novamente.",
         variant: "destructive"

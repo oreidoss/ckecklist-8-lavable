@@ -18,7 +18,7 @@ export const useSectionManagement = (secoes: Secao[] | undefined, completedSecti
   
   // Initialize editing state based on completed sections
   useEffect(() => {
-    if (secoes && completedSections) {
+    if (secoes && completedSections?.length) {
       const initialEditState: Record<string, boolean> = {};
       secoes.forEach(secao => {
         // Sections that are not completed start in edit mode

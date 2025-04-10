@@ -15,7 +15,7 @@ export const useChecklistPageState = (
   auditoriaId: string | undefined,
   setPontuacaoPorSecao?: React.Dispatch<React.SetStateAction<Record<string, number>>>
 ) => {
-  const { toast } = useToast();
+  const toast = useToast();
   
   // Fetch all data
   const dataState = useChecklistData(auditoriaId);
@@ -47,7 +47,7 @@ export const useChecklistPageState = (
     isEditingActive,
     toggleEditMode,
     getPerguntasBySecao
-  } = useSectionManagement(secoes, []);
+  } = useSectionManagement(secoes, completedSections);
 
   // Section navigation and completion tracking
   const {
