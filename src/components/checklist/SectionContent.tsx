@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import ChecklistQuestion, { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 import { Button } from "@/components/ui/button";
 import { Pencil } from 'lucide-react';
+import { Pergunta } from '@/lib/types';
 
 interface SectionContentProps {
-  perguntasSecaoAtiva: any[];
+  perguntasSecaoAtiva: Pergunta[];
   respostas: Record<string, RespostaValor>;
   observacoes: Record<string, string>;
   fileUrls: Record<string, string>;
@@ -35,6 +36,11 @@ const SectionContent: React.FC<SectionContentProps> = ({
   isEditingActive = true,
   toggleEditMode
 }) => {
+  // Debug para verificar as perguntas
+  useEffect(() => {
+    console.log("Perguntas da seção ativa:", perguntasSecaoAtiva);
+  }, [perguntasSecaoAtiva]);
+
   // Verifica se alguma pergunta já foi respondida
   const hasResponses = perguntasSecaoAtiva.some(pergunta => 
     respostas[pergunta.id] !== undefined
@@ -48,6 +54,14 @@ const SectionContent: React.FC<SectionContentProps> = ({
       console.log("toggleEditMode não foi fornecido");
     }
   };
+
+  if (!perguntasSecaoAtiva || perguntasSecaoAtiva.length === 0) {
+    return (
+      <div className="p-4 text-center">
+        <p className="text-gray-500">Nenhuma pergunta encontrada para esta seção.</p>
+      </div>
+    );
+  }
   
   return (
     <>

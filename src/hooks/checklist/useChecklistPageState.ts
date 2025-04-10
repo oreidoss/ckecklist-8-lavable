@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useChecklistData } from '@/hooks/checklist/useChecklistData';
 import { useSectionManagement } from '@/hooks/checklist/useSectionManagement';
@@ -7,6 +7,7 @@ import { useChecklistNavigation } from '@/hooks/checklist/useChecklistNavigation
 import { useChecklistResponses } from '@/hooks/checklist/useChecklistResponses';
 import { useChecklistProcessor } from '@/hooks/checklist/useChecklistProcessor';
 import { useChecklistHelpers } from '@/hooks/checklist/useChecklistHelpers';
+import { perguntaService } from '@/lib/services/perguntaService';
 
 /**
  * Hook that combines all the checklist state management for the Checklist page
@@ -16,6 +17,23 @@ export const useChecklistPageState = (
   setPontuacaoPorSecao?: React.Dispatch<React.SetStateAction<Record<string, number>>>
 ) => {
   const toast = useToast();
+  const [initializingData, setInitializingData] = useState(true);
+  
+  // Carregar perguntas do Supabase ao inicializar
+  useEffect(() => {
+    const loadPerguntas = async () => {
+      try {
+        await perguntaService.fetchPerguntasFromSupabase();
+        console.log('Perguntas carregadas do Supabase');
+      } catch (error) {
+        console.error('Erro ao carregar perguntas:', error);
+      } finally {
+        setInitializingData(false);
+      }
+    };
+    
+    loadPerguntas();
+  }, []);
   
   // Fetch all data
   const dataState = useChecklistData(auditoriaId);
@@ -30,7 +48,7 @@ export const useChecklistPageState = (
     isEditingSupervisor,
     isEditingGerente,
     currentDate,
-    isLoading,
+    isLoading: dataLoading,
     setSupervisor,
     setGerente,
     setIsEditingSupervisor,
@@ -38,8 +56,7 @@ export const useChecklistPageState = (
     refetchAuditoria
   } = dataState;
   
-  // Section and editing state management - passing an empty array instead of completedSections
-  // to avoid the variable reference error
+  // Section and editing state management - passing an empty array initially
   const { 
     activeSecao,
     setActiveSecao,
@@ -137,8 +154,10 @@ export const useChecklistPageState = (
   
   // Initialize state on load
   useEffect(() => {
-    processExistingResponses();
-  }, [respostasExistentes, perguntas, secoes, processExistingResponses]);
+    if (!initializingData) {
+      processExistingResponses();
+    }
+  }, [respostasExistentes, perguntas, secoes, processExistingResponses, initializingData]);
 
   // Update section editing state when completedSections changes
   useEffect(() => {
@@ -152,6 +171,9 @@ export const useChecklistPageState = (
     }
   }, [completedSections, secoes, setEditingSections, editingSections]);
 
+  // Combine loading states
+  const isLoading = dataLoading || initializingData;
+  
   // Combine isSaving states
   const isSaving = navIsSaving || respIsSaving;
 

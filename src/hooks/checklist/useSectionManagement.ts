@@ -1,5 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { Secao, Pergunta } from '@/lib/types';
+import { db } from '@/lib/db';
+import { perguntaService } from '@/lib/services/perguntaService';
 
 /**
  * Hook for managing section state and edit mode
@@ -7,6 +10,7 @@ import { Secao, Pergunta } from '@/lib/types';
 export const useSectionManagement = (secoes: Secao[] | undefined, initialCompletedSections: string[] = []) => {
   const [activeSecao, setActiveSecao] = useState<string | null>(null);
   const [editingSections, setEditingSections] = useState<Record<string, boolean>>({});
+  const [secaoPerguntas, setSecaoPerguntas] = useState<Record<string, Pergunta[]>>({});
   
   // Set initial active section
   useEffect(() => {
@@ -32,6 +36,26 @@ export const useSectionManagement = (secoes: Secao[] | undefined, initialComplet
     }
   }, [secoes, initialCompletedSections]);
   
+  // Load all perguntas for each section on initialization
+  useEffect(() => {
+    if (secoes) {
+      // Carregar todas as perguntas uma vez
+      const allPerguntas = perguntaService.getPerguntas();
+      
+      // Organizar perguntas por seção
+      const perguntasPorSecao: Record<string, Pergunta[]> = {};
+      
+      secoes.forEach(secao => {
+        perguntasPorSecao[secao.id] = allPerguntas.filter(
+          pergunta => pergunta.secao_id === secao.id
+        );
+      });
+      
+      setSecaoPerguntas(perguntasPorSecao);
+      console.log("Perguntas carregadas por seção:", perguntasPorSecao);
+    }
+  }, [secoes]);
+  
   // Check if current section is in editing mode
   const isEditingActive = activeSecao ? editingSections[activeSecao] === true : false;
   
@@ -55,7 +79,15 @@ export const useSectionManagement = (secoes: Secao[] | undefined, initialComplet
    * Get questions for the specified section
    */
   const getPerguntasBySecao = (secaoId: string): Pergunta[] => {
-    return [];  // This will be properly implemented in the parent hook
+    // Verificar se temos perguntas carregadas para esta seção
+    if (secaoPerguntas[secaoId]) {
+      return secaoPerguntas[secaoId];
+    }
+    
+    // Se não tivermos em cache, buscar do serviço
+    const perguntas = perguntaService.getPerguntasBySecao(secaoId);
+    console.log(`Buscando perguntas para seção ${secaoId}:`, perguntas);
+    return perguntas;
   };
 
   return {
