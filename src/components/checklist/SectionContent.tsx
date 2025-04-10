@@ -36,7 +36,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
   isEditingActive = true,
   toggleEditMode
 }) => {
-  // Debug para verificar as perguntas
+  // Debug para verificar as perguntas e o estado de edição
   useEffect(() => {
     console.log("Perguntas da seção ativa:", perguntasSecaoAtiva);
     console.log("Respostas atuais:", respostas);
@@ -67,7 +67,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
   
   return (
     <>
-      {hasResponses && !isEditingActive && toggleEditMode && (
+      {hasResponses && toggleEditMode && (
         <div className="flex justify-end mb-2">
           <Button 
             onClick={handleToggleEditMode}
@@ -76,7 +76,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
             className="text-xs"
           >
             <Pencil className="mr-1 h-3 w-3" />
-            Editar Respostas
+            {isEditingActive ? "Desativar Edição" : "Editar Respostas"}
           </Button>
         </div>
       )}
@@ -90,8 +90,12 @@ const SectionContent: React.FC<SectionContentProps> = ({
           fileUrl={fileUrls[pergunta.id] || ''}
           isUploading={uploading[pergunta.id] || false}
           onResponder={(resposta) => {
-            console.log(`Respondendo pergunta ${pergunta.id} com: ${resposta}`);
-            handleResposta(pergunta.id, resposta);
+            console.log(`Respondendo pergunta ${pergunta.id} com: ${resposta}, isEditingActive: ${isEditingActive}`);
+            if (isEditingActive) {
+              handleResposta(pergunta.id, resposta);
+            } else {
+              console.log("Edição desativada, ignorando resposta");
+            }
           }}
           onObservacaoChange={(value) => handleObservacaoChange(pergunta.id, value)}
           onSaveObservacao={() => handleSaveObservacao(pergunta.id)}

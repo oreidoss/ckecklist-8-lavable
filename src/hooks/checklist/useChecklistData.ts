@@ -60,6 +60,7 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
       console.log("Fetched auditoria:", data);
       return data as Auditoria;
     },
+    enabled: !!auditoriaId,
     meta: {
       onSuccess: (data) => {
         if (data) {
@@ -96,7 +97,7 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
     }
   });
   
-  // Use staleTime: 0 to ensure we always get fresh data when returning to the page
+  // Modificado para garantir que sempre carregamos os dados mais recentes
   const { data: respostasExistentes, isLoading: loadingRespostas, refetch: refetchRespostas } = useQuery({
     queryKey: ['respostas', auditoriaId],
     queryFn: async () => {
@@ -116,9 +117,11 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
       console.log(`Encontradas ${data?.length || 0} respostas para auditoria ${auditoriaId}`);
       return data as Resposta[];
     },
-    staleTime: 0, // Always refetch when query mounts
-    refetchOnMount: true, // Always refetch on component mount
-    refetchOnWindowFocus: true // Also refetch on window focus
+    enabled: !!auditoriaId,
+    staleTime: 0, // Sempre refetch quando a query é montada
+    refetchOnMount: true, // Sempre refetch quando o componente monta
+    refetchOnWindowFocus: true, // Também refetch quando a janela ganha foco
+    refetchInterval: 30000 // Refetch a cada 30 segundos para garantir dados atualizados
   });
 
   const isLoading = loadingAuditoria || loadingUsuarios || loadingSecoes || loadingPerguntas || loadingRespostas;

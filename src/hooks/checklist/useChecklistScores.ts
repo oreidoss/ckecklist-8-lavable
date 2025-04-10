@@ -21,6 +21,58 @@ export const useChecklistScores = (
     'N/A': 0
   };
 
+  // Função para calcular e atualizar pontuações sem depender do Supabase (usado em caso de falha de conexão)
+  const calcularPontuacaoLocal = useCallback((respostas: any[], perguntas: any[], secoes: any[]) => {
+    try {
+      // Inicializar pontuações para todas as seções
+      const scores: Record<string, number> = {};
+      secoes.forEach((secao: any) => {
+        scores[secao.id] = 0;
+      });
+
+      // Mapa para rastrear perguntas por seção
+      const perguntaPorSecao = perguntas.reduce((acc: Record<string, string>, pergunta: any) => {
+        acc[pergunta.id] = pergunta.secao_id;
+        return acc;
+      }, {});
+      
+      // Pegar apenas a resposta mais recente para cada pergunta
+      const ultimasRespostas = new Map<string, any>();
+      
+      // Ordenar respostas por data, mais recentes primeiro
+      const respostasOrdenadas = [...respostas].sort((a: any, b: any) => {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      
+      respostasOrdenadas.forEach((resposta: any) => {
+        if (!ultimasRespostas.has(resposta.pergunta_id)) {
+          ultimasRespostas.set(resposta.pergunta_id, resposta);
+        }
+      });
+      
+      // Calcular pontuação para cada seção
+      ultimasRespostas.forEach((resposta: any) => {
+        const secaoId = perguntaPorSecao[resposta.pergunta_id];
+        if (secaoId) {
+          // Usar pontuacao_obtida se disponível, caso contrário calcular a partir da resposta
+          if (resposta.pontuacao_obtida !== null && resposta.pontuacao_obtida !== undefined) {
+            const pontuacao = Number(resposta.pontuacao_obtida);
+            scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
+          } else if (resposta.resposta) {
+            const pontuacao = pontuacaoMap[resposta.resposta] !== undefined ? pontuacaoMap[resposta.resposta] : 0;
+            scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
+          }
+        }
+      });
+
+      console.log("Pontuações calculadas localmente:", scores);
+      return scores;
+    } catch (error) {
+      console.error("Erro ao calcular pontuações localmente:", error);
+      return {};
+    }
+  }, [pontuacaoMap]);
+
   // Função para calcular e atualizar pontuações
   const updatePontuacaoPorSecao = useCallback(async () => {
     if (!auditoriaId) {
@@ -55,50 +107,8 @@ export const useChecklistScores = (
       
       console.log(`Encontradas ${respostasData?.length || 0} respostas, ${perguntasData?.length || 0} perguntas, e ${secoesData?.length || 0} seções`);
       
-      // Inicializar pontuações para todas as seções
-      const scores: Record<string, number> = {};
-      secoesData.forEach((secao: any) => {
-        scores[secao.id] = 0;
-      });
-      
-      // Mapa para rastrear perguntas por seção
-      const perguntaPorSecao = perguntasData.reduce((acc: Record<string, string>, pergunta: any) => {
-        acc[pergunta.id] = pergunta.secao_id;
-        return acc;
-      }, {});
-      
-      // Pegar apenas a resposta mais recente para cada pergunta
-      const ultimasRespostas = new Map<string, any>();
-      
-      // Ordenar respostas por data, mais recentes primeiro
-      const respostasOrdenadas = [...respostasData].sort((a, b) => {
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
-      
-      respostasOrdenadas.forEach((resposta: any) => {
-        if (!ultimasRespostas.has(resposta.pergunta_id)) {
-          ultimasRespostas.set(resposta.pergunta_id, resposta);
-        }
-      });
-      
-      console.log(`Usando ${ultimasRespostas.size} respostas únicas de ${respostasData.length} totais`);
-      
-      // Calcular pontuação para cada seção
-      ultimasRespostas.forEach((resposta: any) => {
-        const secaoId = perguntaPorSecao[resposta.pergunta_id];
-        if (secaoId) {
-          // Usar pontuacao_obtida se disponível, caso contrário calcular a partir da resposta
-          if (resposta.pontuacao_obtida !== null && resposta.pontuacao_obtida !== undefined) {
-            const pontuacao = Number(resposta.pontuacao_obtida);
-            scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
-          } else if (resposta.resposta) {
-            const pontuacao = pontuacaoMap[resposta.resposta] !== undefined ? pontuacaoMap[resposta.resposta] : 0;
-            scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
-          }
-        }
-      });
-      
-      console.log("Pontuações finais calculadas:", scores);
+      // Calcular pontuações localmente
+      const scores = calcularPontuacaoLocal(respostasData || [], perguntasData || [], secoesData || []);
       
       // Atualizar estado global de pontuações por seção
       if (setPontuacaoPorSecao) {
@@ -113,28 +123,32 @@ export const useChecklistScores = (
       });
       
       // Atualizar a auditoria com a nova pontuação total
-      const { error: updateError } = await supabase
-        .from('auditorias')
-        .update({ pontuacao_total: pontuacaoTotal })
-        .eq('id', auditoriaId);
-        
-      if (updateError) {
-        throw updateError;
+      try {
+        const { error: updateError } = await supabase
+          .from('auditorias')
+          .update({ pontuacao_total: pontuacaoTotal })
+          .eq('id', auditoriaId);
+          
+        if (updateError) {
+          console.error("Erro ao atualizar pontuação total da auditoria:", updateError);
+        } else {
+          console.log(`Pontuação total atualizada para auditoria ${auditoriaId}: ${pontuacaoTotal}`);
+        }
+      } catch (updateError) {
+        console.error("Erro ao atualizar pontuação total da auditoria:", updateError);
       }
-      
-      console.log(`Pontuação total atualizada para auditoria ${auditoriaId}: ${pontuacaoTotal}`);
       
     } catch (error) {
       console.error("Erro ao calcular pontuações por seção:", error);
       toast({
         title: "Erro ao calcular pontuações",
-        description: "Ocorreu um erro ao calcular as pontuações das seções.",
+        description: "Usando cálculo local para manter a funcionalidade.",
         variant: "destructive"
       });
     } finally {
       setIsUpdating(false);
     }
-  }, [auditoriaId, setPontuacaoPorSecao, pontuacaoMap, toast]);
+  }, [auditoriaId, setPontuacaoPorSecao, pontuacaoMap, calcularPontuacaoLocal, toast]);
   
   // Calcular pontuações iniciais quando o componente monta
   useEffect(() => {

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Secao, Pergunta } from '@/lib/types';
 import { useChecklist } from '@/hooks/checklist';
 import { useSectionNavigation } from '@/hooks/checklist/useSectionNavigation';
@@ -46,24 +46,56 @@ export const useChecklistNavigation = (
     respostas
   });
 
+  // Monitorar quando a edição de uma seção muda
+  useEffect(() => {
+    if (secoes && activeSecao && editingSections) {
+      console.log(
+        `Estado de edição da seção ${activeSecao} alterado para: ${editingSections[activeSecao] ? 'editável' : 'não editável'}`
+      );
+    }
+  }, [editingSections, activeSecao, secoes]);
+
   // Custom navigation functions
-  const goToPreviousSection = () => {
+  const goToPreviousSection = useCallback(() => {
     if (goToPreviousSectionBase && typeof goToPreviousSectionBase === 'function') {
       goToPreviousSectionBase();
     }
-  };
+  }, [goToPreviousSectionBase]);
 
-  const goToNextSection = () => {
+  const goToNextSection = useCallback(() => {
     if (!secoes || !activeSecao) return;
     
     const currentIndex = secoes.findIndex(s => s.id === activeSecao);
     if (currentIndex < secoes.length - 1) {
       const nextSecaoId = secoes[currentIndex + 1].id;
+      console.log(`Navegando para próxima seção: ${nextSecaoId}`);
       setActiveSecao(nextSecaoId);
       window.scrollTo(0, 0);
-      console.log(`Navegado para próxima seção: ${nextSecaoId}`);
     }
-  };
+  }, [secoes, activeSecao, setActiveSecao]);
+
+  // Nova função para salvar o progresso e navegar para a próxima seção
+  const saveAndNavigateToNextSection = useCallback(async () => {
+    if (!secoes || !activeSecao) return false;
+    
+    console.log("Salvando e navegando para a próxima seção...");
+    
+    // Atualizar seções completas e incompletas
+    updateCompletedSections();
+    updateIncompleteSections();
+    
+    // Navegar para a próxima seção
+    const currentIndex = secoes.findIndex(s => s.id === activeSecao);
+    if (currentIndex < secoes.length - 1) {
+      const nextSecaoId = secoes[currentIndex + 1].id;
+      console.log(`Navegando para próxima seção: ${nextSecaoId}`);
+      setActiveSecao(nextSecaoId);
+      window.scrollTo(0, 0);
+      return true;
+    }
+    
+    return false;
+  }, [secoes, activeSecao, setActiveSecao, updateCompletedSections, updateIncompleteSections]);
 
   return {
     respostas,
@@ -81,6 +113,7 @@ export const useChecklistNavigation = (
     updateCompletedSections,
     updateIncompleteSections,
     goToPreviousSection,
-    goToNextSection
+    goToNextSection,
+    saveAndNavigateToNextSection
   };
 };
