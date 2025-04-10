@@ -14,6 +14,8 @@ export const useChecklistNavigation = (
   perguntas: Pergunta[] | undefined,
   activeSecao: string | null,
   setActiveSecao: (secaoId: string) => void,
+  editingSections: Record<string, boolean>,
+  setEditingSections: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
   setPontuacaoPorSecao?: React.Dispatch<React.SetStateAction<Record<string, number>>>
 ) => {
   // Checklist state and handlers from main hook
