@@ -1,88 +1,86 @@
 
-import { useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { Secao } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import { Secao, Pergunta } from '@/lib/types';
+import { useChecklist } from '@/hooks/checklist';
+import { useSectionNavigation } from '@/hooks/checklist/useSectionNavigation';
+import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 
 /**
- * Hook for handling navigation between checklist sections
+ * Hook for managing checklist navigation and section state
  */
 export const useChecklistNavigation = (
+  auditoriaId: string | undefined,
   secoes: Secao[] | undefined,
+  perguntas: Pergunta[] | undefined,
   activeSecao: string | null,
   setActiveSecao: (secaoId: string) => void,
-  saveAllResponses: () => Promise<void>
+  editingSections: Record<string, boolean>,
+  setEditingSections: React.Dispatch<React.SetStateAction<Record<string, boolean>>>,
+  setPontuacaoPorSecao?: React.Dispatch<React.SetStateAction<Record<string, number>>>
 ) => {
-  const { toast } = useToast();
+  // Checklist state and handlers from main hook
+  const {
+    respostas,
+    setRespostas,
+    progresso, 
+    setProgresso,
+    completedSections,
+    setCompletedSections,
+    observacoes,
+    uploading,
+    fileUrls,
+    isSaving,
+    updateCompletedSections
+  } = useChecklist(auditoriaId, perguntas, setPontuacaoPorSecao);
+  
+  // Section navigation from existing hook
+  const {
+    incompleteSections,
+    setIncompleteSections,
+    updateIncompleteSections,
+    goToNextSection: goToNextSectionBase,
+    goToPreviousSection: goToPreviousSectionBase,
+  } = useSectionNavigation({
+    secoes,
+    perguntas,
+    respostas
+  });
 
-  // Navigate to previous section
-  const goToPreviousSection = useCallback(() => {
-    if (!secoes || !activeSecao) return;
-    
-    const currentIndex = secoes.findIndex(s => s.id === activeSecao);
-    if (currentIndex > 0) {
-      setActiveSecao(secoes[currentIndex - 1].id);
-      window.scrollTo(0, 0);
+  // Custom navigation functions
+  const goToPreviousSection = () => {
+    if (goToPreviousSectionBase && typeof goToPreviousSectionBase === 'function') {
+      goToPreviousSectionBase();
     }
-  }, [secoes, activeSecao, setActiveSecao]);
+  };
 
-  // Navigate to next section
-  const goToNextSection = useCallback(() => {
+  const goToNextSection = () => {
     if (!secoes || !activeSecao) return;
     
     const currentIndex = secoes.findIndex(s => s.id === activeSecao);
     if (currentIndex < secoes.length - 1) {
-      setActiveSecao(secoes[currentIndex + 1].id);
+      const nextSecaoId = secoes[currentIndex + 1].id;
+      setActiveSecao(nextSecaoId);
       window.scrollTo(0, 0);
+      console.log(`Navegado para próxima seção: ${nextSecaoId}`);
     }
-  }, [secoes, activeSecao, setActiveSecao]);
-
-  // Save and navigate to the next section
-  const saveAndNavigateToNextSection = useCallback(async () => {
-    if (!secoes || !activeSecao) return false;
-    
-    try {
-      // Save responses first
-      await saveAllResponses();
-      
-      // Then navigate to next section
-      const currentIndex = secoes.findIndex(s => s.id === activeSecao);
-      if (currentIndex < secoes.length - 1) {
-        setActiveSecao(secoes[currentIndex + 1].id);
-        window.scrollTo(0, 0);
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error("Error saving and navigating:", error);
-      toast({
-        title: "Erro ao navegar",
-        description: "Ocorreu um erro ao salvar as respostas antes de navegar.",
-        variant: "destructive"
-      });
-      return false;
-    }
-  }, [activeSecao, secoes, saveAllResponses, setActiveSecao, toast]);
-
-  // Save and navigate home
-  const saveAndNavigateHome = useCallback(async () => {
-    try {
-      await saveAllResponses();
-      return true;
-    } catch (error) {
-      console.error("Error navigating home:", error);
-      toast({
-        title: "Erro ao salvar",
-        description: "Ocorreu um erro ao salvar as respostas.",
-        variant: "destructive"
-      });
-      return false;
-    }
-  }, [saveAllResponses, toast]);
+  };
 
   return {
+    respostas,
+    setRespostas,
+    progresso,
+    setProgresso,
+    completedSections,
+    setCompletedSections,
+    incompleteSections,
+    setIncompleteSections,
+    observacoes,
+    uploading,
+    fileUrls,
+    isSaving,
+    updateCompletedSections,
+    updateIncompleteSections,
     goToPreviousSection,
-    goToNextSection,
-    saveAndNavigateToNextSection,
-    saveAndNavigateHome
+    goToNextSection
   };
 };
