@@ -17,14 +17,8 @@ export const useResponseHandlers = (
    * Wrapper for handleResposta to include respostasExistentes and update incomplete sections
    */
   const handleRespostaWrapped = (perguntaId: string, resposta: RespostaValor) => {
-    console.log(`handleRespostaWrapped chamado para pergunta ${perguntaId} com ${resposta}`);
-    if (respostasExistentes) {
+    if (respostasExistentes && perguntas) {
       handleRespostaBase(perguntaId, resposta, respostasExistentes, perguntas);
-      updateIncompleteSections();
-    } else {
-      console.error("Não há respostasExistentes para passar ao handleRespostaBase");
-      // Tentar mesmo assim, com um array vazio
-      handleRespostaBase(perguntaId, resposta, [], perguntas);
       updateIncompleteSections();
     }
   };
@@ -35,9 +29,6 @@ export const useResponseHandlers = (
   const handleFileUploadWrapped = (perguntaId: string, file: File) => {
     if (respostasExistentes) {
       handleFileUploadBase(perguntaId, file, respostasExistentes);
-    } else {
-      // Tentar mesmo assim, com um array vazio
-      handleFileUploadBase(perguntaId, file, []);
     }
   };
 
@@ -47,9 +38,6 @@ export const useResponseHandlers = (
   const handleSaveObservacaoWrapped = (perguntaId: string) => {
     if (respostasExistentes) {
       handleSaveObservacaoBase(perguntaId, respostasExistentes);
-    } else {
-      // Tentar mesmo assim, com um array vazio
-      handleSaveObservacaoBase(perguntaId, []);
     }
   };
 

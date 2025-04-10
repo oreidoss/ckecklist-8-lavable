@@ -29,8 +29,6 @@ interface ChecklistContainerProps {
   isSaving: boolean;
   usuarios: any[];
   isEditingActive?: boolean;
-  editingSections: Record<string, boolean>;
-  setEditingSections: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   toggleEditMode?: () => void;
   setIsEditingSupervisor: (value: boolean) => void;
   setIsEditingGerente: (value: boolean) => void;
@@ -76,8 +74,6 @@ const ChecklistContainer: React.FC<ChecklistContainerProps> = ({
   isSaving,
   usuarios,
   isEditingActive,
-  editingSections,
-  setEditingSections,
   toggleEditMode,
   setIsEditingSupervisor,
   setIsEditingGerente,
@@ -138,8 +134,6 @@ const ChecklistContainer: React.FC<ChecklistContainerProps> = ({
           incompleteSections={incompleteSections}
           isSaving={isSaving}
           isEditingActive={isEditingActive}
-          editingSections={editingSections}
-          setEditingSections={setEditingSections}
           toggleEditMode={toggleEditMode}
           getPerguntasBySecao={getPerguntasBySecao}
           handleSetActiveSecao={handleSetActiveSecao}

@@ -60,7 +60,6 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
       console.log("Fetched auditoria:", data);
       return data as Auditoria;
     },
-    enabled: !!auditoriaId,
     meta: {
       onSuccess: (data) => {
         if (data) {
@@ -97,31 +96,27 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
     }
   });
   
-  // Modificado para garantir que sempre carregamos os dados mais recentes
-  const { data: respostasExistentes, isLoading: loadingRespostas, refetch: refetchRespostas } = useQuery({
+  const { data: respostasExistentes, isLoading: loadingRespostas } = useQuery({
     queryKey: ['respostas', auditoriaId],
     queryFn: async () => {
       if (!auditoriaId) throw new Error('ID da auditoria não fornecido');
       
-      console.log(`Buscando respostas para auditoria: ${auditoriaId}`);
+      console.log(`Fetching responses for auditoria: ${auditoriaId}`);
       const { data, error } = await supabase
         .from('respostas')
         .select('*')
         .eq('auditoria_id', auditoriaId);
       
       if (error) {
-        console.error("Erro ao buscar respostas:", error);
+        console.error("Error fetching responses:", error);
         throw error;
       }
       
-      console.log(`Encontradas ${data?.length || 0} respostas para auditoria ${auditoriaId}`);
+      console.log(`Fetched ${data?.length || 0} responses for auditoria ${auditoriaId}`);
       return data as Resposta[];
     },
-    enabled: !!auditoriaId,
-    staleTime: 0, // Sempre refetch quando a query é montada
-    refetchOnMount: true, // Sempre refetch quando o componente monta
-    refetchOnWindowFocus: true, // Também refetch quando a janela ganha foco
-    refetchInterval: 30000 // Refetch a cada 30 segundos para garantir dados atualizados
+    refetchOnWindowFocus: false,
+    staleTime: 60000 // 1 minute
   });
 
   const isLoading = loadingAuditoria || loadingUsuarios || loadingSecoes || loadingPerguntas || loadingRespostas;
@@ -142,7 +137,6 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
     setGerente,
     setIsEditingSupervisor,
     setIsEditingGerente,
-    refetchAuditoria,
-    refetchRespostas
+    refetchAuditoria
   };
 };

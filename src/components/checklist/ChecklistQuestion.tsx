@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import ObservacaoField from '@/components/checklist/ObservacaoField';
 import AnexoField from '@/components/checklist/AnexoField';
@@ -12,10 +12,10 @@ interface ChecklistQuestionProps {
   observacao: string;
   fileUrl: string;
   isUploading: boolean;
-  onResponder: (resposta: RespostaValor) => void;
-  onObservacaoChange: (value: string) => void;
-  onSaveObservacao: () => void;
-  onFileUpload: (file: File) => void;
+  onResponder: (perguntaId: string, resposta: RespostaValor) => void;
+  onObservacaoChange: (perguntaId: string, value: string) => void;
+  onSaveObservacao: (perguntaId: string) => void;
+  onFileUpload: (perguntaId: string, file: File) => void;
   isLastPergunta: boolean;
   disabled?: boolean;
 }
@@ -35,11 +35,6 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
 }) => {
   const [showObservacoes, setShowObservacoes] = useState(false);
   const [showAnexos, setShowAnexos] = useState(false);
-  
-  // Efeito para log das props para depuração
-  useEffect(() => {
-    console.log(`ChecklistQuestion para pergunta ${pergunta.id} - Resposta: ${resposta}, Disabled: ${disabled}`);
-  }, [pergunta.id, resposta, disabled]);
   
   // Define cores para os botões de resposta
   const getButtonVariant = (value: RespostaValor): "default" | "outline" => {
@@ -61,31 +56,18 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
   
   // Função para alternar o estado de observações
   const toggleObservacoes = () => {
-    if (disabled) {
-      console.log("Modo desativado: apenas visualizando observações");
-    }
     setShowObservacoes(!showObservacoes);
     if (showAnexos) setShowAnexos(false);
   };
   
   // Função para alternar o estado de anexos
   const toggleAnexos = () => {
-    if (disabled) {
-      console.log("Modo desativado: apenas visualizando anexos");
-    }
     setShowAnexos(!showAnexos);
     if (showObservacoes) setShowObservacoes(false);
   };
 
-  // Função para lidar com o clique no botão de resposta
-  const handleRespostaClick = (valor: RespostaValor) => {
-    console.log(`Clicando em resposta ${valor} para pergunta ${pergunta.id}, disabled=${disabled}`);
-    if (!disabled) {
-      onResponder(valor);
-    } else {
-      console.log("Botão desativado, ignorando clique");
-    }
-  };
+  // Log para depuração da resposta atual
+  console.log(`Pergunta: ${pergunta.texto} - Resposta: ${resposta} - Disabled: ${disabled}`);
 
   return (
     <div className="bg-gray-50 p-2 rounded-md mb-2">
@@ -98,8 +80,8 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
             <Button
               key={valor}
               variant={getButtonVariant(valor as RespostaValor)}
-              className={`px-2 py-0 h-7 text-xs flex-1 ${getButtonColor(valor as RespostaValor)} ${disabled ? 'opacity-80' : ''}`}
-              onClick={() => handleRespostaClick(valor as RespostaValor)}
+              className={`px-2 py-0 h-7 text-xs flex-1 ${getButtonColor(valor as RespostaValor)}`}
+              onClick={() => !disabled && onResponder(pergunta.id, valor as RespostaValor)}
               disabled={disabled}
             >
               {valor}
@@ -111,7 +93,7 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
         <div className="flex gap-1 ml-auto">
           <Button
             variant="outline"
-            className={`px-2 py-0 h-7 text-xs ${disabled ? 'opacity-80' : ''}`}
+            className="px-2 py-0 h-7 text-xs"
             onClick={toggleObservacoes}
           >
             Obs
@@ -119,7 +101,7 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
           
           <Button
             variant="outline"
-            className={`px-2 py-0 h-7 text-xs ${disabled ? 'opacity-80' : ''}`}
+            className="px-2 py-0 h-7 text-xs"
             onClick={toggleAnexos}
           >
             Anexo
@@ -127,7 +109,7 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
         </div>
       </div>
       
-      {/* Campo de observação - sempre visível para visualização, editável apenas se não estiver desativado */}
+      {/* Campo de observação */}
       {showObservacoes && (
         <ObservacaoField
           perguntaId={pergunta.id}
@@ -138,7 +120,7 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
         />
       )}
       
-      {/* Campo de anexo - sempre visível para visualização, upload apenas se não estiver desativado */}
+      {/* Campo de anexo */}
       {showAnexos && (
         <AnexoField
           perguntaId={pergunta.id}

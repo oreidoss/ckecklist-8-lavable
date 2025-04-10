@@ -1,12 +1,11 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import ChecklistQuestion, { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 import { Button } from "@/components/ui/button";
 import { Pencil } from 'lucide-react';
-import { Pergunta } from '@/lib/types';
 
 interface SectionContentProps {
-  perguntasSecaoAtiva: Pergunta[];
+  perguntasSecaoAtiva: any[];
   respostas: Record<string, RespostaValor>;
   observacoes: Record<string, string>;
   fileUrls: Record<string, string>;
@@ -36,13 +35,6 @@ const SectionContent: React.FC<SectionContentProps> = ({
   isEditingActive = true,
   toggleEditMode
 }) => {
-  // Debug para verificar as perguntas e o estado de edição
-  useEffect(() => {
-    console.log("Perguntas da seção ativa:", perguntasSecaoAtiva);
-    console.log("Respostas atuais:", respostas);
-    console.log("Estado de edição:", isEditingActive);
-  }, [perguntasSecaoAtiva, respostas, isEditingActive]);
-
   // Verifica se alguma pergunta já foi respondida
   const hasResponses = perguntasSecaoAtiva.some(pergunta => 
     respostas[pergunta.id] !== undefined
@@ -56,18 +48,10 @@ const SectionContent: React.FC<SectionContentProps> = ({
       console.log("toggleEditMode não foi fornecido");
     }
   };
-
-  if (!perguntasSecaoAtiva || perguntasSecaoAtiva.length === 0) {
-    return (
-      <div className="p-4 text-center">
-        <p className="text-gray-500">Nenhuma pergunta encontrada para esta seção.</p>
-      </div>
-    );
-  }
   
   return (
     <>
-      {hasResponses && toggleEditMode && (
+      {hasResponses && !isEditingActive && toggleEditMode && (
         <div className="flex justify-end mb-2">
           <Button 
             onClick={handleToggleEditMode}
@@ -76,7 +60,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
             className="text-xs"
           >
             <Pencil className="mr-1 h-3 w-3" />
-            {isEditingActive ? "Desativar Edição" : "Editar Respostas"}
+            Editar Respostas
           </Button>
         </div>
       )}
@@ -89,17 +73,10 @@ const SectionContent: React.FC<SectionContentProps> = ({
           observacao={observacoes[pergunta.id] || ''}
           fileUrl={fileUrls[pergunta.id] || ''}
           isUploading={uploading[pergunta.id] || false}
-          onResponder={(resposta) => {
-            console.log(`Respondendo pergunta ${pergunta.id} com: ${resposta}, isEditingActive: ${isEditingActive}`);
-            if (isEditingActive) {
-              handleResposta(pergunta.id, resposta);
-            } else {
-              console.log("Edição desativada, ignorando resposta");
-            }
-          }}
-          onObservacaoChange={(value) => handleObservacaoChange(pergunta.id, value)}
-          onSaveObservacao={() => handleSaveObservacao(pergunta.id)}
-          onFileUpload={(file) => handleFileUpload(pergunta.id, file)}
+          onResponder={handleResposta}
+          onObservacaoChange={handleObservacaoChange}
+          onSaveObservacao={handleSaveObservacao}
+          onFileUpload={handleFileUpload}
           isLastPergunta={isLastPerguntaInSection(pergunta.id)}
           disabled={!isEditingActive}
         />
