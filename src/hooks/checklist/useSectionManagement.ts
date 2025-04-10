@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Secao, Pergunta } from '@/lib/types';
 
@@ -18,18 +17,16 @@ export const useSectionManagement = (secoes: Secao[] | undefined, initialComplet
   
   // Initialize editing state based on initial completed sections
   useEffect(() => {
-    if (secoes && initialCompletedSections?.length) {
+    if (secoes) {
       const initialEditState: Record<string, boolean> = {};
       secoes.forEach(secao => {
-        // Sections that are not completed start in edit mode
-        initialEditState[secao.id] = !initialCompletedSections.includes(secao.id);
-      });
-      setEditingSections(initialEditState);
-    } else if (secoes) {
-      // If no completed sections provided, all sections start in edit mode
-      const initialEditState: Record<string, boolean> = {};
-      secoes.forEach(secao => {
-        initialEditState[secao.id] = true;
+        // If initialCompletedSections is provided and has items, use it to determine edit state
+        if (initialCompletedSections?.length) {
+          initialEditState[secao.id] = !initialCompletedSections.includes(secao.id);
+        } else {
+          // Otherwise, all sections start in edit mode
+          initialEditState[secao.id] = true;
+        }
       });
       setEditingSections(initialEditState);
     }

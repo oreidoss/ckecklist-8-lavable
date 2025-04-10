@@ -48,7 +48,7 @@ export const useChecklistPageState = (
     isEditingActive,
     toggleEditMode,
     getPerguntasBySecao
-  } = useSectionManagement(secoes, []);
+  } = useSectionManagement(secoes, []);  // Pass empty array initially
 
   // Section navigation and completion tracking
   const {
@@ -138,7 +138,7 @@ export const useChecklistPageState = (
   // Initialize state on load
   useEffect(() => {
     processExistingResponses();
-  }, [respostasExistentes, perguntas, secoes, completedSections, processExistingResponses]);
+  }, [respostasExistentes, perguntas, secoes, processExistingResponses]);
 
   // Update section editing state when completedSections changes
   useEffect(() => {
