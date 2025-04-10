@@ -15,7 +15,7 @@ interface ChecklistQuestionProps {
   onResponder: (resposta: RespostaValor) => void;
   onObservacaoChange: (value: string) => void;
   onSaveObservacao: () => void;
-  onFileUpload: (perguntaId: string, file: File) => void;
+  onFileUpload: (file: File) => void;
   isLastPergunta: boolean;
   disabled?: boolean;
 }
@@ -72,11 +72,6 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
     if (!disabled) {
       onResponder(valor);
     }
-  };
-
-  // Wrapper function to handle file upload
-  const handleFileUpload = (file: File) => {
-    onFileUpload(pergunta.id, file);
   };
 
   // Log para depuração da resposta atual
@@ -141,7 +136,7 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
           perguntaId={pergunta.id}
           fileUrl={fileUrl}
           isUploading={isUploading}
-          onFileUpload={handleFileUpload}
+          onFileUpload={onFileUpload}
           disabled={disabled}
         />
       )}

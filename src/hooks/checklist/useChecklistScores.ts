@@ -1,17 +1,18 @@
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 /**
- * Hook para gerenciar pontuações de seções no checklist
+ * Hook para gerenciar pontuações de seções do checklist
  */
 export const useChecklistScores = (
   auditoriaId: string | undefined,
   setPontuacaoPorSecao?: React.Dispatch<React.SetStateAction<Record<string, number>>>
 ) => {
   const { toast } = useToast();
-  
+  const [isUpdating, setIsUpdating] = useState(false);
+
   // Mapeamento de valores de resposta para pontuações numéricas
   const pontuacaoMap: Record<string, number> = {
     'Sim': 1,
@@ -20,152 +21,127 @@ export const useChecklistScores = (
     'N/A': 0
   };
 
-  /**
-   * Atualiza pontuações de seções baseado nas respostas existentes
-   */
-  const updatePontuacaoPorSecao = async (): Promise<void> => {
-    if (!auditoriaId || !setPontuacaoPorSecao) {
-      console.log("Não é possível atualizar pontuações sem auditoriaId ou setPontuacaoPorSecao");
+  // Função para calcular e atualizar pontuações
+  const updatePontuacaoPorSecao = useCallback(async () => {
+    if (!auditoriaId) {
+      console.log("Nenhum auditoriaId fornecido, não é possível atualizar pontuações");
       return;
     }
     
+    console.log("Atualizando pontuações de seção para auditoria:", auditoriaId);
+    setIsUpdating(true);
+    
     try {
-      console.log("Atualizando pontuações de seção para auditoria:", auditoriaId);
-      
-      // Buscar TODAS as respostas para esta auditoria
+      // Buscar todas as respostas, perguntas e seções necessárias para o cálculo
       const { data: respostasData, error: respostasError } = await supabase
         .from('respostas')
         .select('*')
-        .eq('auditoria_id', auditoriaId);
+        .eq('auditoria_id', auditoriaId)
+        .order('created_at', { ascending: false });
         
-      if (respostasError) {
-        console.error("Erro ao buscar respostas:", respostasError);
-        throw respostasError;
-      }
-
-      console.log(`Encontradas ${respostasData?.length || 0} respostas para esta auditoria`);
-
-      // Buscar TODAS as perguntas para mapear para seções
+      if (respostasError) throw respostasError;
+      
       const { data: perguntasData, error: perguntasError } = await supabase
         .from('perguntas')
         .select('*');
         
-      if (perguntasError) {
-        console.error("Erro ao buscar perguntas:", perguntasError);
-        throw perguntasError;
-      }
+      if (perguntasError) throw perguntasError;
       
-      console.log(`Encontradas ${perguntasData?.length || 0} perguntas totais`);
+      const { data: secoesData, error: secoesError } = await supabase
+        .from('secoes')
+        .select('*');
+        
+      if (secoesError) throw secoesError;
       
-      // Calcular pontuações por seção
+      console.log(`Encontradas ${respostasData?.length || 0} respostas, ${perguntasData?.length || 0} perguntas, e ${secoesData?.length || 0} seções`);
+      
+      // Inicializar pontuações para todas as seções
       const scores: Record<string, number> = {};
-      
-      // Primeiro, inicializar todas as seções para 0
-      perguntasData.forEach(pergunta => {
-        if (pergunta.secao_id && !scores[pergunta.secao_id]) {
-          scores[pergunta.secao_id] = 0;
-        }
+      secoesData.forEach((secao: any) => {
+        scores[secao.id] = 0;
       });
-
-      // Mapear perguntas para suas seções para acesso mais rápido
-      const perguntaPorSecao = perguntasData.reduce((acc, pergunta) => {
-        if (pergunta.secao_id) {
-          acc[pergunta.id] = pergunta.secao_id;
-        }
+      
+      // Mapa para rastrear perguntas por seção
+      const perguntaPorSecao = perguntasData.reduce((acc: Record<string, string>, pergunta: any) => {
+        acc[pergunta.id] = pergunta.secao_id;
         return acc;
-      }, {} as Record<string, string>);
+      }, {});
       
-      // Mapeamento de perguntaId -> respostaId mais recente
-      const ultimasRespostasPorPergunta = new Map<string, any>();
+      // Pegar apenas a resposta mais recente para cada pergunta
+      const ultimasRespostas = new Map<string, any>();
       
-      // Ordenar as respostas para garantir que pegamos as mais recentes
-      // Como estamos usando o created_at, podemos ordenar pelo timestamp
+      // Ordenar respostas por data, mais recentes primeiro
       const respostasOrdenadas = [...respostasData].sort((a, b) => {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
       
-      // Selecionar apenas a resposta mais recente para cada pergunta
-      respostasOrdenadas.forEach(resposta => {
-        const perguntaId = resposta.pergunta_id;
-        if (!ultimasRespostasPorPergunta.has(perguntaId)) {
-          ultimasRespostasPorPergunta.set(perguntaId, resposta);
+      respostasOrdenadas.forEach((resposta: any) => {
+        if (!ultimasRespostas.has(resposta.pergunta_id)) {
+          ultimasRespostas.set(resposta.pergunta_id, resposta);
         }
       });
       
-      console.log(`Usando ${ultimasRespostasPorPergunta.size} respostas únicas (mais recentes) para cálculo`);
+      console.log(`Usando ${ultimasRespostas.size} respostas únicas de ${respostasData.length} totais`);
       
-      // Agora calcular as pontuações totais por seção usando apenas as respostas mais recentes
-      ultimasRespostasPorPergunta.forEach((resposta) => {
-        const perguntaId = resposta.pergunta_id;
-        const secaoId = perguntaPorSecao[perguntaId];
-        
+      // Calcular pontuação para cada seção
+      ultimasRespostas.forEach((resposta: any) => {
+        const secaoId = perguntaPorSecao[resposta.pergunta_id];
         if (secaoId) {
-          // Adicionar pontuação à seção correspondente
+          // Usar pontuacao_obtida se disponível, caso contrário calcular a partir da resposta
           if (resposta.pontuacao_obtida !== null && resposta.pontuacao_obtida !== undefined) {
-            // Garantir que a pontuação seja tratada como número
             const pontuacao = Number(resposta.pontuacao_obtida);
             scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
-            console.log(`Adicionando pontuação ${pontuacao} para pergunta ${perguntaId} na seção ${secaoId}, novo total: ${scores[secaoId]}`);
-          } 
-          // Caso não tenha pontuação salva, calcular com base na resposta
-          else if (resposta.resposta) {
+          } else if (resposta.resposta) {
             const pontuacao = pontuacaoMap[resposta.resposta] !== undefined ? pontuacaoMap[resposta.resposta] : 0;
             scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
-            console.log(`Calculando pontuação ${pontuacao} para resposta "${resposta.resposta}" na seção ${secaoId}, novo total: ${scores[secaoId]}`);
           }
         }
       });
       
-      console.log("Pontuações finais calculadas por seção:", scores);
-      setPontuacaoPorSecao(scores);
+      console.log("Pontuações finais calculadas:", scores);
       
-      // Atualizar pontuação total da auditoria
-      await updateAuditoriaPontuacaoTotal(auditoriaId, ultimasRespostasPorPergunta);
-    } catch (error) {
-      console.error("Erro ao atualizar pontuações de seção:", error);
-      toast({
-        title: "Erro ao calcular pontuações",
-        description: "Ocorreu um erro ao atualizar as pontuações das seções.",
-        variant: "destructive"
-      });
-      throw error;
-    }
-  };
-  
-  /**
-   * Atualiza a pontuação total da auditoria baseada nas respostas mais recentes
-   */
-  const updateAuditoriaPontuacaoTotal = async (auditoriaId: string, ultimasRespostas: Map<string, any>) => {
-    try {
-      // Calcular pontuação total somando apenas as respostas únicas mais recentes
+      // Atualizar estado global de pontuações por seção
+      if (setPontuacaoPorSecao) {
+        console.log("Atualizando pontuações por seção no estado:", scores);
+        setPontuacaoPorSecao(scores);
+      }
+      
+      // Calcular pontuação total para a auditoria
       let pontuacaoTotal = 0;
-      
-      ultimasRespostas.forEach(resposta => {
-        if (resposta.pontuacao_obtida !== null && resposta.pontuacao_obtida !== undefined) {
-          // Garantir que a pontuação seja tratada como número
-          pontuacaoTotal += Number(resposta.pontuacao_obtida);
-        } else if (resposta.resposta) {
-          // Caso não tenha pontuação_obtida, calcular com base na resposta
-          const pontuacao = pontuacaoMap[resposta.resposta] !== undefined ? pontuacaoMap[resposta.resposta] : 0;
-          pontuacaoTotal += pontuacao;
-        }
+      Object.values(scores).forEach(pontuacao => {
+        pontuacaoTotal += pontuacao;
       });
       
-      console.log(`Atualizando pontuacao_total da auditoria ${auditoriaId}: ${pontuacaoTotal} (de ${ultimasRespostas.size} respostas únicas)`);
-      
-      const { error } = await supabase
+      // Atualizar a auditoria com a nova pontuação total
+      const { error: updateError } = await supabase
         .from('auditorias')
         .update({ pontuacao_total: pontuacaoTotal })
         .eq('id', auditoriaId);
         
-      if (error) throw error;
+      if (updateError) {
+        throw updateError;
+      }
+      
+      console.log(`Pontuação total atualizada para auditoria ${auditoriaId}: ${pontuacaoTotal}`);
+      
     } catch (error) {
-      console.error("Erro ao atualizar pontuação total da auditoria:", error);
+      console.error("Erro ao calcular pontuações por seção:", error);
+      toast({
+        title: "Erro ao calcular pontuações",
+        description: "Ocorreu um erro ao calcular as pontuações das seções.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdating(false);
     }
-  };
+  }, [auditoriaId, setPontuacaoPorSecao, pontuacaoMap, toast]);
+  
+  // Calcular pontuações iniciais quando o componente monta
+  useEffect(() => {
+    if (auditoriaId) {
+      updatePontuacaoPorSecao();
+    }
+  }, [auditoriaId, updatePontuacaoPorSecao]);
 
-  return {
-    pontuacaoMap,
-    updatePontuacaoPorSecao
-  };
+  return { pontuacaoMap, updatePontuacaoPorSecao, isUpdating };
 };

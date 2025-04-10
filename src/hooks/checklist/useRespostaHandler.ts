@@ -65,7 +65,8 @@ export const useRespostaHandler = (
       const observacao = observacoes[perguntaId] || '';
       const anexo_url = fileUrls[perguntaId] || '';
       
-      const respostaExistente = respostasExistentes?.find(r => r.pergunta_id === perguntaId);
+      // Encontre a resposta existente para esta pergunta específica
+      const respostaExistente = respostasExistentes.find(r => r.pergunta_id === perguntaId);
       
       // Log para depuração
       if (respostaExistente) {

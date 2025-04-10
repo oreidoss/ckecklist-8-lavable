@@ -1,11 +1,10 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { Check, AlertTriangle } from 'lucide-react';
-import { Secao } from '@/lib/types';
+import { Check, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface SectionNavigationProps {
-  secoes: Secao[];
+  secoes: any[];
   activeSecao: string | null;
   completedSections: string[];
   incompleteSections: string[];
@@ -21,69 +20,62 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
   setActiveSecao,
   pontuacaoPorSecao = {}
 }) => {
-  // Debug the scores
-  console.log("SectionNavigation pontuacaoPorSecao:", pontuacaoPorSecao);
-  
-  const getButtonVariant = (secao: Secao) => {
-    // If it's the active section, use default style
-    if (activeSecao === secao.id) return "default";
+  // Função para determinar classes de estilo com base no status da seção
+  const getSectionClasses = (secaoId: string) => {
+    const isActive = secaoId === activeSecao;
+    const isCompleted = completedSections.includes(secaoId);
+    const isIncomplete = incompleteSections.includes(secaoId);
     
-    // Check if section has pontuacao but no completions
-    const pontuacao = pontuacaoPorSecao[secao.id] || 0;
-    if (pontuacao > 0 && !completedSections.includes(secao.id)) {
-      // This means section has responses but may not be fully completed
-      return "success"; // Green for sections with responses
+    let baseClasses = "px-3 py-2 rounded-md text-xs font-medium flex flex-col items-center justify-center relative min-h-[73px]";
+    
+    if (isActive) {
+      baseClasses += " bg-blue-100 border-2 border-blue-400";
+    } else if (isCompleted) {
+      baseClasses += " bg-green-100 hover:bg-green-200 cursor-pointer";
+    } else if (isIncomplete) {
+      baseClasses += " bg-yellow-100 hover:bg-yellow-200 cursor-pointer";
+    } else {
+      baseClasses += " bg-gray-100 hover:bg-gray-200 cursor-pointer";
     }
     
-    // Check if section is in completedSections
-    if (completedSections.includes(secao.id)) {
-      return "success"; // Green for fully completed
+    return baseClasses;
+  };
+
+  // Função para obter o ícone de status da seção
+  const getSectionStatusIcon = (secaoId: string) => {
+    if (completedSections.includes(secaoId)) {
+      return <Check className="h-4 w-4 text-green-500 absolute top-1 left-1" />;
+    } else if (incompleteSections.includes(secaoId)) {
+      return <AlertCircle className="h-4 w-4 text-yellow-500 absolute top-1 left-1" />;
     }
-    
-    // Sections started but not completed are yellow
-    if (incompleteSections.includes(secao.id)) {
-      return "warning"; // Yellow for in-progress sections
+    return null;
+  };
+
+  const displayPontuacao = (secaoId: string) => {
+    if (pontuacaoPorSecao && secaoId in pontuacaoPorSecao) {
+      const pontuacao = pontuacaoPorSecao[secaoId];
+      return (
+        <span className="absolute top-0 right-0 bg-white text-gray-800 text-xs rounded-bl-md px-1 py-0.5 font-bold">
+          {pontuacao?.toFixed(1)}
+        </span>
+      );
     }
-    
-    // Not started sections are outline/white
-    return "outline";
+    return null;
   };
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {secoes?.map((secao) => {
-        const isCompleted = completedSections.includes(secao.id);
-        const isIncomplete = incompleteSections.includes(secao.id);
-        const pontuacao = pontuacaoPorSecao[secao.id];
-        const hasPontuacao = pontuacao !== undefined && pontuacao !== 0;
-        
-        return (
-          <Button
-            key={secao.id}
-            variant={getButtonVariant(secao)}
-            onClick={() => setActiveSecao(secao.id)}
-            className="whitespace-nowrap flex items-center gap-1 relative"
-          >
-            {/* Show check icon if completed OR if has pontuacao but not marked as completed */}
-            {(isCompleted || (!isCompleted && hasPontuacao)) && <Check className="h-4 w-4" />}
-            
-            {/* Only show warning icon if incomplete and no pontuacao */}
-            {isIncomplete && !hasPontuacao && <AlertTriangle className="h-4 w-4" />}
-            
-            {secao.nome}
-            
-            {/* Always show score if it's available */}
-            {hasPontuacao && (
-              <span 
-                className="absolute -top-1 -right-1 bg-white text-black text-xs px-1 py-0 rounded-full border border-gray-300 font-semibold"
-                style={{ fontSize: '10px', minWidth: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                {typeof pontuacao === 'number' ? pontuacao.toFixed(1) : pontuacao}
-              </span>
-            )}
-          </Button>
-        );
-      })}
+    <div className="flex gap-1 overflow-x-auto pb-2 scrollbar-thin snap-x">
+      {secoes.map((secao) => (
+        <button
+          key={secao.id}
+          className={cn(getSectionClasses(secao.id))}
+          onClick={() => setActiveSecao(secao.id)}
+        >
+          {getSectionStatusIcon(secao.id)}
+          {displayPontuacao(secao.id)}
+          {secao.nome}
+        </button>
+      ))}
     </div>
   );
 };

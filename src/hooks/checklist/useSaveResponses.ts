@@ -39,72 +39,18 @@ export const useSaveResponses = (
       await updatePontuacaoPorSecao();
       console.log("Pontuações por seção atualizadas com sucesso");
       
-      // Vamos buscar todas as respostas atuais após criar ou atualizar
+      // Buscar todas as respostas para esta auditoria
       const { data: respostas, error: fetchError } = await supabase
         .from('respostas')
         .select('*')
-        .eq('auditoria_id', auditoriaId)
-        .order('created_at', { ascending: false }); // Ordenar pela data de criação para garantir que temos as mais recentes
+        .eq('auditoria_id', auditoriaId);
         
       if (fetchError) {
         console.error("Erro ao buscar respostas:", fetchError);
         throw fetchError;
       }
       
-      console.log(`Encontradas ${respostas?.length || 0} respostas para recálculo de pontuação total`);
-      
-      // Calcular pontuação total manualmente
-      let pontuacaoTotal = 0;
-      
-      // Vamos criar um mapa para garantir que contamos apenas a última resposta de cada pergunta
-      const uniqueRespostas = new Map<string, Resposta>();
-      
-      // Usar created_at para determinar a resposta mais recente
-      // Ordenar as respostas para garantir que pegamos as mais recentes primeiro
-      const respostasOrdenadas = [...(respostas as Resposta[])].sort((a, b) => {
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
-      
-      // Pegar apenas a resposta mais recente para cada pergunta
-      respostasOrdenadas.forEach(r => {
-        if (!uniqueRespostas.has(r.pergunta_id)) {
-          uniqueRespostas.set(r.pergunta_id, r);
-        }
-      });
-      
-      console.log(`Usando ${uniqueRespostas.size} respostas únicas para cálculo final`);
-      
-      // Agora podemos somar as pontuações usando apenas as respostas únicas
-      uniqueRespostas.forEach(r => {
-        if (r.pontuacao_obtida !== null && r.pontuacao_obtida !== undefined) {
-          const pontuacao = Number(r.pontuacao_obtida);
-          pontuacaoTotal += pontuacao;
-          console.log(`Adicionando pontuação ${pontuacao} para pergunta ${r.pergunta_id}, novo total: ${pontuacaoTotal}`);
-        } else if (r.resposta) {
-          // Se não tiver pontuacao_obtida, calcular com base na resposta
-          const pontuacao = pontuacaoMap[r.resposta] !== undefined ? pontuacaoMap[r.resposta] : 0;
-          pontuacaoTotal += pontuacao;
-          console.log(`Calculando pontuação ${pontuacao} para resposta "${r.resposta}" na pergunta ${r.pergunta_id}, novo total: ${pontuacaoTotal}`);
-        }
-      });
-      
-      console.log(`Pontuação total calculada: ${pontuacaoTotal}`);
-      
-      // Atualizar auditoria com nova pontuação total
-      const { error } = await supabase
-        .from('auditorias')
-        .update({ 
-          pontuacao_total: pontuacaoTotal,
-        })
-        .eq('id', auditoriaId);
-        
-      if (error) {
-        console.error("Erro ao atualizar pontuação total:", error);
-        throw error;
-      } else {
-        console.log("Pontuação total atualizada com sucesso!");
-      }
-      
+      // Confirmar que as respostas foram salvas
       toast({
         title: "Respostas salvas",
         description: "Todas as respostas desta seção foram salvas com sucesso.",

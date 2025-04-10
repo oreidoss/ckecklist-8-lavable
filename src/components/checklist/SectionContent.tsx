@@ -95,7 +95,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
           }}
           onObservacaoChange={(value) => handleObservacaoChange(pergunta.id, value)}
           onSaveObservacao={() => handleSaveObservacao(pergunta.id)}
-          onFileUpload={(perguntaId, file) => handleFileUpload(perguntaId, file)}
+          onFileUpload={(file) => handleFileUpload(pergunta.id, file)}
           isLastPergunta={isLastPerguntaInSection(pergunta.id)}
           disabled={!isEditingActive}
         />

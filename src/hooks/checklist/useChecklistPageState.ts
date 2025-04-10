@@ -1,25 +1,18 @@
-
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useChecklistData } from '@/hooks/checklist/useChecklistData';
 import { useSectionManagement } from '@/hooks/checklist/useSectionManagement';
-import { useChecklistNavigation } from '@/hooks/checklist/useChecklistNavigation';
-import { useChecklistResponses } from '@/hooks/checklist/useChecklistResponses';
-import { useChecklistProcessor } from '@/hooks/checklist/useChecklistProcessor';
-import { useChecklistHelpers } from '@/hooks/checklist/useChecklistHelpers';
+import { useRespostaHandler } from '@/hooks/checklist/useRespostaHandler';
+import { useSaveResponses } from '@/hooks/checklist/useSaveResponses';
+import { useChecklistScores } from '@/hooks/checklist/useChecklistScores';
 import { useResponseHandlers } from '@/hooks/checklist/useResponseHandlers';
-import { perguntaService } from '@/lib/services/perguntaService';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 
-/**
- * Hook that combines all the checklist state management for the Checklist page
- */
 export const useChecklistPageState = (
   auditoriaId: string | undefined,
   setPontuacaoPorSecao?: React.Dispatch<React.SetStateAction<Record<string, number>>>
 ) => {
-  const toast = useToast();
-  const [initializingData, setInitializingData] = useState(true);
+  const { toast } = useToast();
   const [respostas, setRespostas] = useState<Record<string, RespostaValor>>({});
   const [progresso, setProgresso] = useState(0);
   const [completedSections, setCompletedSections] = useState<string[]>([]);
@@ -27,25 +20,9 @@ export const useChecklistPageState = (
   const [observacoes, setObservacoes] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const [fileUrls, setFileUrls] = useState<Record<string, string>>({});
-  
-  // Carregar perguntas do Supabase ao inicializar
-  useEffect(() => {
-    const loadPerguntas = async () => {
-      try {
-        await perguntaService.fetchPerguntasFromSupabase();
-        console.log('Perguntas carregadas do Supabase');
-      } catch (error) {
-        console.error('Erro ao carregar perguntas:', error);
-      } finally {
-        setInitializingData(false);
-      }
-    };
-    
-    loadPerguntas();
-  }, []);
-  
-  // Fetch all data
-  const dataState = useChecklistData(auditoriaId);
+  const [initializingData, setInitializingData] = useState(true);
+
+  // Fetch data from Supabase
   const {
     usuarios,
     auditoria,
@@ -62,24 +39,11 @@ export const useChecklistPageState = (
     setGerente,
     setIsEditingSupervisor,
     setIsEditingGerente,
-    refetchAuditoria
-  } = dataState;
+    refetchAuditoria,
+    refetchRespostas
+  } = useChecklistData(auditoriaId);
 
-  console.log("respostasExistentes:", respostasExistentes);
-  console.log("perguntas:", perguntas);
-  
-  // Section and editing state management - passing an empty array initially
-  const { 
-    activeSecao,
-    setActiveSecao,
-    editingSections,
-    setEditingSections,
-    isEditingActive,
-    toggleEditMode,
-    getPerguntasBySecao
-  } = useSectionManagement(secoes, []);
-
-  // Definir updateIncompleteSections para uso com handleRespostaWrapped
+  // Update incomplete sections
   const updateIncompleteSections = useCallback(() => {
     if (!secoes || !perguntas) return;
     
@@ -94,10 +58,9 @@ export const useChecklistPageState = (
     });
     
     setIncompleteSections(incomplete);
-    console.log("Seções incompletas atualizadas:", incomplete);
   }, [secoes, perguntas, respostas]);
 
-  // Definir updateCompletedSections 
+  // Update completed sections
   const updateCompletedSections = useCallback(() => {
     if (!secoes || !perguntas) return;
     
@@ -112,76 +75,81 @@ export const useChecklistPageState = (
     });
     
     setCompletedSections(completed);
-    console.log("Seções completas atualizadas:", completed);
   }, [secoes, perguntas, respostas]);
 
-  // Função mock para updatePontuacaoPorSecao
-  const updatePontuacaoPorSecao = useCallback(async () => {
-    console.log("Atualizando pontuação por seção");
-    // Implementação real seria feita aqui
-    return Promise.resolve();
-  }, []);
+  // Manage section state
+  const { 
+    activeSecao,
+    setActiveSecao,
+    editingSections,
+    setEditingSections,
+    isEditingActive,
+    toggleEditMode,
+  } = useSectionManagement(secoes, completedSections);
 
-  // Mock basic implementations for response handling
-  const handleRespostaBase = useCallback((perguntaId: string, resposta: RespostaValor, respostasExistentes: any[] = [], perguntas?: any[]) => {
-    console.log(`Chamando handleRespostaBase para pergunta ${perguntaId} com resposta ${resposta}`);
-    
-    // Atualiza o estado de respostas localmente
-    setRespostas(prev => ({
-      ...prev,
-      [perguntaId]: resposta
-    }));
-    
-    // Aqui normalmente salvaríamos no banco de dados
-    // Esta é uma versão simplificada, apenas para demonstração
-    
-    // Atualizar progresso
-    if (perguntas && perguntas.length > 0) {
-      const newRespostas = {
-        ...respostas,
-        [perguntaId]: resposta
-      };
-      const totalRespondidas = Object.keys(newRespostas).length;
-      const novoProgresso = (totalRespondidas / perguntas.length) * 100;
-      setProgresso(novoProgresso);
-    }
-  }, [respostas]);
-  
-  const handleFileUploadBase = useCallback((perguntaId: string, file: File, respostasExistentes: any[]) => {
-    console.log(`Upload de arquivo para pergunta ${perguntaId}`);
-    // Implementação simplificada
-    setUploading(prev => ({ ...prev, [perguntaId]: true }));
-    
-    // Simular conclusão do upload
-    setTimeout(() => {
-      setUploading(prev => ({ ...prev, [perguntaId]: false }));
-      setFileUrls(prev => ({ ...prev, [perguntaId]: URL.createObjectURL(file) }));
-    }, 1000);
-  }, []);
-  
-  const handleObservacaoChange = useCallback((perguntaId: string, value: string) => {
-    setObservacoes(prev => ({ ...prev, [perguntaId]: value }));
-  }, []);
-  
-  const handleSaveObservacaoBase = useCallback((perguntaId: string, respostasExistentes: any[]) => {
-    console.log(`Salvando observação para pergunta ${perguntaId}`);
-    // Aqui implementaríamos o salvamento no banco de dados
-    // Esta é uma versão simplificada
-  }, []);
+  // Get pergunta by secao
+  const getPerguntasBySecao = useCallback((secaoId: string) => {
+    return perguntas?.filter(p => p.secao_id === secaoId) || [];
+  }, [perguntas]);
 
-  // Use response handlers
+  // Handle scores
+  const { 
+    updatePontuacaoPorSecao 
+  } = useChecklistScores(auditoriaId, setPontuacaoPorSecao);
+
+  // Handle individual responses
+  const { 
+    handleResposta,
+    isSaving: isSavingResponse 
+  } = useRespostaHandler(
+    auditoriaId,
+    setRespostas,
+    setProgresso,
+    observacoes,
+    fileUrls,
+    updatePontuacaoPorSecao
+  );
+
+  // Handle batch saving
+  const { 
+    saveAllResponses,
+    isSaving: isSavingAll 
+  } = useSaveResponses(
+    auditoriaId,
+    updatePontuacaoPorSecao
+  );
+
+  // Wrap response handlers
   const {
     handleRespostaWrapped,
     handleFileUploadWrapped,
     handleSaveObservacaoWrapped
   } = useResponseHandlers(
-    handleRespostaBase,
-    handleFileUploadBase,
-    handleSaveObservacaoBase,
+    handleResposta,
+    (perguntaId, file) => {
+      console.log(`Upload de arquivo para pergunta ${perguntaId}`);
+      // Set uploading state
+      setUploading(prev => ({ ...prev, [perguntaId]: true }));
+      
+      // Simulate upload completion - in a real app this would be an async function
+      setTimeout(() => {
+        setUploading(prev => ({ ...prev, [perguntaId]: false }));
+        setFileUrls(prev => ({ ...prev, [perguntaId]: URL.createObjectURL(file) }));
+      }, 1000);
+    },
+    (perguntaId) => {
+      console.log(`Salvando observação para pergunta ${perguntaId}`);
+      // Here you would save to the database
+    },
     respostasExistentes,
     perguntas,
     updateIncompleteSections
   );
+
+  // Handle observacao change
+  const handleObservacaoChange = useCallback((perguntaId: string, value: string) => {
+    setObservacoes(prev => ({ ...prev, [perguntaId]: value }));
+  }, []);
 
   // Navigation helpers
   const goToPreviousSection = useCallback(() => {
@@ -204,7 +172,7 @@ export const useChecklistPageState = (
     }
   }, [secoes, activeSecao, setActiveSecao]);
 
-  // Helpers for checklist operations
+  // Helper functions
   const hasUnansweredQuestions = useCallback(() => {
     if (!activeSecao || !perguntas) return false;
     
@@ -220,66 +188,69 @@ export const useChecklistPageState = (
     
     return activePerguntas[activePerguntas.length - 1].id === perguntaId;
   }, [activeSecao, perguntas]);
-  
-  const getActiveQuestionCount = useCallback(() => {
-    if (!activeSecao || !perguntas) return 0;
-    return perguntas.filter(p => p.secao_id === activeSecao).length;
-  }, [activeSecao, perguntas]);
-  
-  const getAnsweredQuestionCount = useCallback(() => {
-    if (!activeSecao || !perguntas) return 0;
-    
-    const activePerguntas = perguntas.filter(p => p.secao_id === activeSecao);
-    return activePerguntas.filter(p => respostas[p.id]).length;
-  }, [activeSecao, perguntas, respostas]);
 
-  // Mock implementations for save functions
-  const saveAllResponses = useCallback(async () => {
-    console.log("Salvando todas as respostas");
-    return Promise.resolve();
-  }, []);
-  
+  // Save and navigate
   const saveAndNavigateHome = useCallback(async () => {
-    console.log("Salvando e navegando para home");
-    return true;
-  }, []);
-
+    if (respostasExistentes) {
+      try {
+        await saveAllResponses();
+        return true;
+      } catch (error) {
+        console.error("Error navigating home:", error);
+        return false;
+      }
+    }
+    return false;
+  }, [respostasExistentes, saveAllResponses]);
+  
   const saveAndNavigateToNextSection = useCallback(async () => {
     if (!activeSecao || !secoes) return false;
     
-    console.log("Salvando e navegando para próxima seção");
-    
-    // Desabilitar edição para seção atual
-    setEditingSections(prev => ({
-      ...prev,
-      [activeSecao]: false
-    }));
-    
-    // Navegar para próxima seção
-    const currentIndex = secoes.findIndex(s => s.id === activeSecao);
-    if (currentIndex < secoes.length - 1) {
-      const nextSecaoId = secoes[currentIndex + 1].id;
-      setActiveSecao(nextSecaoId);
-      window.scrollTo(0, 0);
-      return true;
+    try {
+      // Save responses first
+      await saveAllResponses();
+      
+      // Then navigate to next section
+      const currentIndex = secoes.findIndex(s => s.id === activeSecao);
+      if (currentIndex < secoes.length - 1) {
+        setActiveSecao(secoes[currentIndex + 1].id);
+        window.scrollTo(0, 0);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error saving and navigating:", error);
+      return false;
     }
-    
-    return false;
-  }, [activeSecao, secoes, setEditingSections, setActiveSecao]);
+  }, [activeSecao, secoes, saveAllResponses, setActiveSecao]);
 
   // Process existing responses on initial load
   useEffect(() => {
-    if (!initializingData && respostasExistentes?.length && perguntas?.length) {
+    if (respostasExistentes?.length && perguntas?.length) {
       console.log("Processando respostas existentes");
       
-      // Criar um mapa de respostas existentes
+      // Create maps for responses, observations, and file URLs
       const respostasMap: Record<string, RespostaValor> = {};
       const observacoesMap: Record<string, string> = {};
       const fileUrlsMap: Record<string, string> = {};
       
-      respostasExistentes.forEach(resposta => {
-        if (resposta.pergunta_id) {
-          respostasMap[resposta.pergunta_id] = resposta.resposta as RespostaValor;
+      // Use a Map to keep track of the most recent response for each question
+      const latestResponses = new Map();
+      
+      // Sort responses by created_at, newest first
+      const sortedRespostas = [...respostasExistentes].sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      
+      // Process responses, keeping only the most recent one for each pergunta_id
+      sortedRespostas.forEach(resposta => {
+        if (resposta.pergunta_id && !latestResponses.has(resposta.pergunta_id)) {
+          latestResponses.set(resposta.pergunta_id, resposta);
+          
+          // Add to our response maps
+          if (resposta.resposta) {
+            respostasMap[resposta.pergunta_id] = resposta.resposta as RespostaValor;
+          }
           
           if (resposta.observacao) {
             observacoesMap[resposta.pergunta_id] = resposta.observacao;
@@ -291,23 +262,25 @@ export const useChecklistPageState = (
         }
       });
       
-      console.log("Mapa de respostas:", respostasMap);
+      console.log("Mapa de respostas processado:", respostasMap);
       
-      // Atualizar estados
+      // Update state
       setRespostas(respostasMap);
       setObservacoes(observacoesMap);
       setFileUrls(fileUrlsMap);
       
-      // Calcular progresso
+      // Calculate progress
       const progresso = perguntas.length > 0 ? 
         (Object.keys(respostasMap).length / perguntas.length) * 100 : 0;
       setProgresso(progresso);
       
-      // Atualizar seções completas
+      // Update section states
       updateCompletedSections();
       updateIncompleteSections();
+      
+      setInitializingData(false);
     }
-  }, [respostasExistentes, perguntas, initializingData, updateCompletedSections, updateIncompleteSections]);
+  }, [respostasExistentes, perguntas, updateCompletedSections, updateIncompleteSections]);
 
   // Update section editing state when completedSections changes
   useEffect(() => {
@@ -324,12 +297,8 @@ export const useChecklistPageState = (
   // Combine loading states
   const isLoading = dataLoading || initializingData;
   
-  // Combine isSaving states
-  const isSaving = false; // Simplified for now
-
-  console.log("Estado atual - respostas:", respostas);
-  console.log("Estado atual - isEditingActive:", isEditingActive);
-  console.log("Estado atual - activeSecao:", activeSecao);
+  // Combine saving states
+  const isSaving = isSavingResponse || isSavingAll;
 
   return {
     // Data
@@ -367,6 +336,7 @@ export const useChecklistPageState = (
     
     // Methods
     refetchAuditoria,
+    refetchRespostas,
     getPerguntasBySecao,
     handleSetActiveSecao: setActiveSecao,
     handleRespostaWrapped,
@@ -381,12 +351,6 @@ export const useChecklistPageState = (
     saveAllResponses,
     updateCompletedSections,
     toggleEditMode,
-    
-    // Analytics helpers
-    getActiveQuestionCount,
-    getAnsweredQuestionCount,
-    
-    // Enhanced navigation
     saveAndNavigateToNextSection
   };
 };

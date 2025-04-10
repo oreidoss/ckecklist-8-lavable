@@ -96,27 +96,29 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
     }
   });
   
-  const { data: respostasExistentes, isLoading: loadingRespostas } = useQuery({
+  // Use staleTime: 0 to ensure we always get fresh data when returning to the page
+  const { data: respostasExistentes, isLoading: loadingRespostas, refetch: refetchRespostas } = useQuery({
     queryKey: ['respostas', auditoriaId],
     queryFn: async () => {
       if (!auditoriaId) throw new Error('ID da auditoria não fornecido');
       
-      console.log(`Fetching responses for auditoria: ${auditoriaId}`);
+      console.log(`Buscando respostas para auditoria: ${auditoriaId}`);
       const { data, error } = await supabase
         .from('respostas')
         .select('*')
         .eq('auditoria_id', auditoriaId);
       
       if (error) {
-        console.error("Error fetching responses:", error);
+        console.error("Erro ao buscar respostas:", error);
         throw error;
       }
       
-      console.log(`Fetched ${data?.length || 0} responses for auditoria ${auditoriaId}`);
+      console.log(`Encontradas ${data?.length || 0} respostas para auditoria ${auditoriaId}`);
       return data as Resposta[];
     },
-    refetchOnWindowFocus: false,
-    staleTime: 60000 // 1 minute
+    staleTime: 0, // Always refetch when query mounts
+    refetchOnMount: true, // Always refetch on component mount
+    refetchOnWindowFocus: true // Also refetch on window focus
   });
 
   const isLoading = loadingAuditoria || loadingUsuarios || loadingSecoes || loadingPerguntas || loadingRespostas;
@@ -137,6 +139,7 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
     setGerente,
     setIsEditingSupervisor,
     setIsEditingGerente,
-    refetchAuditoria
+    refetchAuditoria,
+    refetchRespostas
   };
 };
