@@ -1,26 +1,29 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
+
+import { useState } from 'react';
 import { useChecklistData } from '@/hooks/checklist/useChecklistData';
 import { useSectionManagement } from '@/hooks/checklist/useSectionManagement';
 import { useRespostaHandler } from '@/hooks/checklist/useRespostaHandler';
 import { useSaveResponses } from '@/hooks/checklist/useSaveResponses';
 import { useChecklistScores } from '@/hooks/checklist/useChecklistScores';
 import { useResponseHandlers } from '@/hooks/checklist/useResponseHandlers';
+import { useChecklistHelpers } from '@/hooks/checklist/useChecklistHelpers';
+import { useChecklistStatus } from '@/hooks/checklist/useChecklistStatus';
+import { useChecklistNavigation } from '@/hooks/checklist/useChecklistNavigation';
+import { useInitialData } from '@/hooks/checklist/useInitialData';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 
+/**
+ * Main hook for the checklist page state - now composed of smaller hooks
+ */
 export const useChecklistPageState = (
   auditoriaId: string | undefined,
   setPontuacaoPorSecao?: React.Dispatch<React.SetStateAction<Record<string, number>>>
 ) => {
-  const { toast } = useToast();
+  // State management
   const [respostas, setRespostas] = useState<Record<string, RespostaValor>>({});
-  const [progresso, setProgresso] = useState(0);
-  const [completedSections, setCompletedSections] = useState<string[]>([]);
-  const [incompleteSections, setIncompleteSections] = useState<string[]>([]);
   const [observacoes, setObservacoes] = useState<Record<string, string>>({});
   const [uploading, setUploading] = useState<Record<string, boolean>>({});
   const [fileUrls, setFileUrls] = useState<Record<string, string>>({});
-  const [initializingData, setInitializingData] = useState(true);
 
   // Fetch data from Supabase
   const {
@@ -43,41 +46,31 @@ export const useChecklistPageState = (
     refetchRespostas
   } = useChecklistData(auditoriaId);
 
-  // Update incomplete sections
-  const updateIncompleteSections = useCallback(() => {
-    if (!secoes || !perguntas) return;
-    
-    const incomplete: string[] = [];
-    
-    secoes.forEach(secao => {
-      const secaoPerguntas = perguntas.filter(p => p.secao_id === secao.id);
-      if (secaoPerguntas.length > 0 && 
-          secaoPerguntas.some(p => !respostas[p.id])) {
-        incomplete.push(secao.id);
-      }
-    });
-    
-    setIncompleteSections(incomplete);
-  }, [secoes, perguntas, respostas]);
+  // Manage checklist status and progress
+  const {
+    progresso,
+    setProgresso,
+    completedSections,
+    setCompletedSections,
+    incompleteSections,
+    setIncompleteSections,
+    updateCompletedSections,
+    updateIncompleteSections,
+  } = useChecklistStatus(secoes, perguntas, respostas);
 
-  // Update completed sections
-  const updateCompletedSections = useCallback(() => {
-    if (!secoes || !perguntas) return;
-    
-    const completed: string[] = [];
-    
-    secoes.forEach(secao => {
-      const secaoPerguntas = perguntas.filter(p => p.secao_id === secao.id);
-      if (secaoPerguntas.length > 0 && 
-          secaoPerguntas.every(p => respostas[p.id])) {
-        completed.push(secao.id);
-      }
-    });
-    
-    setCompletedSections(completed);
-  }, [secoes, perguntas, respostas]);
+  // Process initial data
+  const { initializingData } = useInitialData(
+    respostasExistentes,
+    perguntas,
+    setRespostas,
+    setObservacoes,
+    setFileUrls,
+    setProgresso,
+    updateCompletedSections,
+    updateIncompleteSections
+  );
 
-  // Manage section state
+  // Section management
   const { 
     activeSecao,
     setActiveSecao,
@@ -86,11 +79,6 @@ export const useChecklistPageState = (
     isEditingActive,
     toggleEditMode,
   } = useSectionManagement(secoes, completedSections);
-
-  // Get pergunta by secao
-  const getPerguntasBySecao = useCallback((secaoId: string) => {
-    return perguntas?.filter(p => p.secao_id === secaoId) || [];
-  }, [perguntas]);
 
   // Handle scores
   const { 
@@ -119,6 +107,13 @@ export const useChecklistPageState = (
     updatePontuacaoPorSecao
   );
 
+  // Utility functions
+  const {
+    hasUnansweredQuestions,
+    isLastPerguntaInSection,
+    getPerguntasBySecao
+  } = useChecklistHelpers(activeSecao, perguntas, respostas);
+
   // Wrap response handlers
   const {
     handleRespostaWrapped,
@@ -146,141 +141,23 @@ export const useChecklistPageState = (
     updateIncompleteSections
   );
 
+  // Navigation
+  const {
+    goToPreviousSection,
+    goToNextSection,
+    saveAndNavigateToNextSection,
+    saveAndNavigateHome: saveAndNavigateHomeBase
+  } = useChecklistNavigation(
+    secoes,
+    activeSecao,
+    setActiveSecao,
+    saveAllResponses
+  );
+
   // Handle observacao change
-  const handleObservacaoChange = useCallback((perguntaId: string, value: string) => {
+  const handleObservacaoChange = (perguntaId: string, value: string) => {
     setObservacoes(prev => ({ ...prev, [perguntaId]: value }));
-  }, []);
-
-  // Navigation helpers
-  const goToPreviousSection = useCallback(() => {
-    if (!secoes || !activeSecao) return;
-    
-    const currentIndex = secoes.findIndex(s => s.id === activeSecao);
-    if (currentIndex > 0) {
-      setActiveSecao(secoes[currentIndex - 1].id);
-      window.scrollTo(0, 0);
-    }
-  }, [secoes, activeSecao, setActiveSecao]);
-  
-  const goToNextSection = useCallback(() => {
-    if (!secoes || !activeSecao) return;
-    
-    const currentIndex = secoes.findIndex(s => s.id === activeSecao);
-    if (currentIndex < secoes.length - 1) {
-      setActiveSecao(secoes[currentIndex + 1].id);
-      window.scrollTo(0, 0);
-    }
-  }, [secoes, activeSecao, setActiveSecao]);
-
-  // Helper functions
-  const hasUnansweredQuestions = useCallback(() => {
-    if (!activeSecao || !perguntas) return false;
-    
-    const activePerguntas = perguntas.filter(p => p.secao_id === activeSecao);
-    return activePerguntas.some(p => !respostas[p.id]);
-  }, [activeSecao, perguntas, respostas]);
-  
-  const isLastPerguntaInSection = useCallback((perguntaId: string) => {
-    if (!activeSecao || !perguntas) return false;
-    
-    const activePerguntas = perguntas.filter(p => p.secao_id === activeSecao);
-    if (activePerguntas.length === 0) return false;
-    
-    return activePerguntas[activePerguntas.length - 1].id === perguntaId;
-  }, [activeSecao, perguntas]);
-
-  // Save and navigate
-  const saveAndNavigateHome = useCallback(async () => {
-    if (respostasExistentes) {
-      try {
-        await saveAllResponses();
-        return true;
-      } catch (error) {
-        console.error("Error navigating home:", error);
-        return false;
-      }
-    }
-    return false;
-  }, [respostasExistentes, saveAllResponses]);
-  
-  const saveAndNavigateToNextSection = useCallback(async () => {
-    if (!activeSecao || !secoes) return false;
-    
-    try {
-      // Save responses first
-      await saveAllResponses();
-      
-      // Then navigate to next section
-      const currentIndex = secoes.findIndex(s => s.id === activeSecao);
-      if (currentIndex < secoes.length - 1) {
-        setActiveSecao(secoes[currentIndex + 1].id);
-        window.scrollTo(0, 0);
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error("Error saving and navigating:", error);
-      return false;
-    }
-  }, [activeSecao, secoes, saveAllResponses, setActiveSecao]);
-
-  // Process existing responses on initial load
-  useEffect(() => {
-    if (respostasExistentes?.length && perguntas?.length) {
-      console.log("Processando respostas existentes");
-      
-      // Create maps for responses, observations, and file URLs
-      const respostasMap: Record<string, RespostaValor> = {};
-      const observacoesMap: Record<string, string> = {};
-      const fileUrlsMap: Record<string, string> = {};
-      
-      // Use a Map to keep track of the most recent response for each question
-      const latestResponses = new Map();
-      
-      // Sort responses by created_at, newest first
-      const sortedRespostas = [...respostasExistentes].sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-      
-      // Process responses, keeping only the most recent one for each pergunta_id
-      sortedRespostas.forEach(resposta => {
-        if (resposta.pergunta_id && !latestResponses.has(resposta.pergunta_id)) {
-          latestResponses.set(resposta.pergunta_id, resposta);
-          
-          // Add to our response maps
-          if (resposta.resposta) {
-            respostasMap[resposta.pergunta_id] = resposta.resposta as RespostaValor;
-          }
-          
-          if (resposta.observacao) {
-            observacoesMap[resposta.pergunta_id] = resposta.observacao;
-          }
-          
-          if (resposta.anexo_url) {
-            fileUrlsMap[resposta.pergunta_id] = resposta.anexo_url;
-          }
-        }
-      });
-      
-      console.log("Mapa de respostas processado:", respostasMap);
-      
-      // Update state
-      setRespostas(respostasMap);
-      setObservacoes(observacoesMap);
-      setFileUrls(fileUrlsMap);
-      
-      // Calculate progress
-      const progresso = perguntas.length > 0 ? 
-        (Object.keys(respostasMap).length / perguntas.length) * 100 : 0;
-      setProgresso(progresso);
-      
-      // Update section states
-      updateCompletedSections();
-      updateIncompleteSections();
-      
-      setInitializingData(false);
-    }
-  }, [respostasExistentes, perguntas, updateCompletedSections, updateIncompleteSections]);
+  };
 
   // Update section editing state when completedSections changes
   useEffect(() => {
@@ -326,13 +203,13 @@ export const useChecklistPageState = (
     isSaving,
     isEditingActive,
     editingSections,
-    setEditingSections,
     
     // Setters
     setSupervisor,
     setGerente,
     setIsEditingSupervisor,
     setIsEditingGerente,
+    setEditingSections,
     
     // Methods
     refetchAuditoria,
@@ -347,10 +224,13 @@ export const useChecklistPageState = (
     goToNextSection,
     hasUnansweredQuestions,
     isLastPerguntaInSection,
-    saveAndNavigateHomeBase: saveAndNavigateHome,
+    saveAndNavigateHomeBase,
     saveAllResponses,
     updateCompletedSections,
     toggleEditMode,
     saveAndNavigateToNextSection
   };
 };
+
+// Need to import useEffect
+import { useEffect } from 'react';
