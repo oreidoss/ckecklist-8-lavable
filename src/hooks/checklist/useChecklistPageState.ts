@@ -6,7 +6,6 @@ import { useSectionManagement } from '@/hooks/checklist/useSectionManagement';
 import { useChecklistNavigation } from '@/hooks/checklist/useChecklistNavigation';
 import { useChecklistResponses } from '@/hooks/checklist/useChecklistResponses';
 import { useChecklistProcessor } from '@/hooks/checklist/useChecklistProcessor';
-import { useEditingMode } from '@/hooks/checklist/useEditingMode';
 import { useChecklistHelpers } from '@/hooks/checklist/useChecklistHelpers';
 
 /**
@@ -44,6 +43,7 @@ export const useChecklistPageState = (
     activeSecao,
     setActiveSecao,
     editingSections,
+    setEditingSections,
     isEditingActive,
     toggleEditMode,
     getPerguntasBySecao
@@ -62,12 +62,21 @@ export const useChecklistPageState = (
     observacoes,
     uploading,
     fileUrls,
-    isSaving,
+    isSaving: navIsSaving,
     updateCompletedSections,
     updateIncompleteSections,
     goToPreviousSection,
     goToNextSection
-  } = useChecklistNavigation(auditoriaId, secoes, perguntas, activeSecao, setActiveSecao, setPontuacaoPorSecao);
+  } = useChecklistNavigation(
+    auditoriaId, 
+    secoes, 
+    perguntas, 
+    activeSecao, 
+    setActiveSecao,
+    editingSections,
+    setEditingSections, 
+    setPontuacaoPorSecao
+  );
 
   // Response handlers and helpers
   const {
@@ -80,7 +89,8 @@ export const useChecklistPageState = (
     handleFileUploadWrapped,
     saveAllResponses,
     saveAndNavigateHome,
-    saveAndNavigateToNextSection
+    saveAndNavigateToNextSection,
+    isSaving: respIsSaving
   } = useChecklistResponses(
     auditoriaId, 
     activeSecao, 
@@ -127,18 +137,10 @@ export const useChecklistPageState = (
   // Initialize state on load
   useEffect(() => {
     processExistingResponses();
-    
-    // Initialize editing mode for all sections based on completion status
-    if (secoes && completedSections) {
-      console.log("Inicializando estado de edição para seções");
-      const initialEditState: Record<string, boolean> = {};
-      secoes.forEach(secao => {
-        initialEditState[secao.id] = !completedSections.includes(secao.id);
-      });
-      console.log("Estado inicial de edição:", initialEditState);
-      setEditingSections(initialEditState);
-    }
-  }, [respostasExistentes, perguntas, secoes, completedSections]);
+  }, [respostasExistentes, perguntas, secoes, completedSections, processExistingResponses]);
+
+  // Combine isSaving states
+  const isSaving = navIsSaving || respIsSaving;
 
   return {
     // Data

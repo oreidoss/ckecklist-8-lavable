@@ -119,7 +119,7 @@ export const useChecklistResponses = (
           // Go to next section
           goToNextSection();
           
-          toast.toast({
+          toast({
             title: "Navegação bem-sucedida",
             description: "Respostas salvas e navegando para próxima seção."
           });
@@ -131,7 +131,7 @@ export const useChecklistResponses = (
       return true;
     } catch (error) {
       console.error("Error navigating to next section:", error);
-      toast.toast({
+      toast({
         title: "Erro ao navegar",
         description: "Ocorreu um erro ao salvar as respostas. Tente novamente.",
         variant: "destructive"
@@ -152,6 +152,7 @@ export const useChecklistResponses = (
     handleFileUploadWrapped,
     saveAllResponses,
     saveAndNavigateHome,
-    saveAndNavigateToNextSection
+    saveAndNavigateToNextSection,
+    isSaving
   };
 };
