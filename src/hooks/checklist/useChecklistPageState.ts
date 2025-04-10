@@ -38,7 +38,8 @@ export const useChecklistPageState = (
     refetchAuditoria
   } = dataState;
   
-  // Section and editing state management
+  // Section and editing state management - passing an empty array instead of completedSections
+  // to avoid the variable reference error
   const { 
     activeSecao,
     setActiveSecao,
@@ -47,7 +48,7 @@ export const useChecklistPageState = (
     isEditingActive,
     toggleEditMode,
     getPerguntasBySecao
-  } = useSectionManagement(secoes, completedSections);
+  } = useSectionManagement(secoes, []);
 
   // Section navigation and completion tracking
   const {
@@ -138,6 +139,18 @@ export const useChecklistPageState = (
   useEffect(() => {
     processExistingResponses();
   }, [respostasExistentes, perguntas, secoes, completedSections, processExistingResponses]);
+
+  // Update section editing state when completedSections changes
+  useEffect(() => {
+    if (secoes && completedSections?.length) {
+      const updatedEditState: Record<string, boolean> = {...editingSections};
+      secoes.forEach(secao => {
+        // Sections that are not completed start in edit mode
+        updatedEditState[secao.id] = !completedSections.includes(secao.id);
+      });
+      setEditingSections(updatedEditState);
+    }
+  }, [completedSections, secoes, setEditingSections, editingSections]);
 
   // Combine isSaving states
   const isSaving = navIsSaving || respIsSaving;

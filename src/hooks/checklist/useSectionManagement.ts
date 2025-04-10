@@ -5,7 +5,7 @@ import { Secao, Pergunta } from '@/lib/types';
 /**
  * Hook for managing section state and edit mode
  */
-export const useSectionManagement = (secoes: Secao[] | undefined, completedSections?: string[]) => {
+export const useSectionManagement = (secoes: Secao[] | undefined, initialCompletedSections: string[] = []) => {
   const [activeSecao, setActiveSecao] = useState<string | null>(null);
   const [editingSections, setEditingSections] = useState<Record<string, boolean>>({});
   
@@ -16,17 +16,24 @@ export const useSectionManagement = (secoes: Secao[] | undefined, completedSecti
     }
   }, [secoes, activeSecao]);
   
-  // Initialize editing state based on completed sections
+  // Initialize editing state based on initial completed sections
   useEffect(() => {
-    if (secoes && completedSections?.length) {
+    if (secoes && initialCompletedSections?.length) {
       const initialEditState: Record<string, boolean> = {};
       secoes.forEach(secao => {
         // Sections that are not completed start in edit mode
-        initialEditState[secao.id] = !completedSections.includes(secao.id);
+        initialEditState[secao.id] = !initialCompletedSections.includes(secao.id);
+      });
+      setEditingSections(initialEditState);
+    } else if (secoes) {
+      // If no completed sections provided, all sections start in edit mode
+      const initialEditState: Record<string, boolean> = {};
+      secoes.forEach(secao => {
+        initialEditState[secao.id] = true;
       });
       setEditingSections(initialEditState);
     }
-  }, [secoes, completedSections]);
+  }, [secoes, initialCompletedSections]);
   
   // Check if current section is in editing mode
   const isEditingActive = activeSecao ? editingSections[activeSecao] === true : false;
