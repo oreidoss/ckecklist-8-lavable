@@ -115,8 +115,12 @@ const SectionScores: React.FC<SectionScoresProps> = ({
       setPontuacaoPorSecao(scores);
       
       // Atualizar pontuação total da auditoria
-      await updateAuditoriaPontuacaoTotal(auditoriaId, ultimasRespostas);
-      
+      // Use Promise with async/await properly
+      try {
+        await updateAuditoriaPontuacaoTotal(auditoriaId, ultimasRespostas);
+      } catch (error) {
+        console.error("Erro ao atualizar pontuação total da auditoria:", error);
+      }
     } catch (error) {
       console.error("Erro ao calcular pontuações diretamente:", error);
       
