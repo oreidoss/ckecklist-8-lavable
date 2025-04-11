@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useChecklistPageState } from '@/hooks/checklist/useChecklistPageState';
@@ -78,7 +79,7 @@ const Checklist: React.FC = () => {
   const saveAndNavigateHome = async () => {
     if (respostasExistentes) {
       try {
-        const success = await saveAndNavigateHomeBase();
+        const success = await saveAndNavigateHomeBase(respostasExistentes);
         if (success) {
           navigate('/');
         }

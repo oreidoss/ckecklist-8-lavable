@@ -12,10 +12,9 @@ export const useNavigationHandlers = (
   goToNextSection: () => void,
   goToPreviousSection: () => void,
   saveAllResponses: () => Promise<void>,
-  saveAndNavigateHomeBase: () => Promise<boolean>
+  saveAndNavigateHomeBase: (respostasExistentes: any[]) => Promise<boolean>
 ) => {
-  const toastObj = useToast();
-  const { toast } = toastObj;
+  const { toast } = useToast();
 
   /**
    * Handle changing the active section
@@ -28,22 +27,25 @@ export const useNavigationHandlers = (
   /**
    * Save all responses and then navigate home
    */
-  const saveAndNavigateHome = async () => {
+  const saveAndNavigateHome = async (respostasExistentes: any[] | undefined) => {
     console.log("Tentando salvar e navegar para home");
-    try {
-      // Primeiro salvar todas as respostas
-      await saveAllResponses();
-      console.log("Respostas salvas com sucesso antes de navegar para home");
-      return await saveAndNavigateHomeBase();
-    } catch (error) {
-      console.error("Erro ao salvar antes de navegar para home:", error);
-      toast({
-        title: "Erro ao salvar",
-        description: "Ocorreu um erro ao salvar as respostas antes de navegar.",
-        variant: "destructive"
-      });
-      return false;
+    if (respostasExistentes) {
+      try {
+        // Primeiro salvar todas as respostas
+        await saveAllResponses();
+        console.log("Respostas salvas com sucesso antes de navegar para home");
+        return await saveAndNavigateHomeBase(respostasExistentes);
+      } catch (error) {
+        console.error("Erro ao salvar antes de navegar para home:", error);
+        toast({
+          title: "Erro ao salvar",
+          description: "Ocorreu um erro ao salvar as respostas antes de navegar.",
+          variant: "destructive"
+        });
+        return false;
+      }
     }
+    return false;
   };
 
   /**
