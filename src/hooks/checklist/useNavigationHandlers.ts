@@ -14,7 +14,8 @@ export const useNavigationHandlers = (
   saveAllResponses: () => Promise<void>,
   saveAndNavigateHomeBase: () => Promise<boolean>
 ) => {
-  const { toast } = useToast();
+  const toastObj = useToast();
+  const { toast } = toastObj;
 
   /**
    * Handle changing the active section

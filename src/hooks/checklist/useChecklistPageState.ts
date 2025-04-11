@@ -1,12 +1,11 @@
 
-import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useChecklistData } from '@/hooks/checklist/useChecklistData';
 import { useSectionManagement } from '@/hooks/checklist/useSectionManagement';
 import { useChecklistNavigation } from '@/hooks/checklist/useChecklistNavigation';
-import { useChecklistResponses } from '@/hooks/checklist/useChecklistResponses';
-import { useChecklistProcessor } from '@/hooks/checklist/useChecklistProcessor';
 import { useChecklistHelpers } from '@/hooks/checklist/useChecklistHelpers';
+import { useChecklistInitialization } from '@/hooks/checklist/useChecklistInitialization';
+import { useCombinedChecklistLogic } from '@/hooks/checklist/useCombinedChecklistLogic';
 
 /**
  * Hook that combines all the checklist state management for the Checklist page
@@ -78,35 +77,43 @@ export const useChecklistPageState = (
     setPontuacaoPorSecao
   );
 
-  // Response handlers and helpers
+  // Initialize responses from existing data
+  useChecklistInitialization(
+    respostasExistentes,
+    perguntas,
+    secoes,
+    respostas,
+    setRespostas,
+    setProgresso,
+    setCompletedSections,
+    updateIncompleteSections
+  );
+
+  // Combine response and navigation logic
   const {
-    handleResposta,
     handleRespostaWrapped,
     handleObservacaoChange,
-    handleSaveObservacao,
     handleSaveObservacaoWrapped,
-    handleFileUpload,
     handleFileUploadWrapped,
     saveAllResponses,
-    saveAndNavigateHome,
+    saveAndNavigateHome: saveAndNavigateHomeBase,
     saveAndNavigateToNextSection,
     isSaving: respIsSaving
-  } = useChecklistResponses(
-    auditoriaId, 
-    activeSecao, 
+  } = useCombinedChecklistLogic(
+    auditoriaId,
+    activeSecao,
     editingSections,
     setEditingSections,
-    secoes, 
-    respostas, 
-    setRespostas, 
-    observacoes, 
-    fileUrls, 
-    respostasExistentes, 
-    perguntas, 
-    setProgresso, 
-    updateIncompleteSections, 
+    secoes,
+    respostas,
+    setRespostas,
+    observacoes,
+    fileUrls,
+    respostasExistentes,
+    perguntas,
+    setProgresso,
+    updateIncompleteSections,
     goToNextSection,
-    toastObj, // Pass the entire toast object instead of just the function
     setPontuacaoPorSecao
   );
 
@@ -121,24 +128,7 @@ export const useChecklistPageState = (
     respostas,
     activeSecao
   );
-
-  // Process existing responses on initial load
-  const { processExistingResponses } = useChecklistProcessor(
-    respostasExistentes,
-    perguntas,
-    secoes,
-    respostas,
-    setRespostas,
-    setProgresso,
-    setCompletedSections,
-    updateIncompleteSections
-  );
   
-  // Initialize state on load
-  useEffect(() => {
-    processExistingResponses();
-  }, [respostasExistentes, perguntas, secoes, completedSections, processExistingResponses]);
-
   // Combine isSaving states
   const isSaving = navIsSaving || respIsSaving;
 
@@ -186,7 +176,7 @@ export const useChecklistPageState = (
     goToNextSection,
     hasUnansweredQuestions,
     isLastPerguntaInSection,
-    saveAndNavigateHomeBase: saveAndNavigateHome,
+    saveAndNavigateHomeBase,
     saveAllResponses,
     updateCompletedSections,
     toggleEditMode,
