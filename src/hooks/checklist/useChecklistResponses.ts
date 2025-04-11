@@ -22,10 +22,12 @@ export const useChecklistResponses = (
   setProgresso: React.Dispatch<React.SetStateAction<number>>,
   updateIncompleteSections: () => void,
   goToNextSection: () => void,
-  toast: ReturnType<typeof useToast>,
+  toastObj: ReturnType<typeof useToast>,
   setPontuacaoPorSecao?: React.Dispatch<React.SetStateAction<Record<string, number>>>
 ) => {
   const [isSaving, setIsSaving] = useState(false);
+  // Extract the toast function from the toast object
+  const { toast } = toastObj;
 
   // These functions would normally be imported from their respective hooks
   // But for this refactoring, we'll implement simplified versions

@@ -15,7 +15,7 @@ export const useChecklistPageState = (
   auditoriaId: string | undefined,
   setPontuacaoPorSecao?: React.Dispatch<React.SetStateAction<Record<string, number>>>
 ) => {
-  const { toast } = useToast();
+  const toastObj = useToast();
   
   // Fetch all data
   const dataState = useChecklistData(auditoriaId);
@@ -106,7 +106,7 @@ export const useChecklistPageState = (
     setProgresso, 
     updateIncompleteSections, 
     goToNextSection,
-    toast,
+    toastObj, // Pass the entire toast object instead of just the function
     setPontuacaoPorSecao
   );
 
