@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
@@ -16,8 +15,8 @@ type Auditoria = Database['public']['Tables']['auditorias']['Row'] & {
 };
 
 export const useChecklistData = (auditoriaId: string | undefined) => {
-  const [supervisor, setSupervisor] = useState('');
-  const [gerente, setGerente] = useState('');
+  const [supervisor, setSupervisor] = useState('Roberto Alves');
+  const [gerente, setGerente] = useState('Patricia');
   const [isEditingSupervisor, setIsEditingSupervisor] = useState(false);
   const [isEditingGerente, setIsEditingGerente] = useState(false);
   const [currentDate, setCurrentDate] = useState<string>('');
@@ -63,8 +62,8 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
     meta: {
       onSuccess: (data) => {
         if (data) {
-          setSupervisor(data.supervisor || '');
-          setGerente(data.gerente || '');
+          setSupervisor(data.supervisor || 'Roberto Alves');
+          setGerente(data.gerente || 'Patricia');
         }
       }
     }

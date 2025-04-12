@@ -47,6 +47,10 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
   const { toast } = useToast();
   const [selectedSupervisor, setSelectedSupervisor] = useState<string | null>(null);
   const [selectedGerente, setSelectedGerente] = useState<string | null>(null);
+  
+  // Default supervisor and gerente names
+  const defaultSupervisorName = "Roberto Alves";
+  const defaultGerenteName = "Patricia";
 
   // Improved filtering logic to find supervisors and managers
   const supervisores = usuarios?.filter(u => 
@@ -66,25 +70,29 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
   // Reset selections when dialog opens
   useEffect(() => {
     if (open) {
-      // Auto-select first supervisor if available
-      if (supervisores.length > 0 && !selectedSupervisor) {
-        setSelectedSupervisor(supervisores[0].id);
-      }
+      // Try to find Roberto Alves and Patricia in the users list
+      const robertoId = usuarios?.find(u => u.nome === defaultSupervisorName)?.id || null;
+      const patriciaId = usuarios?.find(u => u.nome === defaultGerenteName)?.id || null;
       
-      // Auto-select first gerente if available
-      if (gerentes.length > 0 && !selectedGerente) {
-        setSelectedGerente(gerentes[0].id);
-      }
+      // Set the selected IDs, or first available, or null
+      setSelectedSupervisor(robertoId || (supervisores.length > 0 ? supervisores[0].id : null));
+      setSelectedGerente(patriciaId || (gerentes.length > 0 ? gerentes[0].id : null));
     }
-  }, [open, supervisores, gerentes]);
+  }, [open, supervisores, gerentes, usuarios]);
 
   const createNewAudit = async () => {
     if (isCreatingAudit || !selectedLoja) return;
     setIsCreatingAudit(true);
 
     try {
-      const supervisorNome = usuarios?.find(u => u.id === selectedSupervisor)?.nome || "Supervisor Padrão";
-      const gerenteNome = usuarios?.find(u => u.id === selectedGerente)?.nome || "Gerente Padrão";
+      // Use the default supervisor and gerente names if possible
+      const supervisorNome = selectedSupervisor ? 
+        (usuarios?.find(u => u.id === selectedSupervisor)?.nome || defaultSupervisorName) : 
+        defaultSupervisorName;
+      
+      const gerenteNome = selectedGerente ? 
+        (usuarios?.find(u => u.id === selectedGerente)?.nome || defaultGerenteName) : 
+        defaultGerenteName;
       
       const { data, error } = await supabase
         .from('auditorias')
@@ -127,8 +135,8 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
     // Use any supervisor, or a default name if none exists
     const supervisorId = selectedSupervisor || (usuarios?.length ? usuarios[0].id : null);
     const supervisorNome = supervisorId ? 
-      (usuarios?.find(u => u.id === supervisorId)?.nome || "Supervisor Padrão") : 
-      "Supervisor Padrão";
+      (usuarios?.find(u => u.id === supervisorId)?.nome || defaultSupervisorName) : 
+      defaultSupervisorName;
 
     setSelectedSupervisor(supervisorId);
     createNewAudit();
@@ -155,7 +163,7 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
                 onValueChange={setSelectedSupervisor}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione um supervisor" />
+                  <SelectValue placeholder={defaultSupervisorName} />
                 </SelectTrigger>
                 <SelectContent>
                   {supervisores.length > 0 ? (
@@ -191,7 +199,7 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
                 onValueChange={setSelectedGerente}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Selecione um gerente" />
+                  <SelectValue placeholder={defaultGerenteName} />
                 </SelectTrigger>
                 <SelectContent>
                   {gerentes.length > 0 ? (
@@ -233,7 +241,7 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
           )}
           <Button 
             onClick={createNewAudit} 
-            disabled={!selectedSupervisor || isCreatingAudit}
+            disabled={isCreatingAudit}
           >
             {isCreatingAudit ? "Criando..." : "Iniciar Auditoria"}
           </Button>

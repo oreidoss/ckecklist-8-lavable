@@ -48,6 +48,10 @@ const ChecklistHeader: React.FC<ChecklistHeaderProps> = ({
   handleSaveSupervisor,
   handleSaveGerente
 }) => {
+  // Default values in case they're not set
+  const displaySupervisor = supervisor || "Roberto Alves";
+  const displayGerente = gerente || "Patricia";
+
   return (
     <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
@@ -76,18 +80,20 @@ const ChecklistHeader: React.FC<ChecklistHeaderProps> = ({
               <div className="flex items-center gap-2">
                 <div className="flex-1">
                   <Select 
-                    value={supervisor || "no-supervisor"} 
+                    value={supervisor || "Roberto Alves"} 
                     onValueChange={(value) => setSupervisor(value)}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Selecione um supervisor" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="no-supervisor">Selecione um supervisor</SelectItem>
+                      <SelectItem value="Roberto Alves">Roberto Alves</SelectItem>
                       {usuarios?.map((usuario) => (
-                        <SelectItem key={usuario.id} value={usuario.nome}>
-                          {usuario.nome}
-                        </SelectItem>
+                        usuario.nome !== "Roberto Alves" && (
+                          <SelectItem key={usuario.id} value={usuario.nome}>
+                            {usuario.nome}
+                          </SelectItem>
+                        )
                       ))}
                     </SelectContent>
                   </Select>
@@ -111,7 +117,7 @@ const ChecklistHeader: React.FC<ChecklistHeaderProps> = ({
               <div className="flex items-center gap-2">
                 <div className="flex-1 p-3 border rounded-md bg-gray-50 flex items-center">
                   <UserRound className="h-5 w-5 text-gray-400 mr-2" />
-                  {supervisor || 'Não definido'}
+                  {displaySupervisor}
                 </div>
                 <Button 
                   onClick={() => setIsEditingSupervisor(true)}
@@ -132,18 +138,20 @@ const ChecklistHeader: React.FC<ChecklistHeaderProps> = ({
               <div className="flex items-center gap-2">
                 <div className="flex-1">
                   <Select 
-                    value={gerente || "no-gerente"} 
+                    value={gerente || "Patricia"} 
                     onValueChange={(value) => setGerente(value)}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Selecione um gerente" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="no-gerente">Selecione um gerente</SelectItem>
+                      <SelectItem value="Patricia">Patricia</SelectItem>
                       {usuarios?.map((usuario) => (
-                        <SelectItem key={usuario.id} value={usuario.nome}>
-                          {usuario.nome}
-                        </SelectItem>
+                        usuario.nome !== "Patricia" && (
+                          <SelectItem key={usuario.id} value={usuario.nome}>
+                            {usuario.nome}
+                          </SelectItem>
+                        )
                       ))}
                     </SelectContent>
                   </Select>
@@ -167,7 +175,7 @@ const ChecklistHeader: React.FC<ChecklistHeaderProps> = ({
               <div className="flex items-center gap-2">
                 <div className="flex-1 p-3 border rounded-md bg-gray-50 flex items-center">
                   <UserRound className="h-5 w-5 text-gray-400 mr-2" />
-                  {gerente || 'Não definido'}
+                  {displayGerente}
                 </div>
                 <Button 
                   onClick={() => setIsEditingGerente(true)}
