@@ -4,6 +4,8 @@ export interface Usuario {
   nome: string;
   email: string;
   funcao?: string;
+  role?: 'admin' | 'user' | 'supervisor' | 'gerente';
+  senha?: string;
 }
 
 export interface Loja {

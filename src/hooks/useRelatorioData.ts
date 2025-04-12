@@ -114,7 +114,7 @@ export function useRelatorioData() {
       id: auditoria.id.toString(),
       loja_id: auditoria.loja_id.toString(),
       usuario_id: auditoria.usuario_id.toString(),
-      status: auditoria.status || 'em_andamento',
+      status: (auditoria.status as 'em_andamento' | 'concluido') || 'em_andamento',
       pontuacao_total: Number(auditoria.pontuacao_total || 0),
       perguntas_count: auditoria.perguntas_count || perguntas.length
     };
@@ -124,7 +124,7 @@ export function useRelatorioData() {
       id: a.id.toString(),
       loja_id: a.loja_id.toString(),
       usuario_id: a.usuario_id?.toString() || '',
-      status: a.status || 'em_andamento',
+      status: (a.status as 'em_andamento' | 'concluido') || 'em_andamento',
       pontuacao_total: Number(a.pontuacao_total || 0)
     }));
 
