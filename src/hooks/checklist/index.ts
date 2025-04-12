@@ -26,9 +26,15 @@ export const useChecklist = (
     progresso,
     setProgresso,
     completedSections,
-    setCompletedSections,
-    updateCompletedSections
+    setCompletedSections
   } = useChecklistState();
+  
+  // Get sections management functionality
+  const checklistSections = useChecklistSections(
+    auditoriaId, 
+    completedSections, 
+    setCompletedSections
+  );
   
   // Get save functionality
   const { saveAndNavigateHome, isSaving, setIsSaving, isSendingEmail } = useChecklistSave(auditoriaId);
@@ -40,7 +46,7 @@ export const useChecklist = (
     respostas,
     setRespostas,
     perguntas,
-    updateCompletedSections,
+    updateCompletedSections: checklistSections.updateCompletedSections,
     auditoriaId
   });
   
@@ -54,11 +60,14 @@ export const useChecklist = (
   // Get resposta handling functionality
   const {
     handleResposta
-  } = useChecklistRespostas({
-    handleRespostaWithSections,
-    auditoriaId,
-    setIsSaving
-  });
+  } = useChecklistRespostas(
+    auditoriaId, 
+    setRespostas, 
+    setProgresso, 
+    observacoes, 
+    fileUrls, 
+    setPontuacaoPorSecao
+  );
   
   // Get file upload functionality
   const {
@@ -68,30 +77,19 @@ export const useChecklist = (
   } = useChecklistUploads(auditoriaId, setIsSaving);
   
   // Get scores calculation functionality
-  const {
-    calculateScoresAndProgress,
-    saveAllResponses: saveAllResponsesFromScores
-  } = useChecklistScores({
-    respostas,
-    perguntas,
-    auditoriaId,
-    isSaving,
-    setIsSaving,
-    setProgresso,
-    setPontuacaoPorSecao
-  });
+  const checklistScores = useChecklistScores(auditoriaId, setPontuacaoPorSecao);
   
   // Calculate scores when respostas change
   useEffect(() => {
     if (perguntas) {
-      calculateScoresAndProgress();
+      checklistScores.updatePontuacaoPorSecao();
     }
   }, [respostas, perguntas]);
   
   // Function to save all responses
   const saveAllResponses = useCallback(async () => {
-    return saveAllResponsesFromScores();
-  }, [saveAllResponsesFromScores]);
+    return checklistScores.updatePontuacaoPorSecao();
+  }, [checklistScores.updatePontuacaoPorSecao]);
   
   return {
     // State
@@ -114,6 +112,7 @@ export const useChecklist = (
     handleSaveObservacao,
     saveAndNavigateHome,
     saveAllResponses,
-    updateCompletedSections
+    updateCompletedSections: checklistSections.updateCompletedSections
   };
 };
+

@@ -55,8 +55,9 @@ const Checklist: React.FC = () => {
     isLastPerguntaInSection,
     saveAndNavigateHomeBase,
     saveAllResponses,
-    saveAndNavigateToNextSection,
-    toggleEditMode
+    updateCompletedSections,
+    toggleEditMode,
+    saveAndNavigateToNextSection
   } = useChecklistPageState(auditoriaId, setPontuacaoPorSecao);
   
   // User selector handlers
@@ -152,3 +153,4 @@ const Checklist: React.FC = () => {
 };
 
 export default Checklist;
+
