@@ -22,11 +22,14 @@ interface InformacoesGeraisProps {
 }
 
 export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria }) => {
-  // Calculate total questions
-  const totalPerguntas = auditoria.respostas?.length || 0;
+  // Get the total questions from perguntas, not from respostas
+  // This ensures we show the actual number of questions in the system
+  const totalPerguntas = auditoria.perguntas_count || 0;
   
-  // Total de perguntas disponíveis no sistema com base na pontuação real
-  // Usamos o total de perguntas respondidas como base para calcular a pontuação máxima possível
+  // Get the total number of answered questions (respostas)
+  const totalRespondidas = auditoria.respostas?.length || 0;
+  
+  // Use the actual total questions as the meta total, not the number of responses
   const metaTotal = totalPerguntas;
   
   // Formato da pontuação atual
@@ -83,7 +86,7 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
             <div className="flex items-center space-x-2">
               <Award className="h-5 w-5 text-primary" />
               <div className={`text-xl font-bold ${auditoria.pontuacao_total && auditoria.pontuacao_total > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                {pontuacaoAtual} / {metaTotal} pontos
+                {pontuacaoAtual} / {totalPerguntas} pontos
               </div>
             </div>
             
@@ -140,7 +143,7 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
           <div className="bg-gray-50 p-2 rounded-md text-sm border">
             <div className="flex items-center justify-between">
               <span>
-                <span className="font-medium text-gray-700">Perguntas respondidas:</span> {totalPerguntas}
+                <span className="font-medium text-gray-700">Perguntas respondidas:</span> {totalRespondidas} de {totalPerguntas}
               </span>
               <TooltipProvider>
                 <Tooltip>
@@ -151,7 +154,7 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p className="text-xs">A meta é baseada no total de perguntas respondidas na auditoria</p>
+                    <p className="text-xs">A meta é baseada no total de perguntas disponíveis no sistema</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

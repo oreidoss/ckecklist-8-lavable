@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Auditoria, Loja, Pergunta, Resposta, Secao } from '@/lib/types';
 import { Card } from '@/components/ui/card';
@@ -67,7 +68,7 @@ const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
   return (
     <div className="space-y-6 pdf-container">
       <Card className="print-item">
-        <InformacoesGerais auditoria={auditoria} />
+        <InformacoesGerais auditoria={{...auditoria, perguntas_count: perguntas.length}} />
       </Card>
 
       <Card className="print-item">

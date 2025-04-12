@@ -1,5 +1,10 @@
 
-// Define all types used in the application
+export interface Usuario {
+  id: string;
+  nome: string;
+  email: string;
+  funcao?: string;
+}
 
 export interface Loja {
   id: string;
@@ -15,29 +20,7 @@ export interface Secao {
 export interface Pergunta {
   id: string;
   texto: string;
-  secao_id: string;
-}
-
-export interface Usuario {
-  id: string;
-  nome: string;
-  email: string;
-  senha?: string;
-  role?: 'admin' | 'user' | 'supervisor' | 'gerente';
-  funcao?: string; // Add the funcao field to match Supabase schema
-}
-
-export interface Auditoria {
-  id: string;
-  data: string;
-  loja_id: string;
-  usuario_id: string;
-  status: string; // Changed from enum to string for compatibility with current data
-  pontuacao_total: number;
-  gerente?: string;
-  supervisor?: string;
-  loja?: Loja; // Added loja reference
-  usuario?: Usuario; // Added usuario reference
+  secao_id?: string;
 }
 
 export interface Resposta {
@@ -48,15 +31,20 @@ export interface Resposta {
   pontuacao_obtida: number;
   observacao?: string;
   anexo_url?: string;
-  created_at: string; // Added created_at field to match database schema
+  created_at?: string;
 }
 
-export interface RespostaFormData {
-  pergunta_id: string;
-  resposta: string;
-  pontuacao_obtida: number;
-  observacao?: string;
-  anexo_url?: string;
+export interface Auditoria {
+  id: string;
+  loja_id: string;
+  usuario_id: string;
+  data?: string;
+  status: 'em_andamento' | 'concluido';
+  pontuacao_total: number;
+  supervisor?: string;
+  gerente?: string;
+  loja?: Loja;
+  usuario?: Usuario;
+  respostas?: Resposta[];
+  perguntas_count?: number;
 }
-
-// Add any other required types below

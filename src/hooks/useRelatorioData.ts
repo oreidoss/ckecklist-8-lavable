@@ -47,7 +47,19 @@ export function useRelatorioData() {
         .single();
       
       if (error) throw error;
-      return data;
+      
+      // Count total perguntas for comparison
+      const { count: perguntasCount, error: countError } = await supabase
+        .from('perguntas')
+        .select('*', { count: 'exact', head: true });
+      
+      if (countError) throw countError;
+      
+      // Add the count to the auditoria object
+      return {
+        ...data,
+        perguntas_count: perguntasCount
+      };
     },
     enabled: !!auditoriaId
   });
@@ -103,7 +115,8 @@ export function useRelatorioData() {
       loja_id: auditoria.loja_id.toString(),
       usuario_id: auditoria.usuario_id.toString(),
       status: auditoria.status || 'em_andamento',
-      pontuacao_total: Number(auditoria.pontuacao_total || 0)
+      pontuacao_total: Number(auditoria.pontuacao_total || 0),
+      perguntas_count: auditoria.perguntas_count || perguntas.length
     };
 
     const typedAuditorias: Auditoria[] = auditorias.map(a => ({
