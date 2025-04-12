@@ -39,17 +39,6 @@ export const useChecklist = (
   // Get save functionality
   const { saveAndNavigateHome, isSaving, setIsSaving, isSendingEmail } = useChecklistSave(auditoriaId);
   
-  // Get sections management functionality
-  const {
-    handleRespostaWithSections
-  } = useChecklistSections({
-    respostas,
-    setRespostas,
-    perguntas,
-    updateCompletedSections: checklistSections.updateCompletedSections,
-    auditoriaId
-  });
-  
   // Get observacoes functionality
   const {
     observacoes,
@@ -57,7 +46,14 @@ export const useChecklist = (
     handleSaveObservacao
   } = useChecklistObservacoes(auditoriaId);
   
-  // Get resposta handling functionality
+  // Get file upload functionality - moved before it's used in useChecklistRespostas
+  const {
+    uploading,
+    fileUrls,
+    handleFileUpload
+  } = useChecklistUploads(auditoriaId);
+  
+  // Get resposta handling functionality - now fileUrls is defined before this point
   const {
     handleResposta
   } = useChecklistRespostas(
@@ -68,13 +64,6 @@ export const useChecklist = (
     fileUrls, 
     setPontuacaoPorSecao
   );
-  
-  // Get file upload functionality
-  const {
-    uploading,
-    fileUrls,
-    handleFileUpload
-  } = useChecklistUploads(auditoriaId, setIsSaving);
   
   // Get scores calculation functionality
   const checklistScores = useChecklistScores(auditoriaId, setPontuacaoPorSecao);
@@ -115,4 +104,3 @@ export const useChecklist = (
     updateCompletedSections: checklistSections.updateCompletedSections
   };
 };
-

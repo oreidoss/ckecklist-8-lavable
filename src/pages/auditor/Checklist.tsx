@@ -81,7 +81,8 @@ const Checklist: React.FC = () => {
   const saveAndNavigateHome = async () => {
     if (respostasExistentes) {
       try {
-        const success = await saveAndNavigateHomeBase(respostasExistentes, progresso);
+        // Pass just the respostasExistentes array, not the progresso parameter
+        const success = await saveAndNavigateHomeBase(respostasExistentes);
         if (success) {
           navigate('/');
         }
@@ -153,4 +154,3 @@ const Checklist: React.FC = () => {
 };
 
 export default Checklist;
-

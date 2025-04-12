@@ -57,7 +57,7 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
     }
   };
 
-  const saveAndNavigateHome = async (respostasExistentes: any[], progresso: number = 0) => {
+  const saveAndNavigateHome = async (respostasExistentes: any[]) => {
     if (isSaving || !auditoriaId) return false;
     
     setIsSaving(true);
@@ -76,6 +76,9 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         .single();
         
       if (auditoriaError) throw auditoriaError;
+      
+      // Calculate progress based on respostas
+      const progresso = respostasExistentes.length > 0 ? 100 : 0;
       
       const { error } = await supabase
         .from('auditorias')
