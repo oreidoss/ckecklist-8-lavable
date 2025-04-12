@@ -21,9 +21,6 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
   setActiveSecao,
   pontuacaoPorSecao = {}
 }) => {
-  // Debug the scores
-  console.log("SectionNavigation pontuacaoPorSecao:", pontuacaoPorSecao);
-  
   const getButtonVariant = (secao: Secao) => {
     // If it's the active section, use default style
     if (activeSecao === secao.id) return "default";
@@ -62,13 +59,17 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
             key={secao.id}
             variant={getButtonVariant(secao)}
             onClick={() => setActiveSecao(secao.id)}
-            className="whitespace-nowrap flex items-center gap-1 relative"
+            className={`whitespace-nowrap flex items-center gap-1 relative ${
+              !isCompleted && !hasPontuacao 
+                ? 'bg-soft-orange/20 text-bright-orange border-soft-orange hover:bg-soft-orange/30' 
+                : ''
+            }`}
           >
             {/* Show check icon if completed OR if has pontuacao but not marked as completed */}
             {(isCompleted || (!isCompleted && hasPontuacao)) && <Check className="h-4 w-4" />}
             
             {/* Only show warning icon if incomplete and no pontuacao */}
-            {isIncomplete && !hasPontuacao && <AlertTriangle className="h-4 w-4" />}
+            {isIncomplete && !hasPontuacao && <AlertTriangle className="h-4 w-4 text-bright-orange" />}
             
             {secao.nome}
             
@@ -89,3 +90,4 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
 };
 
 export default SectionNavigation;
+
