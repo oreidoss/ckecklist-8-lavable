@@ -27,6 +27,7 @@ interface ChecklistContainerProps {
   completedSections: string[];
   incompleteSections: string[];
   isSaving: boolean;
+  isSendingEmail?: boolean;
   usuarios: any[];
   isEditingActive?: boolean;
   toggleEditMode?: () => void;
@@ -72,6 +73,7 @@ const ChecklistContainer: React.FC<ChecklistContainerProps> = ({
   completedSections,
   incompleteSections,
   isSaving,
+  isSendingEmail,
   usuarios,
   isEditingActive,
   toggleEditMode,
@@ -133,6 +135,7 @@ const ChecklistContainer: React.FC<ChecklistContainerProps> = ({
           completedSections={completedSections}
           incompleteSections={incompleteSections}
           isSaving={isSaving}
+          isSendingEmail={isSendingEmail}
           isEditingActive={isEditingActive}
           toggleEditMode={toggleEditMode}
           getPerguntasBySecao={getPerguntasBySecao}

@@ -1,70 +1,103 @@
 
-import { useState, useEffect } from 'react';
-import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
+import { useState, useEffect, useCallback } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useChecklistSave } from './useChecklistSave';
 import { useChecklistSections } from './useChecklistSections';
 import { useChecklistObservacoes } from './useChecklistObservacoes';
-import { useChecklistUploads } from './useChecklistUploads';
 import { useChecklistRespostas } from './useChecklistRespostas';
-import { useChecklistSave } from './useChecklistSave';
-import { Pergunta } from '@/lib/types';
+import { useChecklistUploads } from './useChecklistUploads';
+import { useChecklistScores } from './useChecklistScores';
+import { useChecklistState } from './useChecklistState';
+import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 
 /**
- * Main hook that combines all the checklist hooks
+ * Main hook for checklist functionality
  */
-export function useChecklist(
-  auditoriaId: string | undefined, 
-  perguntas: Pergunta[] = [],
+export const useChecklist = (
+  auditoriaId: string | undefined,
+  perguntas: any[] | undefined,
   setPontuacaoPorSecao?: React.Dispatch<React.SetStateAction<Record<string, number>>>
-) {
-  const [respostas, setRespostas] = useState<Record<string, RespostaValor>>({});
-  const [progresso, setProgresso] = useState(0);
-  const [completedSections, setCompletedSections] = useState<string[]>([]);
-  
-  // Import sub-hooks for checklist functionality
+) => {
+  // Get state management hooks
   const { 
-    updateCompletedSections, 
-    markSectionAsComplete 
-  } = useChecklistSections(auditoriaId, completedSections, setCompletedSections);
+    respostas,
+    setRespostas,
+    progresso,
+    setProgresso,
+    completedSections,
+    setCompletedSections,
+    updateCompletedSections
+  } = useChecklistState();
   
+  // Get save functionality
+  const { saveAndNavigateHome, isSaving, setIsSaving, isSendingEmail } = useChecklistSave(auditoriaId);
+  
+  // Get sections management functionality
+  const {
+    handleRespostaWithSections
+  } = useChecklistSections({
+    respostas,
+    setRespostas,
+    perguntas,
+    updateCompletedSections,
+    auditoriaId
+  });
+  
+  // Get observacoes functionality
   const {
     observacoes,
     handleObservacaoChange,
     handleSaveObservacao
   } = useChecklistObservacoes(auditoriaId);
   
+  // Get resposta handling functionality
+  const {
+    handleResposta
+  } = useChecklistRespostas({
+    handleRespostaWithSections,
+    auditoriaId,
+    setIsSaving
+  });
+  
+  // Get file upload functionality
   const {
     uploading,
     fileUrls,
     handleFileUpload
-  } = useChecklistUploads(auditoriaId);
+  } = useChecklistUploads(auditoriaId, setIsSaving);
   
+  // Get scores calculation functionality
   const {
+    calculateScoresAndProgress,
+    saveAllResponses: saveAllResponsesFromScores
+  } = useChecklistScores({
+    respostas,
+    perguntas,
+    auditoriaId,
     isSaving,
-    handleResposta,
-    saveAllResponses,
-    updatePontuacaoPorSecao
-  } = useChecklistRespostas(auditoriaId, setRespostas, setProgresso, observacoes, fileUrls, setPontuacaoPorSecao);
+    setIsSaving,
+    setProgresso,
+    setPontuacaoPorSecao
+  });
   
-  const {
-    saveAndNavigateHome
-  } = useChecklistSave(auditoriaId);
-
-  // Update section completion status when responses change
+  // Calculate scores when respostas change
   useEffect(() => {
-    if (!auditoriaId || !perguntas || perguntas.length === 0) return;
-    
-    // Calculate progress
-    const progresso = perguntas.length > 0 ? 
-      (Object.keys(respostas).length / perguntas.length) * 100 : 0;
-    
-    setProgresso(progresso);
-  }, [respostas, perguntas, auditoriaId]);
-
+    if (perguntas) {
+      calculateScoresAndProgress();
+    }
+  }, [respostas, perguntas]);
+  
+  // Function to save all responses
+  const saveAllResponses = useCallback(async () => {
+    return saveAllResponsesFromScores();
+  }, [saveAllResponsesFromScores]);
+  
   return {
     // State
     respostas,
     setRespostas,
-    progresso, 
+    progresso,
     setProgresso,
     completedSections,
     setCompletedSections,
@@ -72,16 +105,15 @@ export function useChecklist(
     uploading,
     fileUrls,
     isSaving,
+    isSendingEmail,
     
     // Methods
-    updateCompletedSections,
-    markSectionAsComplete,
     handleResposta,
     handleFileUpload,
     handleObservacaoChange,
     handleSaveObservacao,
     saveAndNavigateHome,
     saveAllResponses,
-    updatePontuacaoPorSecao
+    updateCompletedSections
   };
-}
+};

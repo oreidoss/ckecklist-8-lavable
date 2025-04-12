@@ -53,6 +53,7 @@ export const useChecklistPageState = (
     uploading,
     fileUrls,
     isSaving,
+    isSendingEmail,
     handleResposta: handleRespostaBase,
     handleFileUpload: handleFileUploadBase,
     handleObservacaoChange,
@@ -275,6 +276,7 @@ export const useChecklistPageState = (
     uploading,
     fileUrls,
     isSaving,
+    isSendingEmail,
     isEditingActive,
     
     // Setters

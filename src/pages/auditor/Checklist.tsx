@@ -34,6 +34,7 @@ const Checklist: React.FC = () => {
     uploading,
     fileUrls,
     isSaving,
+    isSendingEmail,
     isEditingActive,
     
     setSupervisor,
@@ -79,7 +80,7 @@ const Checklist: React.FC = () => {
   const saveAndNavigateHome = async () => {
     if (respostasExistentes) {
       try {
-        const success = await saveAndNavigateHomeBase(respostasExistentes);
+        const success = await saveAndNavigateHomeBase(respostasExistentes, progresso);
         if (success) {
           navigate('/');
         }
@@ -121,6 +122,7 @@ const Checklist: React.FC = () => {
         completedSections={completedSections}
         incompleteSections={incompleteSections}
         isSaving={isSaving}
+        isSendingEmail={isSendingEmail}
         isEditingActive={isEditingActive}
         toggleEditMode={toggleEditMode}
         usuarios={usuarios || []}

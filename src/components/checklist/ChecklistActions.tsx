@@ -2,20 +2,22 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { FileText, Save } from 'lucide-react';
+import { FileText, Save, Mail, Loader2 } from 'lucide-react';
 
 interface ChecklistActionsProps {
   auditoriaId: string | undefined;
   saveAndNavigateHome: () => void;
   isSaving: boolean;
   isEditingActive?: boolean;
+  isSendingEmail?: boolean;
 }
 
 const ChecklistActions: React.FC<ChecklistActionsProps> = ({
   auditoriaId,
   saveAndNavigateHome,
   isSaving,
-  isEditingActive = true
+  isEditingActive = true,
+  isSendingEmail = false
 }) => {
   const navigate = useNavigate();
 
@@ -31,11 +33,25 @@ const ChecklistActions: React.FC<ChecklistActionsProps> = ({
           variant="default"
           size="sm"
           onClick={saveAndNavigateHome}
-          disabled={isSaving}
+          disabled={isSaving || isSendingEmail}
           className="flex-1 text-xs h-8"
         >
-          <Save className="mr-1 h-3 w-3" />
-          Salvar
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+              Salvando...
+            </>
+          ) : isSendingEmail ? (
+            <>
+              <Mail className="mr-1 h-3 w-3" />
+              Enviando...
+            </>
+          ) : (
+            <>
+              <Save className="mr-1 h-3 w-3" />
+              Salvar
+            </>
+          )}
         </Button>
       )}
       
@@ -43,7 +59,7 @@ const ChecklistActions: React.FC<ChecklistActionsProps> = ({
         variant="outline"
         size="sm"
         onClick={navigateToReport}
-        disabled={isSaving}
+        disabled={isSaving || isSendingEmail}
         className="flex-1 text-xs h-8"
       >
         <FileText className="mr-1 h-3 w-3" />

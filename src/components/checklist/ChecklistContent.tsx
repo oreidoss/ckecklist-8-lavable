@@ -20,6 +20,7 @@ interface ChecklistContentProps {
   completedSections: string[];
   incompleteSections: string[];
   isSaving: boolean;
+  isSendingEmail?: boolean;
   isEditingActive?: boolean;
   toggleEditMode?: () => void;
   getPerguntasBySecao: (secaoId: string) => any[];
@@ -50,6 +51,7 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
   completedSections,
   incompleteSections,
   isSaving,
+  isSendingEmail,
   isEditingActive = true,
   toggleEditMode,
   getPerguntasBySecao,
@@ -149,6 +151,7 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
             auditoriaId={auditoriaId}
             saveAndNavigateHome={saveAndNavigateHome}
             isSaving={isSaving}
+            isSendingEmail={isSendingEmail}
             isEditingActive={isEditingActive}
           />
         </div>
