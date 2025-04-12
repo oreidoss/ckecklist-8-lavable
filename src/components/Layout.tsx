@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -198,7 +197,7 @@ export function Layout({ children }: LayoutProps) {
       
       <footer className="py-3 px-4 sm:px-6 border-t text-center text-xs sm:text-sm text-muted-foreground">
         <div className="container">
-          &copy; {new Date().getFullYear()} Checklist 9.0 - Todos os direitos reservados
+          &copy; {new Date().getFullYear()} O REI DOS CATÁLOGOS - Rogerio Carvalheira
         </div>
       </footer>
     </div>

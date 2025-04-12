@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Auditoria, Loja, Pergunta, Resposta, Secao } from '@/lib/types';
 import { Card } from '@/components/ui/card';
@@ -104,7 +103,7 @@ const RelatorioDetalhado: React.FC<RelatorioDetalhadoProps> = ({
       </Card>
       
       <div className="pdf-footer text-center text-sm text-gray-500 mt-8 mb-4">
-        © 2025 Checklist 9.0 - Todos os direitos reservados
+        © 2025 O REI DOS CATÁLOGOS - Rogerio Carvalheira
       </div>
     </div>
   );
