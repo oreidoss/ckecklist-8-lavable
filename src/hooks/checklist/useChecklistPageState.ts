@@ -149,7 +149,8 @@ export const useChecklistPageState = (
   
   // Enhanced navigation with edit mode handling
   const {
-    enhancedSaveAndNavigateToNextSection
+    enhancedSaveAndNavigateToNextSection,
+    enhancedNavigateToPreviousSection
   } = useChecklistEnhancedNavigation(
     activeSecao,
     secoes,
@@ -222,7 +223,7 @@ export const useChecklistPageState = (
     handleObservacaoChange,
     handleSaveObservacaoWrapped,
     handleFileUploadWrapped,
-    goToPreviousSection,
+    goToPreviousSection: enhancedNavigateToPreviousSection,
     goToNextSection,
     hasUnansweredQuestions,
     isLastPerguntaInSection,

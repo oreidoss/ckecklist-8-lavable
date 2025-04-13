@@ -101,6 +101,44 @@ export type Database = {
           },
         ]
       }
+      questions_0yv7hd: {
+        Row: {
+          created_at: string
+          id: number
+          is_critical: boolean | null
+          section_id: number | null
+          text: string
+          user_email: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          is_critical?: boolean | null
+          section_id?: number | null
+          text: string
+          user_email: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          is_critical?: boolean | null
+          section_id?: number | null
+          text?: string
+          user_email?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_0yv7hd_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections_0yv7hd"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       respostas: {
         Row: {
           anexo_url: string | null
@@ -161,6 +199,57 @@ export type Database = {
         Update: {
           id?: string
           nome?: string
+        }
+        Relationships: []
+      }
+      sections_0yv7hd: {
+        Row: {
+          created_at: string
+          id: number
+          name: string
+          user_email: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          name: string
+          user_email: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          name?: string
+          user_email?: string
+          weight?: number
+        }
+        Relationships: []
+      }
+      stores_0yv7hd: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: number
+          name: string
+          region: string | null
+          user_email: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: number
+          name: string
+          region?: string | null
+          user_email: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: number
+          name?: string
+          region?: string | null
+          user_email?: string
         }
         Relationships: []
       }

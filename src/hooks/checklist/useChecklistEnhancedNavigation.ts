@@ -71,8 +71,24 @@ export const useChecklistEnhancedNavigation = (
       return false;
     }
   };
+
+  // Enhanced method for previous section navigation
+  const enhancedNavigateToPreviousSection = (): void => {
+    if (!activeSecao || !secoes) return;
+    
+    console.log("Navegando para seção anterior");
+    const currentIndex = secoes.findIndex(s => s.id === activeSecao);
+    
+    if (currentIndex > 0) {
+      const prevSecaoId = secoes[currentIndex - 1].id;
+      console.log(`Navegando para seção anterior: ${prevSecaoId}`);
+      setActiveSecao(prevSecaoId);
+      window.scrollTo(0, 0);
+    }
+  };
   
   return {
-    enhancedSaveAndNavigateToNextSection
+    enhancedSaveAndNavigateToNextSection,
+    enhancedNavigateToPreviousSection
   };
 };

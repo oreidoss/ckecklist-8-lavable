@@ -26,11 +26,11 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         userName: user.nome,
       });
       
-      const response = await fetch(`https://plskhjrrwofdroicafnr.supabase.co/functions/v1/send-report-email`, {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-report-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsc2toanJyd29mZHJvaWNhZm5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM1OTI4ODcsImV4cCI6MjA1OTE2ODg4N30.lX-8Vx0xECgVRgpVtELFQUqcrU19KRwvvSR-_ObSZYQ`,
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           auditoriaId,
