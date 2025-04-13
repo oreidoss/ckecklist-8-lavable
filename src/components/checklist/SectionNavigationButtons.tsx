@@ -69,6 +69,19 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
     }
   };
 
+  const onPreviousSectionClick = () => {
+    console.log("Navegando para seção anterior");
+    if (isFirstSection || isProcessing || isSaving) return;
+    
+    // Chamar função de navegação para a seção anterior
+    if (typeof handlePreviousSection === 'function') {
+      handlePreviousSection();
+      console.log("Navegação para seção anterior concluída");
+    } else {
+      console.error("handlePreviousSection não é uma função");
+    }
+  };
+
   const onSaveClick = async () => {
     if (isSaving || !saveResponses) return;
     
@@ -97,7 +110,7 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
       <Button
         variant="outline"
         size="sm"
-        onClick={handlePreviousSection}
+        onClick={onPreviousSectionClick}
         disabled={isFirstSection || isProcessing || isSaving}
         className="flex-1 text-xs h-8"
       >

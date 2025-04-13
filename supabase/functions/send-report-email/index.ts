@@ -19,26 +19,46 @@ interface ReportEmailRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  console.log("Função send-report-email chamada");
+  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
+    console.log("Recebida requisição OPTIONS");
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { auditoriaId, lojaName, userEmail, userName }: ReportEmailRequest = await req.json();
+    console.log("Tentando ler o corpo da requisição");
+    const text = await req.text();
+    console.log("Corpo da requisição:", text);
+    
+    let data: ReportEmailRequest;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error("Erro ao fazer parse do JSON:", e);
+      throw new Error(`Erro ao processar corpo da requisição: ${e.message}`);
+    }
+    
+    const { auditoriaId, lojaName, userEmail, userName } = data;
+    
+    console.log("Dados recebidos:", { auditoriaId, lojaName, userEmail, userName });
     
     if (!auditoriaId || !lojaName || !userEmail) {
       throw new Error("Dados incompletos para envio do email");
     }
 
     // Generate the report PDF
+    console.log("Gerando PDF para auditoria:", auditoriaId);
     const pdfBuffer = await generatePdf(auditoriaId);
+    console.log("PDF gerado com sucesso");
     
     // Format current date
     const today = new Date();
     const formattedDate = today.toLocaleDateString('pt-BR');
     
     // Send email to admin
+    console.log("Enviando email para admin");
     const adminEmail = await resend.emails.send({
       from: "Checklist 9.0 <onboarding@resend.dev>",
       to: ["rogerio@oreidoscatalogos.com.br"],
@@ -57,8 +77,10 @@ const handler = async (req: Request): Promise<Response> => {
         }
       ]
     });
+    console.log("Email para admin enviado:", adminEmail);
     
     // Send email to user
+    console.log("Enviando email para usuário:", userEmail);
     const userEmailResponse = await resend.emails.send({
       from: "Checklist 9.0 <onboarding@resend.dev>",
       to: [userEmail],
@@ -76,8 +98,9 @@ const handler = async (req: Request): Promise<Response> => {
         }
       ]
     });
+    console.log("Email para usuário enviado:", userEmailResponse);
 
-    console.log("Emails sent successfully:", adminEmail, userEmailResponse);
+    console.log("Emails enviados com sucesso");
 
     return new Response(JSON.stringify({ 
       success: true, 
@@ -93,7 +116,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error sending report email:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message || "Erro desconhecido" }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

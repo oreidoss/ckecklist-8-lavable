@@ -47,8 +47,10 @@ export const useSectionNavigation = ({
     
     const currentIndex = secoes.findIndex(s => s.id === activeSecao);
     if (currentIndex < secoes.length - 1) {
-      setActiveSecao(secoes[currentIndex + 1].id);
+      const nextSecaoId = secoes[currentIndex + 1].id;
+      setActiveSecao(nextSecaoId);
       window.scrollTo(0, 0);
+      console.log(`Navegação para próxima seção: ${nextSecaoId}`);
     }
   }, [secoes, activeSecao]);
   
@@ -57,8 +59,10 @@ export const useSectionNavigation = ({
     
     const currentIndex = secoes.findIndex(s => s.id === activeSecao);
     if (currentIndex > 0) {
-      setActiveSecao(secoes[currentIndex - 1].id);
+      const prevSecaoId = secoes[currentIndex - 1].id;
+      setActiveSecao(prevSecaoId);
       window.scrollTo(0, 0);
+      console.log(`Navegação para seção anterior: ${prevSecaoId}`);
     }
   }, [secoes, activeSecao]);
   
@@ -86,6 +90,7 @@ export const useSectionNavigation = ({
     // Sempre permite a navegação
     setActiveSecao(secaoId);
     window.scrollTo(0, 0);
+    console.log(`Navegação para seção: ${secaoId}`);
   }, [activeSecao, getPerguntasBySecao, respostas, toast]);
 
   return {
