@@ -6,18 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Database } from '@/integrations/supabase/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Progress } from "@/components/ui/progress";
+import { Auditoria } from '@/lib/types';
 
 type Loja = Database['public']['Tables']['lojas']['Row'];
 type Usuario = Database['public']['Tables']['usuarios']['Row'] & {
   role?: string;
 };
-type Auditoria = Database['public']['Tables']['auditorias']['Row'] & {
+type AuditoriaDB = Database['public']['Tables']['auditorias']['Row'] & {
   loja?: Loja;
   usuario?: Usuario;
+  respostas?: any[];
+  perguntas_count?: number;
 };
 
 interface LojaCardProps {
-  loja: Loja & { auditorias: Auditoria[] };
+  loja: Loja & { auditorias: AuditoriaDB[] };
   onNewAudit: (lojaId: string) => void;
   isCreatingAudit: boolean;
 }
