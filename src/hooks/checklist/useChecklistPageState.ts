@@ -10,6 +10,7 @@ import { useResponseHandlers } from '@/hooks/checklist/useResponseHandlers';
 import { useNavigationHandlers } from '@/hooks/checklist/useNavigationHandlers';
 import { useChecklistEditMode } from '@/hooks/checklist/useChecklistEditMode';
 import { useChecklistEnhancedNavigation } from '@/hooks/checklist/useChecklistEnhancedNavigation';
+import { useSectionNavigation } from '@/hooks/checklist/useSectionNavigation';
 import { useEffect } from 'react';
 
 /**
