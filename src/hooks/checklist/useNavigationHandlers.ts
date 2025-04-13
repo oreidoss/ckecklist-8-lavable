@@ -73,8 +73,15 @@ export const useNavigationHandlers = (
             description: "Respostas salvas e navegando para próxima seção.",
           });
           return true;
+        } else {
+          // Já está na última seção
+          toast({
+            title: "Última seção",
+            description: "Você já está na última seção do checklist.",
+          });
         }
       } else {
+        // Fallback para goToNextSection
         goToNextSection();
       }
       

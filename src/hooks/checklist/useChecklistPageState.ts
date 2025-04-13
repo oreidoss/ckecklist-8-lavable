@@ -1,20 +1,19 @@
 
-import { useEffect } from 'react';
-import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
+import { useToast } from '@/hooks/use-toast';
 import { useChecklistData } from '@/hooks/checklist/useChecklistData';
 import { useChecklist } from '@/hooks/checklist';
-import { useSectionNavigation } from '@/hooks/checklist/useSectionNavigation';
-import { useChecklistHelpers } from '@/hooks/checklist/useChecklistHelpers';
+import { useQuestionHelpers } from '@/hooks/checklist/useQuestionHelpers';
 import { useChecklistProcessor } from '@/hooks/checklist/useChecklistProcessor';
-import { useSectionState } from '@/hooks/checklist/useSectionState';
+import { useActiveSectionState } from '@/hooks/checklist/useActiveSectionState';
+import { useSectionProgress } from '@/hooks/checklist/useSectionProgress';
 import { useResponseHandlers } from '@/hooks/checklist/useResponseHandlers';
 import { useNavigationHandlers } from '@/hooks/checklist/useNavigationHandlers';
-import { useToast } from '@/hooks/use-toast';
 import { useChecklistEditMode } from '@/hooks/checklist/useChecklistEditMode';
 import { useChecklistEnhancedNavigation } from '@/hooks/checklist/useChecklistEnhancedNavigation';
+import { useEffect } from 'react';
 
 /**
- * Hook that combines all the checklist state management for the Checklist page
+ * Main hook that combines all checklist state management functionality
  */
 export const useChecklistPageState = (
   auditoriaId: string | undefined,
@@ -42,6 +41,21 @@ export const useChecklistPageState = (
     refetchAuditoria
   } = useChecklistData(auditoriaId);
   
+  // Manage active section state
+  const {
+    activeSecao,
+    setActiveSecao,
+    isFirstSection,
+    isLastSection
+  } = useActiveSectionState(secoes);
+  
+  // Question helper functions
+  const {
+    getPerguntasBySecao,
+    hasUnansweredQuestions,
+    isLastPerguntaInSection
+  } = useQuestionHelpers(activeSecao, perguntas, {});
+  
   // Checklist state and handlers
   const {
     respostas,
@@ -64,37 +78,14 @@ export const useChecklistPageState = (
     updateCompletedSections
   } = useChecklist(auditoriaId, perguntas, setPontuacaoPorSecao);
   
-  // Section navigation
+  // Section progress tracking
   const {
     incompleteSections,
     setIncompleteSections,
     updateIncompleteSections,
-    goToNextSection: goToNextSectionBase,
-    goToPreviousSection,
-  } = useSectionNavigation({
-    secoes,
-    perguntas,
-    respostas
-  });
-
-  // Section state management
-  const {
-    activeSecao,
-    setActiveSecao,
-    getPerguntasBySecao
-  } = useSectionState(secoes, perguntas, respostas);
-
-  // Helpers for checklist operations
-  const { 
-    hasUnansweredQuestions, 
-    isLastPerguntaInSection,
     getActiveQuestionCount,
     getAnsweredQuestionCount
-  } = useChecklistHelpers(
-    perguntas,
-    respostas,
-    activeSecao
-  );
+  } = useSectionProgress(perguntas, respostas, activeSecao);
 
   // Response handlers
   const {
@@ -118,7 +109,7 @@ export const useChecklistPageState = (
     isEditingActive
   } = useChecklistEditMode(secoes, completedSections);
 
-  // Função personalizada para goToNextSection
+  // Simple function to go to next section
   const goToNextSection = () => {
     if (!secoes || !activeSecao) return;
     
@@ -130,13 +121,26 @@ export const useChecklistPageState = (
       console.log(`Navegado diretamente para próxima seção: ${nextSecaoId}`);
     }
   };
+  
+  // Simple function to go to previous section
+  const goToPreviousSection = () => {
+    if (!secoes || !activeSecao) return;
+    
+    const currentIndex = secoes.findIndex(s => s.id === activeSecao);
+    if (currentIndex > 0) {
+      const prevSecaoId = secoes[currentIndex - 1].id;
+      setActiveSecao(prevSecaoId);
+      window.scrollTo(0, 0);
+      console.log(`Navegado diretamente para seção anterior: ${prevSecaoId}`);
+    }
+  };
 
   // Navigation handlers
   const {
     handleSetActiveSecao,
     saveAndNavigateHome: saveAndNavigateHomeBase,
     saveAllResponses,
-    saveAndNavigateToNextSection
+    saveAndNavigateToNextSection: basicSaveAndNavigateToNextSection
   } = useNavigationHandlers(
     activeSecao,
     setActiveSecao,

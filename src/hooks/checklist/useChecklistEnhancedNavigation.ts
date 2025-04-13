@@ -56,6 +56,12 @@ export const useChecklistEnhancedNavigation = (
             });
             
             return true;
+          } else {
+            // Already at the last section
+            toast({
+              title: "Última seção",
+              description: "Você já está na última seção do checklist.",
+            });
           }
         }
       }
@@ -84,6 +90,11 @@ export const useChecklistEnhancedNavigation = (
       console.log(`Navegando para seção anterior: ${prevSecaoId}`);
       setActiveSecao(prevSecaoId);
       window.scrollTo(0, 0);
+    } else {
+      toast({
+        title: "Primeira seção",
+        description: "Você já está na primeira seção do checklist.",
+      });
     }
   };
   
