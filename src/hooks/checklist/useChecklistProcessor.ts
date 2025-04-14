@@ -12,7 +12,7 @@ export const useChecklistProcessor = (
   secoes: Secao[] | undefined,
   respostas: Record<string, RespostaValor>,
   setRespostas: React.Dispatch<React.SetStateAction<Record<string, RespostaValor>>>,
-  setProgresso: React.Dispatch<React.SetStateAction<number>>>,
+  setProgresso: React.Dispatch<React.SetStateAction<number>>,
   setCompletedSections: React.Dispatch<React.SetStateAction<string[]>>,
   updateIncompleteSections: () => void
 ) => {
