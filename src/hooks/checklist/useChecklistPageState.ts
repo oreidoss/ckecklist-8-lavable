@@ -1,16 +1,16 @@
 
 import { useToast } from '@/hooks/use-toast';
-import { useChecklistData } from '@/hooks/checklist/useChecklistData';
 import { useChecklist } from '@/hooks/checklist';
-import { useQuestionHelpers } from '@/hooks/checklist/useQuestionHelpers';
-import { useChecklistProcessor } from '@/hooks/checklist/useChecklistProcessor';
 import { useActiveSectionState } from '@/hooks/checklist/useActiveSectionState';
 import { useSectionProgress } from '@/hooks/checklist/useSectionProgress';
 import { useResponseHandlers } from '@/hooks/checklist/useResponseHandlers';
 import { useNavigationHandlers } from '@/hooks/checklist/useNavigationHandlers';
 import { useChecklistEditMode } from '@/hooks/checklist/useChecklistEditMode';
 import { useChecklistEnhancedNavigation } from '@/hooks/checklist/useChecklistEnhancedNavigation';
-import { useSectionNavigation } from '@/hooks/checklist/useSectionNavigation';
+import { useQuestionHelpers } from '@/hooks/checklist/useQuestionHelpers';
+import { useChecklistProcessor } from '@/hooks/checklist/useChecklistProcessor';
+import { useResponseProcessor } from '@/hooks/checklist/useResponseProcessor';
+import { useChecklistDataFetching } from '@/hooks/checklist/useChecklistDataFetching';
 import { useEffect } from 'react';
 
 /**
@@ -22,7 +22,7 @@ export const useChecklistPageState = (
 ) => {
   const { toast } = useToast();
   
-  // Fetch all data
+  // Fetch all data - now using the dedicated data fetching hook
   const {
     usuarios,
     auditoria,
@@ -40,7 +40,7 @@ export const useChecklistPageState = (
     setIsEditingSupervisor,
     setIsEditingGerente,
     refetchAuditoria
-  } = useChecklistData(auditoriaId);
+  } = useChecklistDataFetching(auditoriaId);
   
   // Manage active section state
   const {
@@ -52,9 +52,7 @@ export const useChecklistPageState = (
   
   // Question helper functions
   const {
-    getPerguntasBySecao,
-    hasUnansweredQuestions,
-    isLastPerguntaInSection
+    getPerguntasBySecao
   } = useQuestionHelpers(activeSecao, perguntas, {});
   
   // Checklist state and handlers
@@ -88,6 +86,13 @@ export const useChecklistPageState = (
     getAnsweredQuestionCount
   } = useSectionProgress(perguntas, respostas, activeSecao);
 
+  // Response processor - new hook
+  const {
+    hasUnansweredQuestions,
+    isLastPerguntaInSection,
+    processResponses
+  } = useResponseProcessor(respostas, perguntas, secoes, activeSecao);
+
   // Response handlers
   const {
     handleRespostaWrapped,
@@ -119,7 +124,6 @@ export const useChecklistPageState = (
       const nextSecaoId = secoes[currentIndex + 1].id;
       setActiveSecao(nextSecaoId);
       window.scrollTo(0, 0);
-      console.log(`Navegado diretamente para próxima seção: ${nextSecaoId}`);
     }
   };
   
@@ -132,7 +136,6 @@ export const useChecklistPageState = (
       const prevSecaoId = secoes[currentIndex - 1].id;
       setActiveSecao(prevSecaoId);
       window.scrollTo(0, 0);
-      console.log(`Navegado diretamente para seção anterior: ${prevSecaoId}`);
     }
   };
 
@@ -165,27 +168,23 @@ export const useChecklistPageState = (
     setEditingSections,
     completedSections
   );
-
-  // Process responses on initial load
-  const { processExistingResponses } = useChecklistProcessor(
-    respostasExistentes,
-    perguntas,
-    secoes,
-    respostas,
-    setRespostas,
-    setProgresso,
-    setCompletedSections,
-    updateIncompleteSections
-  );
   
   // Toggle edit mode wrapper to pass activeSecao
   const toggleEditMode = () => {
     toggleEditModeBase(activeSecao);
   };
   
+  // Process responses on initial load
   useEffect(() => {
-    processExistingResponses();
-  }, [respostasExistentes, perguntas, secoes]);
+    if (respostasExistentes?.length) {
+      processResponses(
+        respostasExistentes,
+        setRespostas,
+        setProgresso,
+        updateIncompleteSections
+      );
+    }
+  }, [respostasExistentes, perguntas, secoes, processResponses, setRespostas, setProgresso, updateIncompleteSections]);
 
   return {
     // Data
