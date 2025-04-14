@@ -70,6 +70,7 @@ export const useSectionNavigation = ({
     // Se não tiver seção ativa ou estiver na mesma seção, simplesmente ativa
     if (!activeSecao || secaoId === activeSecao) {
       setActiveSecao(secaoId);
+      window.scrollTo(0, 0);
       return;
     }
     
