@@ -97,12 +97,6 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
     }
   };
   
-  // Handler for previous section navigation
-  const handlePreviousSection = () => {
-    console.log("ChecklistContent: handlePreviousSection chamado");
-    goToPreviousSection();
-  };
-  
   return (
     <>
       <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
@@ -146,7 +140,7 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
           <SectionNavigationButtons 
             isFirstSection={isFirstSection}
             isLastSection={isLastSection}
-            handlePreviousSection={handlePreviousSection}
+            handlePreviousSection={goToPreviousSection}
             handleNextSection={handleNextSection}
             hasUnansweredQuestions={hasUnansweredQuestions}
             saveResponses={saveAllResponses}

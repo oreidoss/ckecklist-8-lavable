@@ -22,7 +22,6 @@ export const useNavigationHandlers = (
   const handleSetActiveSecao = (secaoId: string) => {
     console.log(`Navegando para seção: ${secaoId}`);
     setActiveSecao(secaoId);
-    window.scrollTo(0, 0);
   };
 
   /**
