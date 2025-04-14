@@ -30,6 +30,21 @@ export const useRespostaHandler = (
   const handleResposta = async (perguntaId: string, resposta: RespostaValor, respostasExistentes: any[], perguntas?: Pergunta[]) => {
     if (!auditoriaId) {
       console.error("Não é possível salvar resposta sem auditoriaId");
+      toast({
+        title: "Erro",
+        description: "ID da auditoria não encontrado. Tente recarregar a página.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!perguntaId) {
+      console.error("ID da pergunta não fornecido");
+      toast({
+        title: "Erro",
+        description: "ID da pergunta não encontrado. Tente recarregar a página.",
+        variant: "destructive"
+      });
       return;
     }
     
@@ -37,21 +52,25 @@ export const useRespostaHandler = (
     setIsSaving(true);
     
     // Atualiza o estado local ANTES de operações assíncronas para feedback imediato na UI
-    setRespostas(prev => {
-      const updatedRespostas = {
-        ...prev,
-        [perguntaId]: resposta
-      };
-      
-      // Atualiza progresso se tivermos perguntas
-      if (perguntas?.length) {
-        const respostasCount = Object.keys(updatedRespostas).length;
-        const novoProgresso = (respostasCount / perguntas.length) * 100;
-        setProgresso(novoProgresso);
-      }
-      
-      return updatedRespostas;
-    });
+    try {
+      setRespostas(prev => {
+        const updatedRespostas = {
+          ...prev,
+          [perguntaId]: resposta
+        };
+        
+        // Atualiza progresso se tivermos perguntas
+        if (perguntas?.length) {
+          const respostasCount = Object.keys(updatedRespostas).length;
+          const novoProgresso = (respostasCount / perguntas.length) * 100;
+          setProgresso(novoProgresso);
+        }
+        
+        return updatedRespostas;
+      });
+    } catch (updateError) {
+      console.error("Erro ao atualizar estado local:", updateError);
+    }
     
     try {
       // Calcula a pontuação com base no valor da resposta com verificação adicional
@@ -65,6 +84,7 @@ export const useRespostaHandler = (
       const observacao = observacoes[perguntaId] || '';
       const anexo_url = fileUrls[perguntaId] || '';
       
+      // Procurar por uma resposta existente para esta pergunta
       const respostaExistente = respostasExistentes?.find(r => r.pergunta_id === perguntaId);
       
       // Log para depuração
@@ -143,14 +163,26 @@ export const useRespostaHandler = (
         console.log("Pontuações por seção atualizadas após salvar resposta");
       } catch (error) {
         console.error("Erro ao atualizar pontuações de seção após salvar resposta:", error);
+        toast({
+          title: "Aviso",
+          description: "As pontuações por seção não puderam ser atualizadas, mas a resposta foi salva.",
+          variant: "default"
+        });
       }
       
     } catch (error) {
       console.error("Erro ao processar resposta:", error);
       toast({
         title: "Erro",
-        description: "Ocorreu um erro ao processar a resposta.",
+        description: "Ocorreu um erro ao processar a resposta. Tente novamente.",
         variant: "destructive"
+      });
+      
+      // Revert local state on error (optional)
+      setRespostas(prev => {
+        const updated = { ...prev };
+        delete updated[perguntaId]; // Remove the entry that failed to save
+        return updated;
       });
     } finally {
       setIsSaving(false);
