@@ -34,8 +34,17 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao enviar email do relatório');
+        const errorText = await response.text();
+        let errorMessage;
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || 'Erro desconhecido ao enviar email do relatório';
+        } catch (e) {
+          errorMessage = errorText || 'Erro ao processar resposta do servidor';
+        }
+        
+        throw new Error(errorMessage);
       }
       
       toast({
