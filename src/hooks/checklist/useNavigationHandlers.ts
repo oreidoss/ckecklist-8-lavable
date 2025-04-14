@@ -66,16 +66,15 @@ export const useNavigationHandlers = (
           setActiveSecao(nextSecaoId);
           window.scrollTo(0, 0);
           console.log(`Navegado para próxima seção: ${nextSecaoId}`);
-          
-          toast({
-            title: "Navegação bem-sucedida",
-            description: "Respostas salvas e navegando para próxima seção.",
-          });
-          return true;
         }
       } else {
         goToNextSection();
       }
+      
+      toast({
+        title: "Navegação bem-sucedida",
+        description: "Respostas salvas e navegando para próxima seção.",
+      });
       
       return true;
     } catch (error) {

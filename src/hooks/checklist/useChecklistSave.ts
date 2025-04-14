@@ -19,18 +19,11 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
     setIsSendingEmail(true);
     
     try {
-      console.log("Enviando e-mail do relatório com os dados:", {
-        auditoriaId,
-        lojaName,
-        userEmail: user.email,
-        userName: user.nome,
-      });
-      
-      const response = await fetch(`https://plskhjrrwofdroicafnr.supabase.co/functions/v1/send-report-email`, {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-report-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsc2toanJyd29mZHJvaWNhZm5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM1OTI4ODcsImV4cCI6MjA1OTE2ODg4N30.lX-8Vx0xECgVRgpVtELFQUqcrU19KRwvvSR-_ObSZYQ`,
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           auditoriaId,
@@ -41,13 +34,9 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
       });
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: `Erro ${response.status}: ${response.statusText}` }));
-        console.error("Resposta não-ok do servidor:", errorData);
-        throw new Error(errorData.error || `Erro ao enviar email do relatório: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao enviar email do relatório');
       }
-      
-      const responseData = await response.json().catch(() => ({}));
-      console.log("Resposta do servidor:", responseData);
       
       toast({
         title: "Email enviado",
@@ -89,22 +78,13 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
       if (auditoriaError) throw auditoriaError;
       
       // Calculate progress based on respostas
-      const respostasContagem = respostasExistentes ? respostasExistentes.length : 0;
-      const { count: perguntasCount, error: countError } = await supabase
-        .from('perguntas')
-        .select('*', { count: 'exact', head: true });
-      
-      if (countError) throw countError;
-      
-      // Calculate progress percentage
-      const progresso = perguntasCount ? Math.round((respostasContagem / perguntasCount) * 100) : 0;
-      console.log(`Progresso calculado: ${progresso}% (${respostasContagem}/${perguntasCount})`);
+      const progresso = respostasExistentes.length > 0 ? 100 : 0;
       
       const { error } = await supabase
         .from('auditorias')
         .update({ 
           pontuacao_total: pontuacaoTotal,
-          status: progresso >= 100 ? 'concluido' : 'em_andamento'
+          status: progresso === 100 ? 'concluido' : 'em_andamento'
         })
         .eq('id', auditoriaId);
         
@@ -115,9 +95,8 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         description: "Todas as respostas foram salvas com sucesso!",
       });
       
-      // If the audit is complete (progresso >= 100%), send the report via email
-      if (progresso >= 100 && auditoria?.loja?.nome) {
-        console.log("Auditoria concluída, enviando relatório por email");
+      // If the audit is complete (100%), send the report via email
+      if (progresso === 100 && auditoria?.loja?.nome) {
         await sendReportEmail(auditoria.loja.nome);
       }
       
