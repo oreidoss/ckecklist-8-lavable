@@ -1,4 +1,5 @@
 
+
 export interface Usuario {
   id: string;
   nome: string;
@@ -50,3 +51,4 @@ export interface Auditoria {
   respostas?: Resposta[];
   perguntas_count?: number;
 }
+
