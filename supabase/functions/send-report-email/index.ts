@@ -38,7 +38,7 @@ const handler = async (req: Request): Promise<Response> => {
     const today = new Date();
     const formattedDate = today.toLocaleDateString('pt-BR');
     
-    // Send email to admin
+    // Send email to admin (Rogerio)
     const adminEmail = await resend.emails.send({
       from: "Checklist 9.0 <onboarding@resend.dev>",
       to: ["rogerio@oreidoscatalogos.com.br"],
@@ -58,7 +58,7 @@ const handler = async (req: Request): Promise<Response> => {
       ]
     });
     
-    // Send email to user
+    // Send email to user who completed the checklist
     const userEmailResponse = await resend.emails.send({
       from: "Checklist 9.0 <onboarding@resend.dev>",
       to: [userEmail],
