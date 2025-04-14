@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowLeftCircle, ArrowRightCircle, Save, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SectionNavigationButtonsProps {
   isFirstSection: boolean;
@@ -27,13 +26,9 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
   
   const onNextSectionClick = async () => {
-    if (isLastSection || isProcessing || isSaving) return;
-    
-    // Clear any previous errors
-    setActionError(null);
+    if (isLastSection || isProcessing) return;
     
     // Warn if questions are unanswered
     if (hasUnansweredQuestions()) {
@@ -53,24 +48,17 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
         const result = handleNextSection();
         
         if (result instanceof Promise) {
-          const success = await result;
-          console.log(`Navegação para próxima seção ${success ? 'concluída' : 'falhou'}`);
-          
-          if (!success) {
-            setActionError("Não foi possível navegar para a próxima seção. Tente novamente.");
-          }
+          await result;
+          console.log("Navegação para próxima seção concluída");
         } else {
           console.log("Função de navegação executada sem Promise");
         }
       } else {
         console.error("handleNextSection não é uma função");
-        setActionError("Erro na função de navegação. Tente recarregar a página.");
       }
       
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
       console.error("Erro ao navegar para próxima seção:", error);
-      setActionError(`Erro: ${errorMessage}`);
       toast({
         title: "Erro",
         description: "Ocorreu um erro ao salvar as respostas. Tente novamente.",
@@ -82,34 +70,21 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
   };
 
   const onPreviousSectionClick = () => {
+    console.log("Navegando para seção anterior");
     if (isFirstSection || isProcessing || isSaving) return;
     
-    // Clear any previous errors
-    setActionError(null);
-    
-    console.log("Navegando para seção anterior");
-    
-    try {
-      // Chamar função de navegação para a seção anterior
-      if (typeof handlePreviousSection === 'function') {
-        handlePreviousSection();
-        console.log("Navegação para seção anterior concluída");
-      } else {
-        console.error("handlePreviousSection não é uma função");
-        setActionError("Erro na função de navegação. Tente recarregar a página.");
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
-      console.error("Erro ao navegar para seção anterior:", error);
-      setActionError(`Erro: ${errorMessage}`);
+    // Chamar função de navegação para a seção anterior
+    if (typeof handlePreviousSection === 'function') {
+      handlePreviousSection();
+      console.log("Navegação para seção anterior concluída");
+    } else {
+      console.error("handlePreviousSection não é uma função");
     }
   };
 
   const onSaveClick = async () => {
     if (isSaving || !saveResponses) return;
     
-    // Clear any previous errors
-    setActionError(null);
     setIsSaving(true);
     
     try {
@@ -119,9 +94,7 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
         description: "Todas as respostas desta seção foram salvas com sucesso.",
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
       console.error("Erro ao salvar respostas:", error);
-      setActionError(`Erro: ${errorMessage}`);
       toast({
         title: "Erro",
         description: "Ocorreu um erro ao salvar as respostas. Tente novamente.",
@@ -133,67 +106,59 @@ const SectionNavigationButtons: React.FC<SectionNavigationButtonsProps> = ({
   };
   
   return (
-    <div className="space-y-2">
-      <div className="flex gap-1">
+    <div className="flex gap-1">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onPreviousSectionClick}
+        disabled={isFirstSection || isProcessing || isSaving}
+        className="flex-1 text-xs h-8"
+      >
+        <ArrowLeftCircle className="mr-1 h-3 w-3" />
+        Anterior
+      </Button>
+      
+      {showSaveButton && saveResponses && (
         <Button
           variant="outline"
           size="sm"
-          onClick={onPreviousSectionClick}
-          disabled={isFirstSection || isProcessing || isSaving}
+          onClick={onSaveClick}
+          disabled={isSaving}
           className="flex-1 text-xs h-8"
         >
-          <ArrowLeftCircle className="mr-1 h-3 w-3" />
-          Anterior
-        </Button>
-        
-        {showSaveButton && saveResponses && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onSaveClick}
-            disabled={isSaving}
-            className="flex-1 text-xs h-8"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                Salvando...
-              </>
-            ) : (
-              <>
-                <Save className="mr-1 h-3 w-3" />
-                Salvar
-              </>
-            )}
-          </Button>
-        )}
-        
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onNextSectionClick}
-          disabled={isLastSection || isProcessing || isSaving}
-          className="flex-1 text-xs h-8"
-        >
-          {isProcessing ? (
+          {isSaving ? (
             <>
               <Loader2 className="mr-1 h-3 w-3 animate-spin" />
               Salvando...
             </>
           ) : (
             <>
-              Próxima
-              <ArrowRightCircle className="ml-1 h-3 w-3" />
+              <Save className="mr-1 h-3 w-3" />
+              Salvar
             </>
           )}
         </Button>
-      </div>
-      
-      {actionError && (
-        <Alert variant="destructive" className="mt-2 p-2">
-          <AlertDescription className="text-xs">{actionError}</AlertDescription>
-        </Alert>
       )}
+      
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={onNextSectionClick}
+        disabled={isLastSection || isProcessing || isSaving}
+        className="flex-1 text-xs h-8"
+      >
+        {isProcessing ? (
+          <>
+            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+            Salvando...
+          </>
+        ) : (
+          <>
+            Próxima
+            <ArrowRightCircle className="ml-1 h-3 w-3" />
+          </>
+        )}
+      </Button>
     </div>
   );
 };

@@ -56,12 +56,6 @@ export const useChecklistEnhancedNavigation = (
             });
             
             return true;
-          } else {
-            // Already at the last section
-            toast({
-              title: "Última seção",
-              description: "Você já está na última seção do checklist.",
-            });
           }
         }
       }
@@ -77,29 +71,8 @@ export const useChecklistEnhancedNavigation = (
       return false;
     }
   };
-
-  // Enhanced method for previous section navigation
-  const enhancedNavigateToPreviousSection = (): void => {
-    if (!activeSecao || !secoes) return;
-    
-    console.log("Navegando para seção anterior");
-    const currentIndex = secoes.findIndex(s => s.id === activeSecao);
-    
-    if (currentIndex > 0) {
-      const prevSecaoId = secoes[currentIndex - 1].id;
-      console.log(`Navegando para seção anterior: ${prevSecaoId}`);
-      setActiveSecao(prevSecaoId);
-      window.scrollTo(0, 0);
-    } else {
-      toast({
-        title: "Primeira seção",
-        description: "Você já está na primeira seção do checklist.",
-      });
-    }
-  };
   
   return {
-    enhancedSaveAndNavigateToNextSection,
-    enhancedNavigateToPreviousSection
+    enhancedSaveAndNavigateToNextSection
   };
 };

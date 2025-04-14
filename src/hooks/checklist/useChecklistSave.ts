@@ -14,18 +14,7 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
   const { user } = useAuth();
 
   const sendReportEmail = async (lojaName: string) => {
-    if (!auditoriaId || !user) {
-      const errorMsg = !auditoriaId 
-        ? "ID da auditoria não fornecido" 
-        : "Usuário não autenticado";
-      
-      toast({
-        title: "Erro",
-        description: errorMsg,
-        variant: "destructive"
-      });
-      return false;
-    }
+    if (!auditoriaId || !user) return false;
     
     setIsSendingEmail(true);
     
@@ -37,18 +26,11 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         userName: user.nome,
       });
       
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      
-      if (!supabaseUrl || !supabaseKey) {
-        throw new Error("Variáveis de ambiente do Supabase não configuradas corretamente");
-      }
-      
-      const response = await fetch(`${supabaseUrl}/functions/v1/send-report-email`, {
+      const response = await fetch(`https://plskhjrrwofdroicafnr.supabase.co/functions/v1/send-report-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`,
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsc2toanJyd29mZHJvaWNhZm5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM1OTI4ODcsImV4cCI6MjA1OTE2ODg4N30.lX-8Vx0xECgVRgpVtELFQUqcrU19KRwvvSR-_ObSZYQ`,
         },
         body: JSON.stringify({
           auditoriaId,
@@ -59,13 +41,7 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
       });
       
       if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch (e) {
-          errorData = { error: `Erro ${response.status}: ${response.statusText}` };
-        }
-        
+        const errorData = await response.json().catch(() => ({ error: `Erro ${response.status}: ${response.statusText}` }));
         console.error("Resposta não-ok do servidor:", errorData);
         throw new Error(errorData.error || `Erro ao enviar email do relatório: ${response.status}`);
       }
@@ -80,11 +56,10 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
       
       return true;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
       console.error('Error sending report email:', error);
       toast({
         title: "Erro ao enviar email",
-        description: `O relatório foi salvo, mas não foi possível enviar o email: ${errorMessage}`,
+        description: "O relatório foi salvo, mas não foi possível enviar o email.",
         variant: "destructive"
       });
       return false;
@@ -94,42 +69,15 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
   };
 
   const saveAndNavigateHome = async (respostasExistentes: any[]) => {
-    if (isSaving) {
-      toast({
-        title: "Operação em andamento",
-        description: "Aguarde o término do salvamento atual.",
-      });
-      return false;
-    }
-    
-    if (!auditoriaId) {
-      toast({
-        title: "Erro",
-        description: "ID da auditoria não encontrado. Tente recarregar a página.",
-        variant: "destructive"
-      });
-      return false;
-    }
+    if (isSaving || !auditoriaId) return false;
     
     setIsSaving(true);
     
     try {
       let pontuacaoTotal = 0;
-      
-      if (!Array.isArray(respostasExistentes) || respostasExistentes.length === 0) {
-        console.warn("Nenhuma resposta disponível para calcular a pontuação");
-      } else {
-        respostasExistentes.forEach(r => {
-          if (r.pontuacao_obtida !== null && r.pontuacao_obtida !== undefined) {
-            const pontuacao = Number(r.pontuacao_obtida);
-            if (!isNaN(pontuacao)) {
-              pontuacaoTotal += pontuacao;
-            } else {
-              console.warn(`Pontuação inválida para resposta ID ${r.id}: ${r.pontuacao_obtida}`);
-            }
-          }
-        });
-      }
+      respostasExistentes?.forEach(r => {
+        pontuacaoTotal += r.pontuacao_obtida || 0;
+      });
       
       // Get loja information for the email
       const { data: auditoria, error: auditoriaError } = await supabase
@@ -138,24 +86,15 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         .eq('id', auditoriaId)
         .single();
         
-      if (auditoriaError) {
-        throw new Error(`Erro ao carregar dados da auditoria: ${auditoriaError.message}`);
-      }
-      
-      if (!auditoria) {
-        throw new Error("Auditoria não encontrada");
-      }
+      if (auditoriaError) throw auditoriaError;
       
       // Calculate progress based on respostas
       const respostasContagem = respostasExistentes ? respostasExistentes.length : 0;
-      
       const { count: perguntasCount, error: countError } = await supabase
         .from('perguntas')
         .select('*', { count: 'exact', head: true });
       
-      if (countError) {
-        throw new Error(`Erro ao contar perguntas: ${countError.message}`);
-      }
+      if (countError) throw countError;
       
       // Calculate progress percentage
       const progresso = perguntasCount ? Math.round((respostasContagem / perguntasCount) * 100) : 0;
@@ -169,9 +108,7 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         })
         .eq('id', auditoriaId);
         
-      if (error) {
-        throw new Error(`Erro ao atualizar auditoria: ${error.message}`);
-      }
+      if (error) throw error;
       
       toast({
         title: "Respostas salvas",
@@ -186,11 +123,10 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
       
       return true;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
       console.error('Error saving audit:', error);
       toast({
         title: "Erro",
-        description: `Não foi possível salvar as respostas: ${errorMessage}`,
+        description: "Não foi possível salvar as respostas.",
         variant: "destructive"
       });
       return false;

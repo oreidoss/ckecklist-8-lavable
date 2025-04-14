@@ -38,7 +38,7 @@ export const useChecklistEditMode = (secoes: any[] | undefined, completedSection
       return newState;
     });
     
-    // Show toast notification with delay to ensure state is updated
+    // Show toast notification
     setTimeout(() => {
       toast({
         title: editingSections[activeSecao] ? "Modo visualização ativado" : "Modo edição ativado",
@@ -51,7 +51,7 @@ export const useChecklistEditMode = (secoes: any[] | undefined, completedSection
   
   // Check if a section is in edit mode
   const isEditingActive = (activeSecao: string | null) => {
-    return activeSecao ? !!editingSections[activeSecao] : false;
+    return activeSecao ? editingSections[activeSecao] === true : false;
   };
   
   return {

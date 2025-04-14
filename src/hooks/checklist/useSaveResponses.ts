@@ -25,14 +25,8 @@ export const useSaveResponses = (
   // Função para salvar todas as respostas de uma vez (para uso com botão Próximo/Salvar)
   const saveAllResponses = async (): Promise<void> => {
     if (!auditoriaId) {
-      const errorMsg = "Não é possível salvar respostas sem auditoriaId";
-      console.error(errorMsg);
-      toast({
-        title: "Erro",
-        description: "ID da auditoria não encontrado. Tente recarregar a página.",
-        variant: "destructive"
-      });
-      return Promise.reject(errorMsg);
+      console.error("Não é possível salvar respostas sem auditoriaId");
+      return Promise.reject("Auditoria ID não fornecido");
     }
     
     console.log("Iniciando saveAllResponses para auditoria:", auditoriaId);
@@ -54,20 +48,10 @@ export const useSaveResponses = (
         
       if (fetchError) {
         console.error("Erro ao buscar respostas:", fetchError);
-        throw new Error(`Erro ao buscar respostas: ${fetchError.message}`);
+        throw fetchError;
       }
       
-      if (!respostas || respostas.length === 0) {
-        console.warn("Nenhuma resposta encontrada para esta auditoria");
-        toast({
-          title: "Informação",
-          description: "Nenhuma resposta encontrada para esta auditoria.",
-          variant: "default"
-        });
-        return Promise.resolve();
-      }
-      
-      console.log(`Encontradas ${respostas.length} respostas para recálculo de pontuação total`);
+      console.log(`Encontradas ${respostas?.length || 0} respostas para recálculo de pontuação total`);
       
       // Calcular pontuação total manualmente
       let pontuacaoTotal = 0;
@@ -77,7 +61,7 @@ export const useSaveResponses = (
       
       // Usar created_at para determinar a resposta mais recente
       // Ordenar as respostas para garantir que pegamos as mais recentes primeiro
-      const respostasOrdenadas = [...respostas].sort((a, b) => {
+      const respostasOrdenadas = [...(respostas as Resposta[])].sort((a, b) => {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
       
@@ -94,12 +78,8 @@ export const useSaveResponses = (
       uniqueRespostas.forEach(r => {
         if (r.pontuacao_obtida !== null && r.pontuacao_obtida !== undefined) {
           const pontuacao = Number(r.pontuacao_obtida);
-          if (!isNaN(pontuacao)) {
-            pontuacaoTotal += pontuacao;
-            console.log(`Adicionando pontuação ${pontuacao} para pergunta ${r.pergunta_id}, novo total: ${pontuacaoTotal}`);
-          } else {
-            console.warn(`Pontuação inválida para pergunta ${r.pergunta_id}: ${r.pontuacao_obtida}`);
-          }
+          pontuacaoTotal += pontuacao;
+          console.log(`Adicionando pontuação ${pontuacao} para pergunta ${r.pergunta_id}, novo total: ${pontuacaoTotal}`);
         } else if (r.resposta) {
           // Se não tiver pontuacao_obtida, calcular com base na resposta
           const pontuacao = pontuacaoMap[r.resposta] !== undefined ? pontuacaoMap[r.resposta] : 0;
@@ -120,7 +100,7 @@ export const useSaveResponses = (
         
       if (error) {
         console.error("Erro ao atualizar pontuação total:", error);
-        throw new Error(`Erro ao atualizar pontuação total: ${error.message}`);
+        throw error;
       } else {
         console.log("Pontuação total atualizada com sucesso!");
       }
@@ -132,11 +112,10 @@ export const useSaveResponses = (
       
       return Promise.resolve();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
       console.error("Erro ao salvar respostas:", error);
       toast({
         title: "Erro",
-        description: `Ocorreu um erro ao salvar as respostas: ${errorMessage}`,
+        description: "Ocorreu um erro ao salvar as respostas.",
         variant: "destructive"
       });
       return Promise.reject(error);
