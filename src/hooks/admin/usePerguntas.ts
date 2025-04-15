@@ -9,10 +9,11 @@ export function usePerguntas() {
   const { toast } = useToast();
   const [perguntaParaEditar, setPerguntaParaEditar] = useState<Pergunta | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedSecaoId, setSelectedSecaoId] = useState<string | null>(null);
   
   // Fetch perguntas
   const { 
-    data: perguntas = [], 
+    data: allPerguntas = [], 
     isLoading: isLoadingPerguntas,
     refetch: refetchPerguntas
   } = useQuery({
@@ -35,6 +36,11 @@ export function usePerguntas() {
       return data as Pergunta[];
     }
   });
+  
+  // Filter perguntas based on selected secao
+  const perguntas = selectedSecaoId
+    ? allPerguntas.filter(pergunta => pergunta.secao_id === selectedSecaoId)
+    : allPerguntas;
   
   // Fetch secoes
   const {
@@ -153,6 +159,7 @@ export function usePerguntas() {
   
   return {
     perguntas,
+    allPerguntas,
     secoes,
     isLoadingPerguntas,
     isLoadingSecoes,
@@ -162,6 +169,8 @@ export function usePerguntas() {
     setPerguntaParaEditar,
     refetchPerguntas,
     handleAtualizarPergunta,
-    handleExcluirPergunta
+    handleExcluirPergunta,
+    selectedSecaoId,
+    setSelectedSecaoId
   };
 }

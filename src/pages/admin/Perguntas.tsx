@@ -14,6 +14,7 @@ import { PerguntasTable } from '@/components/admin/perguntas/PerguntasTable';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useToast } from '@/hooks/use-toast';
+import { SectionFilter } from '@/components/admin/perguntas/SectionFilter';
 
 const AdminPerguntas: React.FC = () => {
   const { toast } = useToast();
@@ -27,7 +28,9 @@ const AdminPerguntas: React.FC = () => {
     setPerguntaParaEditar,
     refetchPerguntas,
     handleAtualizarPergunta,
-    handleExcluirPergunta
+    handleExcluirPergunta,
+    selectedSecaoId,
+    setSelectedSecaoId
   } = usePerguntas();
   
   const isMobile = useIsMobile();
@@ -39,7 +42,13 @@ const AdminPerguntas: React.FC = () => {
         description="Adicione, edite e remova perguntas do checklist"
       />
       
-      <div className="flex justify-end mb-4">
+      <div className="flex flex-col sm:flex-row justify-between gap-4 mb-4 items-start sm:items-center">
+        <SectionFilter
+          secoes={secoes}
+          selectedSecaoId={selectedSecaoId}
+          onSelectSecao={setSelectedSecaoId}
+        />
+        
         <AddPerguntaDialog 
           secoes={secoes} 
           onPerguntaAdded={refetchPerguntas} 
@@ -51,6 +60,9 @@ const AdminPerguntas: React.FC = () => {
           <CardTitle>Perguntas Cadastradas</CardTitle>
           <CardDescription>
             Lista de todas as perguntas disponíveis para o checklist
+            {selectedSecaoId && secoes.find(s => s.id === selectedSecaoId) && (
+              <> - Filtro: {secoes.find(s => s.id === selectedSecaoId)?.nome}</>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className={isMobile ? "px-2 py-2" : ""}>
