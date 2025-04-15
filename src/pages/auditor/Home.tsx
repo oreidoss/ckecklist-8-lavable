@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,7 +33,32 @@ const Home: React.FC = () => {
         .select('*, auditorias(*, usuario:usuarios(*))');
       
       if (error) throw error;
-      return data as (Loja & { auditorias: Auditoria[] })[];
+      
+      // Enhance the data to ensure all auditorias have the necessary properties
+      const enhancedData = data?.map(loja => {
+        // Ensure each auditoria has a respostas array
+        const enhancedAuditorias = loja.auditorias?.map((auditoria: any) => {
+          // Calculate or set perguntas_count if not present
+          if (!auditoria.perguntas_count) {
+            const respostasLength = auditoria.respostas?.length || 0;
+            auditoria.perguntas_count = respostasLength > 0 ? respostasLength : 20; // Default value if no responses yet
+          }
+          
+          // Ensure respostas is always an array
+          if (!auditoria.respostas) {
+            auditoria.respostas = [];
+          }
+          
+          return auditoria;
+        }) || [];
+        
+        return {
+          ...loja,
+          auditorias: enhancedAuditorias
+        };
+      });
+      
+      return enhancedData as (Loja & { auditorias: Auditoria[] })[];
     }
   });
 

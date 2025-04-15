@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Store, Calendar, User, Plus, Edit } from 'lucide-react';
@@ -32,18 +33,19 @@ export const LojaCard: React.FC<LojaCardProps> = ({
   const hasOngoingAudit = latestAudit && latestAudit.status !== 'concluido';
   const isCompleted = latestAudit && latestAudit.status === 'concluido';
   
-  // Calculate progress percentage
+  // Calculate progress percentage - improved version
   const calculateProgress = () => {
     if (!latestAudit) return 0;
     
     // If there's perguntas_count, use it as the denominator
-    if (latestAudit.perguntas_count) {
+    if (latestAudit.perguntas_count && latestAudit.perguntas_count > 0) {
       const answeredCount = latestAudit.respostas?.length || 0;
       return Math.min(100, Math.round((answeredCount / latestAudit.perguntas_count) * 100));
     }
     
-    // If no perguntas_count available, use the total responses
-    return (latestAudit.respostas?.length || 0) > 0 ? 100 : 0;
+    // If no perguntas_count available or it's zero, check if we have any responses
+    return latestAudit.respostas && latestAudit.respostas.length > 0 ? 
+      Math.min(100, latestAudit.respostas.length * 5) : 0; // Fallback to showing some progress based on response count
   };
   
   const progressPercentage = calculateProgress();

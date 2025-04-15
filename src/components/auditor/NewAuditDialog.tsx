@@ -173,8 +173,8 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
             </Label>
             <div className="col-span-3">
               <Select 
-                value={selectedSupervisor || ""} 
-                onValueChange={setSelectedSupervisor}
+                value={selectedSupervisor || ""}
+                onValueChange={value => setSelectedSupervisor(value)}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder={defaultSupervisorName} />
@@ -209,8 +209,8 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
             </Label>
             <div className="col-span-3">
               <Select 
-                value={selectedGerente || ""} 
-                onValueChange={setSelectedGerente}
+                value={selectedGerente || ""}
+                onValueChange={value => setSelectedGerente(value)}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder={defaultGerenteName} />
