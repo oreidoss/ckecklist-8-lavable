@@ -29,14 +29,14 @@ export function SectionFilter({
         <Label htmlFor="secao-filter" className="text-sm">Filtrar por seção:</Label>
       </div>
       <Select
-        value={selectedSecaoId || ''}
-        onValueChange={(value) => onSelectSecao(value === '' ? null : value)}
+        value={selectedSecaoId || 'all'}
+        onValueChange={(value) => onSelectSecao(value === 'all' ? null : value)}
       >
         <SelectTrigger id="secao-filter" className="w-[200px]">
           <SelectValue placeholder="Todas as seções" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Todas as seções</SelectItem>
+          <SelectItem value="all">Todas as seções</SelectItem>
           {secoes.map((secao) => (
             <SelectItem key={secao.id} value={secao.id}>
               {secao.nome}
