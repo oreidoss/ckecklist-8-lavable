@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,15 +5,12 @@ import { Database } from '@/integrations/supabase/types';
 import { LojaCard } from '@/components/auditor/LojaCard';
 import { NewAuditDialog } from '@/components/auditor/NewAuditDialog';
 import { useToast } from '@/hooks/use-toast';
+import { Auditoria } from '@/lib/types';
 
 // Types for our Supabase data
 type Loja = Database['public']['Tables']['lojas']['Row'];
 type Usuario = Database['public']['Tables']['usuarios']['Row'] & {
   role?: string;
-};
-type Auditoria = Database['public']['Tables']['auditorias']['Row'] & {
-  loja?: Loja;
-  usuario?: Usuario;
 };
 
 const Home: React.FC = () => {
@@ -85,7 +81,7 @@ const Home: React.FC = () => {
         toast({
           title: "Atenção",
           description: "Não foram encontrados usuários com função de supervisor ou gerente. Considere criar usuários com estas funções na área de Administração de Usuários.",
-          variant: "destructive", // Changed from "warning" to "destructive" as the available options are "default" or "destructive"
+          variant: "destructive",
           duration: 6000
         });
       } else {

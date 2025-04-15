@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Store, Calendar, User, Plus, Edit } from 'lucide-react';
@@ -6,19 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Database } from '@/integrations/supabase/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Progress } from "@/components/ui/progress";
-import { Auditoria } from '@/lib/types';  // Explicitly import Auditoria type
+import { Auditoria } from '@/lib/types';
 
 type Loja = Database['public']['Tables']['lojas']['Row'];
 type Usuario = Database['public']['Tables']['usuarios']['Row'] & {
   role?: string;
 };
-type AuditoriaWithRelations = Auditoria & {
-  loja?: Loja;
-  usuario?: Usuario;
-};
 
 interface LojaCardProps {
-  loja: Loja & { auditorias: AuditoriaWithRelations[] };
+  loja: Loja & { auditorias: Auditoria[] };
   onNewAudit: (lojaId: string) => void;
   isCreatingAudit: boolean;
 }
