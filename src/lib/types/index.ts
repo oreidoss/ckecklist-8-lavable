@@ -47,6 +47,6 @@ export interface Auditoria {
   gerente?: string;
   loja?: Loja;
   usuario?: Usuario;
-  respostas?: Resposta[];  // Added this line
-  perguntas_count?: number;  // Added this line
+  respostas?: Resposta[];  // Added this property
+  perguntas_count?: number;  // Added this property
 }
