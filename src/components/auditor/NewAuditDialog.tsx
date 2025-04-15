@@ -48,7 +48,7 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
   const [selectedSupervisor, setSelectedSupervisor] = useState<string | null>(null);
   const [selectedGerente, setSelectedGerente] = useState<string | null>(null);
   
-  // Adicionamos logs para depuração
+  // Add logs for debugging
   console.log("Usuarios disponíveis:", usuarios);
   
   // Default supervisor and gerente names
@@ -76,7 +76,7 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
   // Reset selections when dialog opens
   useEffect(() => {
     if (open) {
-      // Try to find Roberto Alves and Patricia in the users list
+      // Try to find default users in the users list
       const robertoUser = usuarios?.find(u => u.nome === defaultSupervisorName);
       const patriciaUser = usuarios?.find(u => u.nome === defaultGerenteName);
       
@@ -94,16 +94,16 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
     setIsCreatingAudit(true);
 
     try {
-      // Get supervisor name from selected ID
+      // Get supervisor and manager names from selected IDs
       const supervisorUser = usuarios?.find(u => u.id === selectedSupervisor);
       const gerenteUser = usuarios?.find(u => u.id === selectedGerente);
       
       console.log("Usuario supervisor selecionado:", supervisorUser);
       console.log("Usuario gerente selecionado:", gerenteUser);
       
-      // Use the default supervisor and gerente names if possible
-      const supervisorNome = supervisorUser ? supervisorUser.nome : defaultSupervisorName;
-      const gerenteNome = gerenteUser ? gerenteUser.nome : defaultGerenteName;
+      // Use the found names or default names
+      const supervisorNome = supervisorUser?.nome || defaultSupervisorName;
+      const gerenteNome = gerenteUser?.nome || defaultGerenteName;
       
       console.log("Nome supervisor a ser salvo:", supervisorNome);
       console.log("Nome gerente a ser salvo:", gerenteNome);
@@ -148,10 +148,8 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
     
     // Use any supervisor, or a default name if none exists
     const supervisorId = selectedSupervisor || (usuarios?.length ? usuarios[0].id : null);
-    const supervisorNome = supervisorId ? 
-      (usuarios?.find(u => u.id === supervisorId)?.nome || defaultSupervisorName) : 
-      defaultSupervisorName;
-
+    
+    // Use default supervisor name if no supervisor selected
     setSelectedSupervisor(supervisorId);
     createNewAudit();
   };
@@ -187,7 +185,6 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
                       </SelectItem>
                     ))
                   ) : usuarios?.length ? (
-                    // If no specific supervisors found, show all users as options
                     usuarios.map(usuario => (
                       <SelectItem key={usuario.id} value={usuario.id}>
                         {usuario.nome} {!usuario.role && "(sem função definida)"}
@@ -215,7 +212,7 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder={defaultGerenteName} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   {gerentes.length > 0 ? (
                     gerentes.map(gerente => (
                       <SelectItem key={gerente.id} value={gerente.id}>
@@ -223,7 +220,6 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
                       </SelectItem>
                     ))
                   ) : usuarios?.length ? (
-                    // If no specific gerentes found, show all users as options
                     usuarios.map(usuario => (
                       <SelectItem key={usuario.id} value={usuario.id}>
                         {usuario.nome} {!usuario.role && "(sem função definida)"}

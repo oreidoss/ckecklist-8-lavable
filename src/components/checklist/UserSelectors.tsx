@@ -157,7 +157,7 @@ const UserSelectorsComponent: React.FC<UserSelectorsProps> = (props) => {
               <SelectTrigger className="w-[200px] h-8">
                 <SelectValue placeholder="Selecione um supervisor" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 {supervisores.length > 0 ? (
                   supervisores.map((supervisor) => (
                     <SelectItem key={supervisor.id} value={supervisor.nome}>
@@ -207,7 +207,7 @@ const UserSelectorsComponent: React.FC<UserSelectorsProps> = (props) => {
               <SelectTrigger className="w-[200px] h-8">
                 <SelectValue placeholder="Selecione um gerente" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 {gerentes.length > 0 ? (
                   gerentes.map((gerente) => (
                     <SelectItem key={gerente.id} value={gerente.nome}>

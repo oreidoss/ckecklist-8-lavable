@@ -1,8 +1,8 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { Database } from '@/integrations/supabase/types';
-import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 
 type Loja = Database['public']['Tables']['lojas']['Row'];
 type Usuario = Database['public']['Tables']['usuarios']['Row'];
@@ -15,6 +15,7 @@ type Auditoria = Database['public']['Tables']['auditorias']['Row'] & {
 };
 
 export const useChecklistData = (auditoriaId: string | undefined) => {
+  // Default values used when creating a new audit
   const [supervisor, setSupervisor] = useState('Roberto Alves');
   const [gerente, setGerente] = useState('Patricia');
   const [isEditingSupervisor, setIsEditingSupervisor] = useState(false);
@@ -59,12 +60,11 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
       console.log("Fetched auditoria:", data);
       return data as Auditoria;
     },
-    meta: {
-      onSuccess: (data) => {
-        if (data) {
-          setSupervisor(data.supervisor || 'Roberto Alves');
-          setGerente(data.gerente || 'Patricia');
-        }
+    onSuccess: (data) => {
+      if (data) {
+        console.log("Setting supervisor and gerente from fetched data:", data.supervisor, data.gerente);
+        if (data.supervisor) setSupervisor(data.supervisor);
+        if (data.gerente) setGerente(data.gerente);
       }
     }
   });
@@ -117,6 +117,14 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
     refetchOnWindowFocus: false,
     staleTime: 60000 // 1 minute
   });
+
+  // Update supervisor and gerente whenever auditoria data changes
+  useEffect(() => {
+    if (auditoria) {
+      if (auditoria.supervisor) setSupervisor(auditoria.supervisor);
+      if (auditoria.gerente) setGerente(auditoria.gerente);
+    }
+  }, [auditoria]);
 
   const isLoading = loadingAuditoria || loadingUsuarios || loadingSecoes || loadingPerguntas || loadingRespostas;
 
