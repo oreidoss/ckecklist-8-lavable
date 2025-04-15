@@ -6,18 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Database } from '@/integrations/supabase/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Progress } from "@/components/ui/progress";
+import { Auditoria } from '@/lib/types';  // Explicitly import Auditoria type
 
 type Loja = Database['public']['Tables']['lojas']['Row'];
 type Usuario = Database['public']['Tables']['usuarios']['Row'] & {
   role?: string;
 };
-type Auditoria = Database['public']['Tables']['auditorias']['Row'] & {
+type AuditoriaWithRelations = Auditoria & {
   loja?: Loja;
   usuario?: Usuario;
 };
 
 interface LojaCardProps {
-  loja: Loja & { auditorias: Auditoria[] };
+  loja: Loja & { auditorias: AuditoriaWithRelations[] };
   onNewAudit: (lojaId: string) => void;
   isCreatingAudit: boolean;
 }
@@ -38,16 +39,16 @@ export const LojaCard: React.FC<LojaCardProps> = ({
   
   // Calculate progress percentage
   const calculateProgress = () => {
-    if (!latestAudit || !latestAudit.respostas) return 0;
+    if (!latestAudit) return 0;
     
     // If there's perguntas_count, use it as the denominator
     if (latestAudit.perguntas_count) {
-      const answeredCount = latestAudit.respostas.length;
+      const answeredCount = latestAudit.respostas?.length || 0;
       return Math.min(100, Math.round((answeredCount / latestAudit.perguntas_count) * 100));
     }
     
     // If no perguntas_count available, use the total responses
-    return latestAudit.respostas.length > 0 ? 100 : 0;
+    return (latestAudit.respostas?.length || 0) > 0 ? 100 : 0;
   };
   
   const progressPercentage = calculateProgress();
