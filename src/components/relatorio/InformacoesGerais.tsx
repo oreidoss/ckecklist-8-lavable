@@ -16,6 +16,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
 
 interface InformacoesGeraisProps {
   auditoria: any;
@@ -30,7 +31,7 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
   const totalRespondidas = auditoria.respostas?.length || 0;
   
   // Use the actual total questions as the meta total, not the number of responses
-  const metaTotal = totalPerguntas;
+  const metaTotal = totalPerguntas > 0 ? totalPerguntas : 1; // Evitar divisão por zero
   
   // Formato da pontuação atual
   const pontuacaoAtual = auditoria.pontuacao_total !== null && auditoria.pontuacao_total !== undefined 
@@ -38,9 +39,18 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
     : '0';
   
   // Calcular o progresso percentual
-  const progressoPercentual = auditoria.pontuacao_total && metaTotal 
-    ? Math.round((auditoria.pontuacao_total / metaTotal) * 100)
-    : 0;
+  let progressoPercentual = 0;
+  
+  if (totalPerguntas > 0) {
+    // Se temos o total de perguntas, calcular com base em respostas respondidas
+    progressoPercentual = Math.round((totalRespondidas / totalPerguntas) * 100);
+  } else if (auditoria.pontuacao_total && metaTotal) {
+    // Ou usar a pontuação como alternativa
+    progressoPercentual = Math.round((auditoria.pontuacao_total / metaTotal) * 100);
+  }
+  
+  // Garantir que o progresso seja um valor válido entre 0 e 100
+  progressoPercentual = Math.max(0, Math.min(100, progressoPercentual));
   
   // Pontuação restante para alcançar a meta
   const pontuacaoRestante = auditoria.pontuacao_total !== null && auditoria.pontuacao_total !== undefined 
@@ -159,6 +169,11 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
                 </Tooltip>
               </TooltipProvider>
             </div>
+            <Progress
+              value={progressoPercentual}
+              className="h-2 mt-2"
+              indicatorClassName={progressoPercentual > 0 ? "bg-primary" : ""}
+            />
           </div>
         </div>
         

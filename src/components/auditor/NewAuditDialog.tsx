@@ -48,6 +48,9 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
   const [selectedSupervisor, setSelectedSupervisor] = useState<string | null>(null);
   const [selectedGerente, setSelectedGerente] = useState<string | null>(null);
   
+  // Adicionamos logs para depuração
+  console.log("Usuarios disponíveis:", usuarios);
+  
   // Default supervisor and gerente names
   const defaultSupervisorName = "Roberto Alves";
   const defaultGerenteName = "Patricia";
@@ -66,17 +69,23 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
     u.email?.toLowerCase().includes('gerente') || 
     u.nome?.toLowerCase().includes('gerente')
   ) || [];
+  
+  console.log("Supervisores filtrados:", supervisores);
+  console.log("Gerentes filtrados:", gerentes);
 
   // Reset selections when dialog opens
   useEffect(() => {
     if (open) {
       // Try to find Roberto Alves and Patricia in the users list
-      const robertoId = usuarios?.find(u => u.nome === defaultSupervisorName)?.id || null;
-      const patriciaId = usuarios?.find(u => u.nome === defaultGerenteName)?.id || null;
+      const robertoUser = usuarios?.find(u => u.nome === defaultSupervisorName);
+      const patriciaUser = usuarios?.find(u => u.nome === defaultGerenteName);
+      
+      console.log("Usuario Roberto encontrado:", robertoUser);
+      console.log("Usuario Patricia encontrado:", patriciaUser);
       
       // Set the selected IDs, or first available, or null
-      setSelectedSupervisor(robertoId || (supervisores.length > 0 ? supervisores[0].id : null));
-      setSelectedGerente(patriciaId || (gerentes.length > 0 ? gerentes[0].id : null));
+      setSelectedSupervisor(robertoUser?.id || (supervisores.length > 0 ? supervisores[0].id : null));
+      setSelectedGerente(patriciaUser?.id || (gerentes.length > 0 ? gerentes[0].id : null));
     }
   }, [open, supervisores, gerentes, usuarios]);
 
@@ -85,14 +94,19 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
     setIsCreatingAudit(true);
 
     try {
-      // Use the default supervisor and gerente names if possible
-      const supervisorNome = selectedSupervisor ? 
-        (usuarios?.find(u => u.id === selectedSupervisor)?.nome || defaultSupervisorName) : 
-        defaultSupervisorName;
+      // Get supervisor name from selected ID
+      const supervisorUser = usuarios?.find(u => u.id === selectedSupervisor);
+      const gerenteUser = usuarios?.find(u => u.id === selectedGerente);
       
-      const gerenteNome = selectedGerente ? 
-        (usuarios?.find(u => u.id === selectedGerente)?.nome || defaultGerenteName) : 
-        defaultGerenteName;
+      console.log("Usuario supervisor selecionado:", supervisorUser);
+      console.log("Usuario gerente selecionado:", gerenteUser);
+      
+      // Use the default supervisor and gerente names if possible
+      const supervisorNome = supervisorUser ? supervisorUser.nome : defaultSupervisorName;
+      const gerenteNome = gerenteUser ? gerenteUser.nome : defaultGerenteName;
+      
+      console.log("Nome supervisor a ser salvo:", supervisorNome);
+      console.log("Nome gerente a ser salvo:", gerenteNome);
       
       const { data, error } = await supabase
         .from('auditorias')

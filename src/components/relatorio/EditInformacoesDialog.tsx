@@ -41,6 +41,12 @@ export const EditInformacoesDialog: React.FC<EditInformacoesDialogProps> = ({
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = React.useState(false);
 
+  // Adicionar logs para depuração
+  console.log("Auditoria atual:", auditoria);
+  console.log("Usuários disponíveis:", usuarios);
+  console.log("Supervisores passados como prop:", propSupervisores);
+  console.log("Gerentes passados como prop:", propGerentes);
+
   // Filter users by role or name/email if not provided as props
   const supervisores = propSupervisores.length > 0 ? propSupervisores : 
     usuarios.filter(u => 
@@ -57,6 +63,9 @@ export const EditInformacoesDialog: React.FC<EditInformacoesDialogProps> = ({
       u.email?.toLowerCase().includes('gerente') || 
       u.nome?.toLowerCase().includes('gerente')
     );
+  
+  console.log("Supervisores filtrados:", supervisores);
+  console.log("Gerentes filtrados:", gerentes);
 
   // Create a form with react-hook-form
   const form = useForm({
@@ -68,6 +77,11 @@ export const EditInformacoesDialog: React.FC<EditInformacoesDialogProps> = ({
   
   // Update form values when auditoria changes
   React.useEffect(() => {
+    console.log("Atualizando formulário com:", {
+      gerente: auditoria.gerente || '',
+      supervisor: auditoria.supervisor || ''
+    });
+    
     form.reset({
       gerente: auditoria.gerente || '',
       supervisor: auditoria.supervisor || ''
@@ -77,6 +91,8 @@ export const EditInformacoesDialog: React.FC<EditInformacoesDialogProps> = ({
   // Update manager and supervisor information
   const atualizarInformacoes = async (values: { gerente: string; supervisor: string }) => {
     if (!auditoria) return;
+    
+    console.log("Valores a serem salvos:", values);
     
     try {
       const { error } = await supabase
