@@ -13,6 +13,9 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
   const { toast } = useToast();
   const { user } = useAuth();
 
+  /**
+   * Send report via email
+   */
   const sendReportEmail = async (lojaName: string) => {
     if (!auditoriaId || !user) return false;
     
@@ -20,11 +23,20 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
     
     try {
       console.log("Starting email send process...");
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-report-email`, {
+      
+      // Ensure we have the proper environment variables
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Supabase configuration is missing');
+      }
+      
+      const response = await fetch(`${supabaseUrl}/functions/v1/send-report-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${supabaseKey}`,
         },
         body: JSON.stringify({
           auditoriaId,
@@ -74,6 +86,9 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
     }
   };
 
+  /**
+   * Save checklist data and navigate home
+   */
   const saveAndNavigateHome = async (respostasExistentes: any[]) => {
     if (isSaving || !auditoriaId) return false;
     

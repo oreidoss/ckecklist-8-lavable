@@ -8,14 +8,17 @@ interface UseSectionNavigationProps {
   secoes: Secao[] | undefined;
   perguntas: Pergunta[] | undefined;
   respostas: Record<string, RespostaValor>;
+  activeSecao: string | null;
+  setActiveSecao: (secaoId: string) => void;
 }
 
 export const useSectionNavigation = ({
   secoes,
   perguntas,
-  respostas
+  respostas,
+  activeSecao,
+  setActiveSecao
 }: UseSectionNavigationProps) => {
-  const [activeSecao, setActiveSecao] = useState<string | null>(null);
   const [incompleteSections, setIncompleteSections] = useState<string[]>([]);
   const { toast } = useToast();
 
@@ -50,7 +53,7 @@ export const useSectionNavigation = ({
       setActiveSecao(secoes[currentIndex + 1].id);
       window.scrollTo(0, 0);
     }
-  }, [secoes, activeSecao]);
+  }, [secoes, activeSecao, setActiveSecao]);
   
   const goToPreviousSection = useCallback(() => {
     if (!secoes || !activeSecao) return;
@@ -60,7 +63,7 @@ export const useSectionNavigation = ({
       setActiveSecao(secoes[currentIndex - 1].id);
       window.scrollTo(0, 0);
     }
-  }, [secoes, activeSecao]);
+  }, [secoes, activeSecao, setActiveSecao]);
   
   const handleSetActiveSecao = useCallback((secaoId: string) => {
     // Se não tiver seção ativa ou estiver na mesma seção, simplesmente ativa
@@ -86,11 +89,9 @@ export const useSectionNavigation = ({
     // Sempre permite a navegação
     setActiveSecao(secaoId);
     window.scrollTo(0, 0);
-  }, [activeSecao, getPerguntasBySecao, respostas, toast]);
+  }, [activeSecao, getPerguntasBySecao, respostas, toast, setActiveSecao]);
 
   return {
-    activeSecao,
-    setActiveSecao,
     incompleteSections,
     setIncompleteSections,
     getPerguntasBySecao,
