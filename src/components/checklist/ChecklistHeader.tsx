@@ -52,6 +52,21 @@ const ChecklistHeader: React.FC<ChecklistHeaderProps> = ({
   const displaySupervisor = supervisor || "Roberto Alves";
   const displayGerente = gerente || "Patricia";
 
+  // Filter usuarios by role if available
+  const supervisores = usuarios?.filter(u => 
+    u.role === 'supervisor' || 
+    u.funcao === 'supervisor' || 
+    u.email?.toLowerCase().includes('supervisor') || 
+    u.nome?.toLowerCase().includes('supervisor')
+  );
+
+  const gerentes = usuarios?.filter(u => 
+    u.role === 'gerente' || 
+    u.funcao === 'gerente' || 
+    u.email?.toLowerCase().includes('gerente') || 
+    u.nome?.toLowerCase().includes('gerente')
+  );
+
   return (
     <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
@@ -88,13 +103,21 @@ const ChecklistHeader: React.FC<ChecklistHeaderProps> = ({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Roberto Alves">Roberto Alves</SelectItem>
-                      {usuarios?.map((usuario) => (
-                        usuario.nome !== "Roberto Alves" && (
-                          <SelectItem key={usuario.id} value={usuario.nome}>
-                            {usuario.nome}
-                          </SelectItem>
-                        )
-                      ))}
+                      {supervisores?.length > 0 
+                        ? supervisores.map((usuario) => (
+                            usuario.nome !== "Roberto Alves" && (
+                              <SelectItem key={usuario.id} value={usuario.nome}>
+                                {usuario.nome}
+                              </SelectItem>
+                            )
+                          ))
+                        : usuarios?.map((usuario) => (
+                            usuario.nome !== "Roberto Alves" && (
+                              <SelectItem key={usuario.id} value={usuario.nome}>
+                                {usuario.nome}
+                              </SelectItem>
+                            )
+                          ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -146,13 +169,21 @@ const ChecklistHeader: React.FC<ChecklistHeaderProps> = ({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Patricia">Patricia</SelectItem>
-                      {usuarios?.map((usuario) => (
-                        usuario.nome !== "Patricia" && (
-                          <SelectItem key={usuario.id} value={usuario.nome}>
-                            {usuario.nome}
-                          </SelectItem>
-                        )
-                      ))}
+                      {gerentes?.length > 0 
+                        ? gerentes.map((usuario) => (
+                            usuario.nome !== "Patricia" && (
+                              <SelectItem key={usuario.id} value={usuario.nome}>
+                                {usuario.nome}
+                              </SelectItem>
+                            )
+                          ))
+                        : usuarios?.map((usuario) => (
+                            usuario.nome !== "Patricia" && (
+                              <SelectItem key={usuario.id} value={usuario.nome}>
+                                {usuario.nome}
+                              </SelectItem>
+                            )
+                          ))}
                     </SelectContent>
                   </Select>
                 </div>
