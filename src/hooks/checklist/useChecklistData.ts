@@ -60,11 +60,14 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
       console.log("Fetched auditoria:", data);
       return data as Auditoria;
     },
-    onSuccess: (data) => {
-      if (data) {
-        console.log("Setting supervisor and gerente from fetched data:", data.supervisor, data.gerente);
-        if (data.supervisor) setSupervisor(data.supervisor);
-        if (data.gerente) setGerente(data.gerente);
+    // Replace direct onSuccess with meta.onSuccess
+    meta: {
+      onSuccess: (data: Auditoria) => {
+        if (data) {
+          console.log("Setting supervisor and gerente from fetched data:", data.supervisor, data.gerente);
+          if (data.supervisor) setSupervisor(data.supervisor);
+          if (data.gerente) setGerente(data.gerente);
+        }
       }
     }
   });
