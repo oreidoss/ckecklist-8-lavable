@@ -15,9 +15,9 @@ type Auditoria = Database['public']['Tables']['auditorias']['Row'] & {
 };
 
 export const useChecklistData = (auditoriaId: string | undefined) => {
-  // Default values used when creating a new audit
-  const [supervisor, setSupervisor] = useState('Roberto Alves');
-  const [gerente, setGerente] = useState('Patricia');
+  // Initialize with empty strings instead of default names
+  const [supervisor, setSupervisor] = useState('');
+  const [gerente, setGerente] = useState('');
   const [isEditingSupervisor, setIsEditingSupervisor] = useState(false);
   const [isEditingGerente, setIsEditingGerente] = useState(false);
   const [currentDate, setCurrentDate] = useState<string>('');
@@ -60,7 +60,6 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
       console.log("Fetched auditoria:", data);
       return data as Auditoria;
     },
-    // Replace direct onSuccess with meta.onSuccess
     meta: {
       onSuccess: (data: Auditoria) => {
         if (data) {

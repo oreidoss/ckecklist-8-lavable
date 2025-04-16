@@ -48,9 +48,9 @@ const ChecklistHeader: React.FC<ChecklistHeaderProps> = ({
   handleSaveSupervisor,
   handleSaveGerente
 }) => {
-  // Default values in case they're not set
-  const displaySupervisor = supervisor || "Roberto Alves";
-  const displayGerente = gerente || "Patricia";
+  // Display the current values without hardcoded defaults
+  const displaySupervisor = supervisor || "";
+  const displayGerente = gerente || "";
 
   // Filter usuarios by role if available
   const supervisores = usuarios?.filter(u => 
@@ -95,28 +95,23 @@ const ChecklistHeader: React.FC<ChecklistHeaderProps> = ({
               <div className="flex items-center gap-2">
                 <div className="flex-1">
                   <Select 
-                    value={supervisor || "Roberto Alves"} 
+                    value={supervisor} 
                     onValueChange={(value) => setSupervisor(value)}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Selecione um supervisor" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Roberto Alves">Roberto Alves</SelectItem>
+                    <SelectContent className="bg-white">
                       {supervisores?.length > 0 
                         ? supervisores.map((usuario) => (
-                            usuario.nome !== "Roberto Alves" && (
-                              <SelectItem key={usuario.id} value={usuario.nome}>
-                                {usuario.nome}
-                              </SelectItem>
-                            )
+                            <SelectItem key={usuario.id} value={usuario.nome}>
+                              {usuario.nome}
+                            </SelectItem>
                           ))
                         : usuarios?.map((usuario) => (
-                            usuario.nome !== "Roberto Alves" && (
-                              <SelectItem key={usuario.id} value={usuario.nome}>
-                                {usuario.nome}
-                              </SelectItem>
-                            )
+                            <SelectItem key={usuario.id} value={usuario.nome}>
+                              {usuario.nome}
+                            </SelectItem>
                           ))}
                     </SelectContent>
                   </Select>
@@ -140,7 +135,7 @@ const ChecklistHeader: React.FC<ChecklistHeaderProps> = ({
               <div className="flex items-center gap-2">
                 <div className="flex-1 p-3 border rounded-md bg-gray-50 flex items-center">
                   <UserRound className="h-5 w-5 text-gray-400 mr-2" />
-                  {displaySupervisor}
+                  {displaySupervisor || "Nenhum supervisor selecionado"}
                 </div>
                 <Button 
                   onClick={() => setIsEditingSupervisor(true)}
@@ -161,28 +156,23 @@ const ChecklistHeader: React.FC<ChecklistHeaderProps> = ({
               <div className="flex items-center gap-2">
                 <div className="flex-1">
                   <Select 
-                    value={gerente || "Patricia"} 
+                    value={gerente} 
                     onValueChange={(value) => setGerente(value)}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Selecione um gerente" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Patricia">Patricia</SelectItem>
+                    <SelectContent className="bg-white">
                       {gerentes?.length > 0 
                         ? gerentes.map((usuario) => (
-                            usuario.nome !== "Patricia" && (
-                              <SelectItem key={usuario.id} value={usuario.nome}>
-                                {usuario.nome}
-                              </SelectItem>
-                            )
+                            <SelectItem key={usuario.id} value={usuario.nome}>
+                              {usuario.nome}
+                            </SelectItem>
                           ))
                         : usuarios?.map((usuario) => (
-                            usuario.nome !== "Patricia" && (
-                              <SelectItem key={usuario.id} value={usuario.nome}>
-                                {usuario.nome}
-                              </SelectItem>
-                            )
+                            <SelectItem key={usuario.id} value={usuario.nome}>
+                              {usuario.nome}
+                            </SelectItem>
                           ))}
                     </SelectContent>
                   </Select>
@@ -206,7 +196,7 @@ const ChecklistHeader: React.FC<ChecklistHeaderProps> = ({
               <div className="flex items-center gap-2">
                 <div className="flex-1 p-3 border rounded-md bg-gray-50 flex items-center">
                   <UserRound className="h-5 w-5 text-gray-400 mr-2" />
-                  {displayGerente}
+                  {displayGerente || "Nenhum gerente selecionado"}
                 </div>
                 <Button 
                   onClick={() => setIsEditingGerente(true)}

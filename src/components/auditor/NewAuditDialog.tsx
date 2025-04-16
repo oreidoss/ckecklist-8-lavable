@@ -51,10 +51,6 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
   // Add logs for debugging
   console.log("Usuarios disponíveis:", usuarios);
   
-  // Default supervisor and gerente names
-  const defaultSupervisorName = "Roberto Alves";
-  const defaultGerenteName = "Patricia";
-
   // Improved filtering logic to find supervisors and managers
   const supervisores = usuarios?.filter(u => 
     u.role === 'supervisor' || 
@@ -76,18 +72,11 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
   // Reset selections when dialog opens
   useEffect(() => {
     if (open) {
-      // Try to find default users in the users list
-      const robertoUser = usuarios?.find(u => u.nome === defaultSupervisorName);
-      const patriciaUser = usuarios?.find(u => u.nome === defaultGerenteName);
-      
-      console.log("Usuario Roberto encontrado:", robertoUser);
-      console.log("Usuario Patricia encontrado:", patriciaUser);
-      
-      // Set the selected IDs, or first available, or null
-      setSelectedSupervisor(robertoUser?.id || (supervisores.length > 0 ? supervisores[0].id : null));
-      setSelectedGerente(patriciaUser?.id || (gerentes.length > 0 ? gerentes[0].id : null));
+      // Set defaults to null to ensure user makes a selection
+      setSelectedSupervisor(supervisores.length > 0 ? supervisores[0].id : null);
+      setSelectedGerente(gerentes.length > 0 ? gerentes[0].id : null);
     }
-  }, [open, supervisores, gerentes, usuarios]);
+  }, [open, supervisores, gerentes]);
 
   const createNewAudit = async () => {
     if (isCreatingAudit || !selectedLoja) return;
@@ -101,9 +90,9 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
       console.log("Usuario supervisor selecionado:", supervisorUser);
       console.log("Usuario gerente selecionado:", gerenteUser);
       
-      // Use the found names or default names
-      const supervisorNome = supervisorUser?.nome || defaultSupervisorName;
-      const gerenteNome = gerenteUser?.nome || defaultGerenteName;
+      // Use the found names or empty strings
+      const supervisorNome = supervisorUser?.nome || "";
+      const gerenteNome = gerenteUser?.nome || "";
       
       console.log("Nome supervisor a ser salvo:", supervisorNome);
       console.log("Nome gerente a ser salvo:", gerenteNome);
@@ -175,9 +164,9 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
                 onValueChange={value => setSelectedSupervisor(value)}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder={defaultSupervisorName} />
+                  <SelectValue placeholder="Selecione um supervisor" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   {supervisores.length > 0 ? (
                     supervisores.map(supervisor => (
                       <SelectItem key={supervisor.id} value={supervisor.id}>
@@ -210,7 +199,7 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
                 onValueChange={value => setSelectedGerente(value)}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder={defaultGerenteName} />
+                  <SelectValue placeholder="Selecione um gerente" />
                 </SelectTrigger>
                 <SelectContent className="bg-white">
                   {gerentes.length > 0 ? (
@@ -240,15 +229,6 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          {(supervisores.length === 0 || gerentes.length === 0) && (
-            <Button 
-              onClick={handleCreateAuditAnyway} 
-              disabled={isCreatingAudit}
-              variant="secondary"
-            >
-              {isCreatingAudit ? "Criando..." : "Usar opções padrão"}
-            </Button>
-          )}
           <Button 
             onClick={createNewAudit} 
             disabled={isCreatingAudit}

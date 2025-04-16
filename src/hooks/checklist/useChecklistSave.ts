@@ -19,6 +19,7 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
     setIsSendingEmail(true);
     
     try {
+      console.log("Starting email send process...");
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-report-email`, {
         method: 'POST',
         headers: {
@@ -33,6 +34,8 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         }),
       });
       
+      console.log("Email API response status:", response.status);
+      
       if (!response.ok) {
         const errorText = await response.text();
         let errorMessage;
@@ -40,12 +43,17 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.error || 'Erro desconhecido ao enviar email do relatório';
+          console.error("Error response data:", errorData);
         } catch (e) {
           errorMessage = errorText || 'Erro ao processar resposta do servidor';
+          console.error("Error text:", errorText);
         }
         
         throw new Error(errorMessage);
       }
+      
+      const responseData = await response.json();
+      console.log("Email send success response:", responseData);
       
       toast({
         title: "Email enviado",
@@ -77,6 +85,8 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         pontuacaoTotal += r.pontuacao_obtida || 0;
       });
       
+      console.log("Calculating score and saving audit...");
+      
       // Get loja information for the email
       const { data: auditoria, error: auditoriaError } = await supabase
         .from('auditorias')
@@ -84,7 +94,12 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         .eq('id', auditoriaId)
         .single();
         
-      if (auditoriaError) throw auditoriaError;
+      if (auditoriaError) {
+        console.error("Error fetching audit:", auditoriaError);
+        throw auditoriaError;
+      }
+      
+      console.log("Fetched audit data for email:", auditoria);
       
       // Calculate progress based on respostas
       const progresso = respostasExistentes.length > 0 ? 100 : 0;
@@ -97,16 +112,22 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         })
         .eq('id', auditoriaId);
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating audit:", error);
+        throw error;
+      }
       
       toast({
         title: "Respostas salvas",
         description: "Todas as respostas foram salvas com sucesso!",
       });
       
-      // If the audit is complete (100%), send the report via email
-      if (progresso === 100 && auditoria?.loja?.nome) {
+      // Always try to send the report via email when user clicks save
+      if (auditoria?.loja?.nome) {
+        console.log("Sending email report...");
         await sendReportEmail(auditoria.loja.nome);
+      } else {
+        console.error("Cannot send email: missing loja name");
       }
       
       return true;
