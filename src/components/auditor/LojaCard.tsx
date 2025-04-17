@@ -31,11 +31,11 @@ export const LojaCard: React.FC<LojaCardProps> = ({
   };
 
   return (
-    <Card className="overflow-hidden bg-white hover:shadow-md transition-shadow duration-200">
+    <Card className="overflow-hidden bg-white hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98]">
       <div className="p-6">
         {/* Header with icon and title */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="rounded-full bg-[#9b87f5] p-3">
+          <div className="rounded-full bg-[#9b87f5] p-3 transform transition-transform duration-300 hover:rotate-12">
             <Store className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -67,20 +67,20 @@ export const LojaCard: React.FC<LojaCardProps> = ({
         <div className="flex gap-2">
           <Button
             variant="secondary"
-            className="flex-1 bg-[#F3F4FF] text-[#9b87f5] hover:bg-[#E8E9FF]"
+            className="flex-1 bg-[#F3F4FF] text-[#9b87f5] hover:bg-[#E8E9FF] transition-colors duration-300"
             onClick={() => {}}
           >
-            <History className="h-4 w-4 mr-2" />
+            <History className="h-4 w-4 mr-2 transform transition-transform group-hover:rotate-180 duration-300" />
             Histórico
           </Button>
           
           <Button
             variant="default"
-            className="flex-1 bg-[#9b87f5] hover:bg-[#8a76e4]"
+            className="flex-1 bg-[#9b87f5] hover:bg-[#8a76e4] transition-all duration-300 transform active:scale-95"
             onClick={() => onNewAudit(loja.id)}
             disabled={isCreatingAudit}
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:rotate-90" />
             {latestAudit ? 'Novo Checklist' : 'Avaliar'}
           </Button>
         </div>
