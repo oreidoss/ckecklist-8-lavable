@@ -1,12 +1,13 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Store, Calendar, User, Plus, History } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Store, Calendar, User, Plus, History, AlertCircle, PlayCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Database } from '@/integrations/supabase/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Card } from "@/components/ui/card";
 import { Auditoria } from '@/lib/types';
+import { Badge } from "@/components/ui/badge";
 
 type Loja = Database['public']['Tables']['lojas']['Row'];
 
@@ -21,13 +22,28 @@ export const LojaCard: React.FC<LojaCardProps> = ({
   onNewAudit,
   isCreatingAudit
 }) => {
+  const navigate = useNavigate();
   const latestAudit = loja.auditorias?.sort((a, b) => 
     new Date(b.data || '').getTime() - new Date(a.data || '').getTime()
   )[0];
   
+  const hasOngoingAudit = loja.auditorias?.some(a => a.status === 'em_andamento');
+  const ongoingAudit = hasOngoingAudit ? 
+    loja.auditorias.find(a => a.status === 'em_andamento') : null;
+  
   const formatDate = (date: string | null) => {
     if (!date) return '-';
     return new Date(date).toLocaleDateString('pt-BR');
+  };
+
+  const handleViewHistory = () => {
+    navigate(`/relatorio/loja/${loja.id}`);
+  };
+
+  const handleContinueAudit = () => {
+    if (ongoingAudit) {
+      navigate(`/checklist/${ongoingAudit.id}`);
+    }
   };
 
   return (
@@ -43,6 +59,13 @@ export const LojaCard: React.FC<LojaCardProps> = ({
             <p className="text-sm text-gray-600">
               Gerente: {latestAudit?.gerente || 'Não definido'}
             </p>
+            
+            {hasOngoingAudit && (
+              <Badge variant="outline" className="mt-1 bg-amber-50 text-amber-700 border-amber-300">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                Checklist em andamento
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -68,21 +91,32 @@ export const LojaCard: React.FC<LojaCardProps> = ({
           <Button
             variant="secondary"
             className="flex-1 bg-[#F3F4FF] text-[#9b87f5] hover:bg-[#E8E9FF] transition-colors duration-300"
-            onClick={() => {}}
+            onClick={handleViewHistory}
           >
             <History className="h-4 w-4 mr-2 transform transition-transform group-hover:rotate-180 duration-300" />
             Histórico
           </Button>
           
-          <Button
-            variant="default"
-            className="flex-1 bg-[#9b87f5] hover:bg-[#8a76e4] transition-all duration-300 transform active:scale-95"
-            onClick={() => onNewAudit(loja.id)}
-            disabled={isCreatingAudit}
-          >
-            <Plus className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:rotate-90" />
-            {latestAudit ? 'Novo Checklist' : 'Avaliar'}
-          </Button>
+          {hasOngoingAudit ? (
+            <Button
+              variant="default"
+              className="flex-1 bg-amber-500 hover:bg-amber-600 transition-all duration-300 transform active:scale-95"
+              onClick={handleContinueAudit}
+            >
+              <PlayCircle className="h-4 w-4 mr-2" />
+              Continuar
+            </Button>
+          ) : (
+            <Button
+              variant="default"
+              className="flex-1 bg-[#9b87f5] hover:bg-[#8a76e4] transition-all duration-300 transform active:scale-95"
+              onClick={() => onNewAudit(loja.id)}
+              disabled={isCreatingAudit}
+            >
+              <Plus className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:rotate-90" />
+              {latestAudit ? 'Novo Checklist' : 'Avaliar'}
+            </Button>
+          )}
         </div>
       </div>
     </Card>
