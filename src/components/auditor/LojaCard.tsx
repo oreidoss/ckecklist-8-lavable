@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Store, Calendar, User, Plus, History, AlertCircle, PlayCircle } from 'lucide-react';
@@ -31,6 +30,24 @@ export const LojaCard: React.FC<LojaCardProps> = ({
   const ongoingAudit = hasOngoingAudit ? 
     loja.auditorias.find(a => a.status === 'em_andamento') : null;
   
+  const getTotalScore = (audit: Auditoria) => {
+    if (!audit || !audit.respostas) return 0;
+    
+    const uniqueRespostas = new Map();
+    
+    audit.respostas.sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    ).forEach(resposta => {
+      if (!uniqueRespostas.has(resposta.pergunta_id)) {
+        uniqueRespostas.set(resposta.pergunta_id, resposta);
+      }
+    });
+    
+    return Array.from(uniqueRespostas.values()).reduce((total, resposta) => {
+      return total + (resposta.pontuacao_obtida || 0);
+    }, 0);
+  };
+
   const formatDate = (date: string | null) => {
     if (!date) return '-';
     return new Date(date).toLocaleDateString('pt-BR');
@@ -46,10 +63,12 @@ export const LojaCard: React.FC<LojaCardProps> = ({
     }
   };
 
+  const totalScore = ongoingAudit ? getTotalScore(ongoingAudit) : 
+                    latestAudit ? getTotalScore(latestAudit) : 0;
+
   return (
     <Card className="overflow-hidden bg-white hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98]">
       <div className="p-6">
-        {/* Header with icon and title */}
         <div className="flex items-center gap-3 mb-6">
           <div className="rounded-full bg-[#9b87f5] p-3 transform transition-transform duration-300 hover:rotate-12">
             <Store className="h-5 w-5 text-white" />
@@ -69,7 +88,6 @@ export const LojaCard: React.FC<LojaCardProps> = ({
           </div>
         </div>
 
-        {/* Audit information */}
         <div className="space-y-3 mb-6">
           <div className="flex justify-between items-center">
             <span className="text-gray-600 text-sm">Último checklist:</span>
@@ -81,12 +99,11 @@ export const LojaCard: React.FC<LojaCardProps> = ({
           <div className="flex justify-between items-center">
             <span className="text-gray-600 text-sm">Pontuação:</span>
             <span className="text-gray-900 font-medium">
-              {latestAudit?.pontuacao_total ? `${latestAudit.pontuacao_total} pts` : '-'}
+              {totalScore ? `${totalScore} pts` : '-'}
             </span>
           </div>
         </div>
 
-        {/* Action buttons */}
         <div className="flex gap-2">
           <Button
             variant="secondary"
