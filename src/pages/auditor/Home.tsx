@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,6 +6,7 @@ import { LojaCard } from '@/components/auditor/LojaCard';
 import { NewAuditDialog } from '@/components/auditor/NewAuditDialog';
 import { useToast } from '@/hooks/use-toast';
 import { Auditoria } from '@/lib/types';
+import Button from '@/components/ui/Button';
 
 // Types for our Supabase data
 type Loja = Database['public']['Tables']['lojas']['Row'];
@@ -106,7 +106,7 @@ const Home: React.FC = () => {
       if (supervisores.length === 0 && gerentes.length === 0) {
         toast({
           title: "Atenção",
-          description: "Não foram encontrados usuários com função de supervisor ou gerente. Considere criar usuários com estas funções na área de Administração de Usuários.",
+          description: "Não foram encontrados usuários com função de supervisor ou gerente. Considere criar usuários com estas funções na área de Administração de Usu��rios.",
           variant: "destructive",
           duration: 6000
         });
@@ -127,12 +127,20 @@ const Home: React.FC = () => {
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-[#00bfa5]">Lojas</h1>
+    <div className="container py-8">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Selecione uma Loja</h1>
+        </div>
+        <Button
+          variant="outline"
+          className="bg-[#4285f4] text-white hover:bg-[#3b78e7]"
+        >
+          Alternar Modo
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {lojas?.map((loja) => (
           <LojaCard 
             key={loja.id}
