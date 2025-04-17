@@ -6,7 +6,7 @@ import { LojaCard } from '@/components/auditor/LojaCard';
 import { NewAuditDialog } from '@/components/auditor/NewAuditDialog';
 import { useToast } from '@/hooks/use-toast';
 import { Auditoria } from '@/lib/types';
-import Button from '@/components/ui/Button';
+import { Button } from "@/components/ui/button";
 
 // Types for our Supabase data
 type Loja = Database['public']['Tables']['lojas']['Row'];
@@ -106,7 +106,7 @@ const Home: React.FC = () => {
       if (supervisores.length === 0 && gerentes.length === 0) {
         toast({
           title: "Atenção",
-          description: "Não foram encontrados usuários com função de supervisor ou gerente. Considere criar usuários com estas funções na área de Administração de Usu��rios.",
+          description: "Não foram encontrados usuários com função de supervisor ou gerente. Considere criar usuários com estas funções na área de Administração de Usuários.",
           variant: "destructive",
           duration: 6000
         });
