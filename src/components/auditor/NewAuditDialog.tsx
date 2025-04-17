@@ -45,13 +45,13 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [selectedSupervisor, setSelectedSupervisor] = useState<string | null>(null);
-  const [selectedGerente, setSelectedGerente] = useState<string | null>(null);
+  const [selectedSupervisorId, setSelectedSupervisorId] = useState<string | null>(null);
+  const [selectedGerenteId, setSelectedGerenteId] = useState<string | null>(null);
   
-  // Add logs for debugging
+  // Logs para debug
   console.log("Usuarios disponíveis:", usuarios);
   
-  // Improved filtering logic to find supervisors and managers
+  // Lógica melhorada para filtrar supervisores e gerentes
   const supervisores = usuarios?.filter(u => 
     u.role === 'supervisor' || 
     u.funcao === 'supervisor' || 
@@ -69,12 +69,11 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
   console.log("Supervisores filtrados:", supervisores);
   console.log("Gerentes filtrados:", gerentes);
 
-  // Reset selections when dialog opens
+  // Reset de seleções quando o diálogo é aberto
   useEffect(() => {
     if (open) {
-      // Set defaults to null to ensure user makes a selection
-      setSelectedSupervisor(supervisores.length > 0 ? supervisores[0].id : null);
-      setSelectedGerente(gerentes.length > 0 ? gerentes[0].id : null);
+      setSelectedSupervisorId(supervisores.length > 0 ? supervisores[0].id : null);
+      setSelectedGerenteId(gerentes.length > 0 ? gerentes[0].id : null);
     }
   }, [open, supervisores, gerentes]);
 
@@ -83,14 +82,14 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
     setIsCreatingAudit(true);
 
     try {
-      // Get supervisor and manager names from selected IDs
-      const supervisorUser = usuarios?.find(u => u.id === selectedSupervisor);
-      const gerenteUser = usuarios?.find(u => u.id === selectedGerente);
+      // Obter nomes de supervisor e gerente a partir dos IDs selecionados
+      const supervisorUser = usuarios?.find(u => u.id === selectedSupervisorId);
+      const gerenteUser = usuarios?.find(u => u.id === selectedGerenteId);
       
       console.log("Usuario supervisor selecionado:", supervisorUser);
       console.log("Usuario gerente selecionado:", gerenteUser);
       
-      // Use the found names or empty strings
+      // Usar os nomes encontrados ou strings vazias
       const supervisorNome = supervisorUser?.nome || "";
       const gerenteNome = gerenteUser?.nome || "";
       
@@ -101,7 +100,7 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
         .from('auditorias')
         .insert({
           loja_id: selectedLoja,
-          usuario_id: selectedSupervisor || null,
+          usuario_id: selectedSupervisorId || null,
           supervisor: supervisorNome,
           gerente: gerenteNome,
           data: new Date().toISOString(),
@@ -132,17 +131,6 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
     }
   };
 
-  const handleCreateAuditAnyway = () => {
-    if (!selectedLoja) return;
-    
-    // Use any supervisor, or a default name if none exists
-    const supervisorId = selectedSupervisor || (usuarios?.length ? usuarios[0].id : null);
-    
-    // Use default supervisor name if no supervisor selected
-    setSelectedSupervisor(supervisorId);
-    createNewAudit();
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -160,8 +148,8 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
             </Label>
             <div className="col-span-3">
               <Select 
-                value={selectedSupervisor || ""}
-                onValueChange={value => setSelectedSupervisor(value)}
+                value={selectedSupervisorId || ""}
+                onValueChange={value => setSelectedSupervisorId(value)}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecione um supervisor" />
@@ -195,8 +183,8 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
             </Label>
             <div className="col-span-3">
               <Select 
-                value={selectedGerente || ""}
-                onValueChange={value => setSelectedGerente(value)}
+                value={selectedGerenteId || ""}
+                onValueChange={value => setSelectedGerenteId(value)}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecione um gerente" />
