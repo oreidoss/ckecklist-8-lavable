@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Store, Edit, UserRound, Save } from 'lucide-react';
@@ -157,12 +157,15 @@ const ChecklistHeader: React.FC<ChecklistHeaderProps> = ({
                 <div className="flex-1">
                   <Select 
                     value={gerente} 
-                    onValueChange={(value) => setGerente(value)}
+                    onValueChange={(value) => {
+                      console.log("ChecklistHeader - Alterando gerente para:", value);
+                      setGerente(value);
+                    }}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Selecione um gerente" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white">
+                    <SelectContent position="popper" sideOffset={4} className="bg-white z-50">
                       {gerentes?.length > 0 
                         ? gerentes.map((usuario) => (
                             <SelectItem key={usuario.id} value={usuario.nome}>

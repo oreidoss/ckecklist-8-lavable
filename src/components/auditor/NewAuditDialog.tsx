@@ -190,7 +190,7 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
               <Select 
                 value={selectedGerenteId || ""}
                 onValueChange={(value) => {
-                  console.log("Gerente selecionado:", value);
+                  console.log("Gerente selecionado ID:", value);
                   setSelectedGerenteId(value);
                 }}
               >
@@ -227,7 +227,7 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
           </Button>
           <Button 
             onClick={createNewAudit} 
-            disabled={isCreatingAudit}
+            disabled={isCreatingAudit || !selectedSupervisorId || !selectedGerenteId}
           >
             {isCreatingAudit ? "Criando..." : "Iniciar Auditoria"}
           </Button>
