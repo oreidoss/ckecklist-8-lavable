@@ -71,6 +71,7 @@ const useUserSelectors = ({
     if (!auditoriaId) return;
     
     try {
+      console.log("Salvando gerente:", gerente);
       const { error } = await supabase
         .from('auditorias')
         .update({ gerente })
@@ -146,6 +147,14 @@ const UserSelectorsComponent: React.FC<UserSelectorsProps> = (props) => {
   // Get filtered lists
   const supervisores = getSupervisores(usuarios);
   const gerentes = getGerentes(usuarios);
+  
+  console.log("Rendering UserSelectorsComponent");
+  console.log("Supervisores disponíveis:", supervisores);
+  console.log("Gerentes disponíveis:", gerentes);
+  console.log("Supervisor atual:", supervisor);
+  console.log("Gerente atual:", gerente);
+  console.log("isEditingSupervisor:", isEditingSupervisor);
+  console.log("isEditingGerente:", isEditingGerente);
 
   return (
     <div className="flex flex-col space-y-2">
@@ -153,11 +162,17 @@ const UserSelectorsComponent: React.FC<UserSelectorsProps> = (props) => {
         <span className="text-sm text-gray-500 mr-2">Supervisor(a):</span>
         {isEditingSupervisor ? (
           <div className="flex items-center">
-            <Select value={supervisor} onValueChange={setSupervisor}>
+            <Select 
+              value={supervisor} 
+              onValueChange={(value) => {
+                console.log("Alterando supervisor para:", value);
+                setSupervisor(value);
+              }}
+            >
               <SelectTrigger className="w-[200px] h-8">
                 <SelectValue placeholder="Selecione um supervisor" />
               </SelectTrigger>
-              <SelectContent className="bg-white">
+              <SelectContent position="popper" className="bg-white z-50">
                 {supervisores.length > 0 ? (
                   supervisores.map((supervisor) => (
                     <SelectItem key={supervisor.id} value={supervisor.nome}>
@@ -203,11 +218,17 @@ const UserSelectorsComponent: React.FC<UserSelectorsProps> = (props) => {
         <span className="text-sm text-gray-500 mr-2">Gerente:</span>
         {isEditingGerente ? (
           <div className="flex items-center">
-            <Select value={gerente} onValueChange={setGerente}>
+            <Select 
+              value={gerente}
+              onValueChange={(value) => {
+                console.log("Alterando gerente para:", value);
+                setGerente(value);
+              }}
+            >
               <SelectTrigger className="w-[200px] h-8">
                 <SelectValue placeholder="Selecione um gerente" />
               </SelectTrigger>
-              <SelectContent className="bg-white">
+              <SelectContent position="popper" className="bg-white z-50">
                 {gerentes.length > 0 ? (
                   gerentes.map((gerente) => (
                     <SelectItem key={gerente.id} value={gerente.nome}>

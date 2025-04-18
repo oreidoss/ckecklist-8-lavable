@@ -79,6 +79,11 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
 
   const createNewAudit = async () => {
     if (isCreatingAudit || !selectedLoja) return;
+    
+    console.log("Iniciando criação de auditoria");
+    console.log("Supervisor ID selecionado:", selectedSupervisorId);
+    console.log("Gerente ID selecionado:", selectedGerenteId);
+    
     setIsCreatingAudit(true);
 
     try {
@@ -100,7 +105,7 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
         .from('auditorias')
         .insert({
           loja_id: selectedLoja,
-          usuario_id: selectedSupervisorId || null,
+          usuario_id: selectedSupervisorId,
           supervisor: supervisorNome,
           gerente: gerenteNome,
           data: new Date().toISOString(),
@@ -133,7 +138,7 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] bg-white">
         <DialogHeader>
           <DialogTitle>Nova Auditoria</DialogTitle>
           <DialogDescription>
@@ -154,7 +159,7 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecione um supervisor" />
                 </SelectTrigger>
-                <SelectContent className="bg-white">
+                <SelectContent position="popper" className="bg-white">
                   {supervisores.length > 0 ? (
                     supervisores.map(supervisor => (
                       <SelectItem key={supervisor.id} value={supervisor.id}>
@@ -184,12 +189,15 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
             <div className="col-span-3">
               <Select 
                 value={selectedGerenteId || ""}
-                onValueChange={setSelectedGerenteId}
+                onValueChange={(value) => {
+                  console.log("Gerente selecionado:", value);
+                  setSelectedGerenteId(value);
+                }}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecione um gerente" />
                 </SelectTrigger>
-                <SelectContent className="bg-white">
+                <SelectContent position="popper" className="bg-white z-50">
                   {gerentes.length > 0 ? (
                     gerentes.map(gerente => (
                       <SelectItem key={gerente.id} value={gerente.id}>
