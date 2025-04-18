@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import ObservacaoField from '@/components/checklist/ObservacaoField';
@@ -18,6 +17,7 @@ interface ChecklistQuestionProps {
   onFileUpload: (perguntaId: string, file: File) => void;
   isLastPergunta: boolean;
   disabled?: boolean;
+  questionNumber?: number;
 }
 
 const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
@@ -31,7 +31,8 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
   onSaveObservacao,
   onFileUpload,
   isLastPergunta,
-  disabled = false
+  disabled = false,
+  questionNumber
 }) => {
   const [showObservacoes, setShowObservacoes] = useState(false);
   const [showAnexos, setShowAnexos] = useState(false);
@@ -71,7 +72,14 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
 
   return (
     <div className="bg-gray-50 p-2 rounded-md mb-2">
-      <div className="text-xs mb-2">{pergunta.texto}</div>
+      <div className="flex gap-2 items-start mb-2">
+        {questionNumber && (
+          <span className="text-xs font-medium text-gray-500 min-w-[20px]">
+            {questionNumber}.
+          </span>
+        )}
+        <div className="text-xs flex-grow">{pergunta.texto}</div>
+      </div>
       
       <div className="flex flex-wrap gap-1">
         {/* Botões de resposta */}

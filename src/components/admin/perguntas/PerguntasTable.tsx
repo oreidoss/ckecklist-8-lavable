@@ -72,18 +72,19 @@ export function PerguntasTable({
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead className="w-[80px]">Nº</TableHead>
           <TableHead className="w-[200px]">Seção</TableHead>
           <TableHead>Pergunta</TableHead>
           <TableHead className="text-right w-[100px]">Ações</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {perguntas.map((pergunta) => {
-          // Use edited pergunta if available, otherwise use original
+        {perguntas.map((pergunta, index) => {
           const currentPergunta = editedPerguntas[pergunta.id] || pergunta;
           
           return (
             <TableRow key={pergunta.id}>
+              <TableCell className="font-medium">{index + 1}</TableCell>
               <TableCell>{getSecaoNome(currentPergunta.secao_id)}</TableCell>
               <TableCell>{currentPergunta.texto}</TableCell>
               <TableCell className="text-right">
@@ -91,7 +92,7 @@ export function PerguntasTable({
                   <EditPerguntaDialog 
                     pergunta={currentPergunta} 
                     secoes={secoes} 
-                    onPerguntaChange={handlePerguntaChange}
+                    onPerguntaChange={onPerguntaChange}
                     onSave={() => onSavePergunta(currentPergunta)}
                     isSubmitting={isSubmitting}
                   />

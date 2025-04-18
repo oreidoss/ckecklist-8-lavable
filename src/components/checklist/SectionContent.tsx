@@ -65,7 +65,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
         </div>
       )}
       
-      {perguntasSecaoAtiva.map((pergunta) => (
+      {perguntasSecaoAtiva.map((pergunta, index) => (
         <ChecklistQuestion
           key={pergunta.id}
           pergunta={pergunta}
@@ -79,6 +79,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
           onFileUpload={handleFileUpload}
           isLastPergunta={isLastPerguntaInSection(pergunta.id)}
           disabled={!isEditingActive}
+          questionNumber={index + 1}
         />
       ))}
     </>
