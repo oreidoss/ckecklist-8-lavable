@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -114,23 +113,8 @@ export function usePerguntas() {
   const handleExcluirPergunta = async (id: string) => {
     try {
       setIsSubmitting(true);
-      // Verificar se há respostas associadas a esta pergunta
-      const { data: respostas, error: respostasError } = await supabase
-        .from('respostas')
-        .select('id')
-        .eq('pergunta_id', id)
-        .limit(1);
       
-      if (respostasError) throw respostasError;
-      
-      if (respostas && respostas.length > 0) {
-        toast({
-          title: "Não é possível excluir",
-          description: "Esta pergunta possui respostas associadas em auditorias. Exclua as auditorias primeiro.",
-          variant: "destructive"
-        });
-        return;
-      }
+      console.log("Excluindo pergunta:", id);
       
       const { error } = await supabase
         .from('perguntas')
@@ -143,7 +127,7 @@ export function usePerguntas() {
       
       toast({
         title: "Pergunta excluída",
-        description: "A pergunta foi excluída com sucesso."
+        description: "A pergunta e todas as suas respostas foram excluídas com sucesso."
       });
     } catch (error: any) {
       console.error("Erro ao excluir pergunta:", error);

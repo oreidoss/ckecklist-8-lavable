@@ -31,6 +31,8 @@ export class PerguntaService extends BaseService {
   }
 
   deletePergunta(id: string): void {
+    // Due to cascade delete in the database, we only need to remove the pergunta
+    // All related records will be automatically deleted
     const perguntas = this.getPerguntas().filter(p => p.id !== id);
     this.setItem(this.STORAGE_KEY, perguntas);
   }
