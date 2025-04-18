@@ -127,20 +127,20 @@ const Home: React.FC = () => {
   }
 
   return (
-    <div className="container py-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="container py-4 sm:py-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Selecione uma Loja</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Selecione uma Loja</h1>
         </div>
         <Button
           variant="outline"
-          className="bg-[#4285f4] text-white hover:bg-[#3b78e7]"
+          className="w-full sm:w-auto bg-[#4285f4] text-white hover:bg-[#3b78e7]"
         >
           Alternar Modo
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {lojas?.map((loja) => (
           <LojaCard 
             key={loja.id}

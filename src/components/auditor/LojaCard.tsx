@@ -68,14 +68,14 @@ export const LojaCard: React.FC<LojaCardProps> = ({
 
   return (
     <Card className="overflow-hidden bg-white hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98]">
-      <div className="p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="rounded-full bg-[#9b87f5] p-3 transform transition-transform duration-300 hover:rotate-12">
-            <Store className="h-5 w-5 text-white" />
+      <div className="p-4 sm:p-6">
+        <div className="flex items-center gap-3 mb-4 sm:mb-6">
+          <div className="rounded-full bg-[#9b87f5] p-2 sm:p-3 transform transition-transform duration-300 hover:rotate-12">
+            <Store className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">{loja.nome}</h2>
-            <p className="text-sm text-gray-600">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">{loja.nome}</h2>
+            <p className="text-xs sm:text-sm text-gray-600">
               Gerente: {latestAudit?.gerente || 'Não definido'}
             </p>
             
@@ -88,17 +88,17 @@ export const LojaCard: React.FC<LojaCardProps> = ({
           </div>
         </div>
 
-        <div className="space-y-3 mb-6">
+        <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
           <div className="flex justify-between items-center">
-            <span className="text-gray-600 text-sm">Último checklist:</span>
-            <span className="text-gray-900 font-medium">
+            <span className="text-xs sm:text-sm text-gray-600">Último checklist:</span>
+            <span className="text-xs sm:text-sm text-gray-900 font-medium">
               {formatDate(latestAudit?.data || null)}
             </span>
           </div>
           
           <div className="flex justify-between items-center">
-            <span className="text-gray-600 text-sm">Pontuação:</span>
-            <span className="text-gray-900 font-medium">
+            <span className="text-xs sm:text-sm text-gray-600">Pontuação:</span>
+            <span className="text-xs sm:text-sm text-gray-900 font-medium">
               {totalScore ? `${totalScore} pts` : '-'}
             </span>
           </div>
@@ -107,30 +107,33 @@ export const LojaCard: React.FC<LojaCardProps> = ({
         <div className="flex gap-2">
           <Button
             variant="secondary"
-            className="flex-1 bg-[#F3F4FF] text-[#9b87f5] hover:bg-[#E8E9FF] transition-colors duration-300"
+            size="sm"
+            className="flex-1 bg-[#F3F4FF] text-[#9b87f5] hover:bg-[#E8E9FF] transition-colors duration-300 text-xs sm:text-sm"
             onClick={handleViewHistory}
           >
-            <History className="h-4 w-4 mr-2 transform transition-transform group-hover:rotate-180 duration-300" />
+            <History className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             Histórico
           </Button>
           
           {hasOngoingAudit ? (
             <Button
               variant="default"
-              className="flex-1 bg-amber-500 hover:bg-amber-600 transition-all duration-300 transform active:scale-95"
+              size="sm"
+              className="flex-1 bg-amber-500 hover:bg-amber-600 transition-all duration-300 transform active:scale-95 text-xs sm:text-sm"
               onClick={handleContinueAudit}
             >
-              <PlayCircle className="h-4 w-4 mr-2" />
+              <PlayCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               Continuar
             </Button>
           ) : (
             <Button
               variant="default"
-              className="flex-1 bg-[#9b87f5] hover:bg-[#8a76e4] transition-all duration-300 transform active:scale-95"
+              size="sm"
+              className="flex-1 bg-[#9b87f5] hover:bg-[#8a76e4] transition-all duration-300 transform active:scale-95 text-xs sm:text-sm"
               onClick={() => onNewAudit(loja.id)}
               disabled={isCreatingAudit}
             >
-              <Plus className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:rotate-90" />
+              <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               {latestAudit ? 'Novo Checklist' : 'Avaliar'}
             </Button>
           )}
