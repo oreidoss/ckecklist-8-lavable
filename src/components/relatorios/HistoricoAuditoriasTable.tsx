@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -14,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DeleteAuditoriaDialog } from './DeleteAuditoriaDialog';
 import { Database } from '@/integrations/supabase/types';
 
 type Auditoria = Database['public']['Tables']['auditorias']['Row'] & {
@@ -35,14 +35,12 @@ export const HistoricoAuditoriasTable: React.FC<HistoricoAuditoriasTableProps> =
   const navigate = useNavigate();
 
   const getStatusAuditoria = (pontuacao: number | null, status: string | null) => {
-    // Check completion status first
     if (status === 'concluido') {
       return <Badge className="bg-green-500 hover:bg-green-500">Concluída</Badge>;
     } else if (status === 'em_andamento') {
       return <Badge className="bg-yellow-500 hover:bg-yellow-500">Em Andamento</Badge>;
     }
     
-    // Fallback to score-based status if no explicit status
     if (!pontuacao) return <Badge className="bg-gray-500 hover:bg-gray-500">Pendente</Badge>;
     
     if (pontuacao > 5) {
@@ -56,6 +54,10 @@ export const HistoricoAuditoriasTable: React.FC<HistoricoAuditoriasTableProps> =
 
   const handleEditAuditoria = (auditoriaId: string) => {
     navigate(`/checklist/${auditoriaId}`);
+  };
+
+  const handleAuditoriaDeleted = () => {
+    window.location.reload();
   };
 
   if (isLoadingAuditorias) {
@@ -128,6 +130,12 @@ export const HistoricoAuditoriasTable: React.FC<HistoricoAuditoriasTableProps> =
                 >
                   <FileText className="h-4 w-4" />
                 </Button>
+                <DeleteAuditoriaDialog
+                  auditoriaId={auditoria.id}
+                  lojaNumero={auditoria.loja?.numero || ''}
+                  lojaNome={auditoria.loja?.nome || ''}
+                  onDeleted={handleAuditoriaDeleted}
+                />
               </div>
             </TableCell>
           </TableRow>
