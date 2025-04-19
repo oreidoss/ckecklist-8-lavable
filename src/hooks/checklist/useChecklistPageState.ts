@@ -86,7 +86,10 @@ export const useChecklistPageState = (
     saveAndNavigateHome: saveAndNavigateHomeBase
   } = useSaveProgress(
     saveAllResponses,
-    saveAllResponses
+    async () => {
+      await saveAllResponses();
+      return true; // Return boolean to match expected type
+    }
   );
   
   // Use response handlers

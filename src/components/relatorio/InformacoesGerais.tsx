@@ -30,9 +30,6 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
   // Get the total number of answered questions (respostas)
   const totalRespondidas = auditoria.respostas?.length || 0;
   
-  // Use the actual total questions as the meta total, not the number of responses
-  const metaTotal = totalPerguntas > 0 ? totalPerguntas : 1; // Evitar divisão por zero
-  
   // Formato da pontuação atual
   const pontuacaoAtual = auditoria.pontuacao_total !== null && auditoria.pontuacao_total !== undefined 
     ? auditoria.pontuacao_total.toFixed(1) 
@@ -44,18 +41,13 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
   if (totalPerguntas > 0) {
     // Se temos o total de perguntas, calcular com base em respostas respondidas
     progressoPercentual = Math.round((totalRespondidas / totalPerguntas) * 100);
-  } else if (auditoria.pontuacao_total && metaTotal) {
+  } else if (auditoria.pontuacao_total && totalPerguntas) {
     // Ou usar a pontuação como alternativa
-    progressoPercentual = Math.round((auditoria.pontuacao_total / metaTotal) * 100);
+    progressoPercentual = Math.round((totalRespondidas / totalPerguntas) * 100);
   }
   
   // Garantir que o progresso seja um valor válido entre 0 e 100
   progressoPercentual = Math.max(0, Math.min(100, progressoPercentual));
-  
-  // Pontuação restante para alcançar a meta
-  const pontuacaoRestante = auditoria.pontuacao_total !== null && auditoria.pontuacao_total !== undefined 
-    ? (metaTotal - auditoria.pontuacao_total).toFixed(1)
-    : metaTotal.toString();
   
   return (
     <Card>
@@ -96,7 +88,7 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
             <div className="flex items-center space-x-2">
               <Award className="h-5 w-5 text-primary" />
               <div className={`text-xl font-bold ${auditoria.pontuacao_total && auditoria.pontuacao_total > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                {pontuacaoAtual} / {totalPerguntas} pontos
+                {pontuacaoAtual} pontos
               </div>
             </div>
             
@@ -120,19 +112,19 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
                         <div className="font-medium">{pontuacaoAtual}</div>
                       </div>
                       <div>
-                        <div className="text-xs text-muted-foreground">Meta Total</div>
-                        <div className="font-medium">{metaTotal}</div>
+                        <div className="text-xs text-muted-foreground">Total Perguntas</div>
+                        <div className="font-medium">{totalPerguntas}</div>
                       </div>
                       <div>
-                        <div className="text-xs text-muted-foreground">Progresso</div>
+                        <div className="text-xs text-muted-foreground">Perguntas Respondidas</div>
                         <div className="font-medium">
-                          {progressoPercentual}%
+                          {totalRespondidas} ({progressoPercentual}%)
                         </div>
                       </div>
                       <div>
-                        <div className="text-xs text-muted-foreground">Restante</div>
+                        <div className="text-xs text-muted-foreground">Perguntas Restantes</div>
                         <div className="font-medium">
-                          {pontuacaoRestante}
+                          {totalPerguntas - totalRespondidas}
                         </div>
                       </div>
                     </div>
@@ -164,7 +156,7 @@ export const InformacoesGerais: React.FC<InformacoesGeraisProps> = ({ auditoria 
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p className="text-xs">A meta é baseada no total de perguntas disponíveis no sistema</p>
+                    <p className="text-xs">A pontuação é calculada com base nas respostas dadas às perguntas</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
