@@ -89,27 +89,47 @@ export const useUserSelectorHandlers = (props: UseUserSelectorHandlersProps) => 
     }
   };
 
-  // Filter users by role
+  // Improved users filtering by role
   const getSupervisores = (usuarios: Usuario[]) => {
     if (!usuarios || usuarios.length === 0) return [];
     
-    return usuarios.filter(u => 
-      u.role === 'supervisor' || 
-      u.funcao === 'supervisor' || 
-      (u.email && u.email.toLowerCase().includes('supervisor')) || 
-      (u.nome && u.nome.toLowerCase().includes('supervisor'))
-    );
+    console.log("Filtrando supervisores de:", usuarios);
+    
+    return usuarios.filter(u => {
+      // Check multiple fields to determine if user is a supervisor
+      const isSupervisorByRole = u.role === 'supervisor' || u.funcao === 'supervisor';
+      const isSupervisorByEmail = u.email && u.email.toLowerCase().includes('supervisor');
+      const isSupervisorByName = u.nome && u.nome.toLowerCase().includes('supervisor');
+      
+      const isSupervisor = isSupervisorByRole || isSupervisorByEmail || isSupervisorByName;
+      
+      if (isSupervisor) {
+        console.log("Encontrado supervisor:", u.nome);
+      }
+      
+      return isSupervisor;
+    });
   };
   
   const getGerentes = (usuarios: Usuario[]) => {
     if (!usuarios || usuarios.length === 0) return [];
     
-    return usuarios.filter(u => 
-      u.role === 'gerente' || 
-      u.funcao === 'gerente' || 
-      (u.email && u.email.toLowerCase().includes('gerente')) || 
-      (u.nome && u.nome.toLowerCase().includes('gerente'))
-    );
+    console.log("Filtrando gerentes de:", usuarios);
+    
+    return usuarios.filter(u => {
+      // Check multiple fields to determine if user is a manager
+      const isGerenteByRole = u.role === 'gerente' || u.funcao === 'gerente';
+      const isGerenteByEmail = u.email && u.email.toLowerCase().includes('gerente');
+      const isGerenteByName = u.nome && u.nome.toLowerCase().includes('gerente');
+      
+      const isGerente = isGerenteByRole || isGerenteByEmail || isGerenteByName;
+      
+      if (isGerente) {
+        console.log("Encontrado gerente:", u.nome);
+      }
+      
+      return isGerente;
+    });
   };
 
   return {

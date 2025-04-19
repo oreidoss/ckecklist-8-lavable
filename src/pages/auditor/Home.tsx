@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,9 +31,22 @@ const Home: React.FC = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('lojas')
-        .select('*, auditorias(*, usuario:usuarios(*))');
+        .select('*, auditorias(*, usuario:usuarios(*), respostas(*))');
       
       if (error) throw error;
+      
+      // Log the auditorias data to verify ongoing status
+      data?.forEach((loja) => {
+        console.log(`Loja ${loja.nome} auditorias:`, loja.auditorias);
+        
+        const inProgressAudits = loja.auditorias.filter(
+          (audit: any) => audit.status === 'em_andamento'
+        );
+        
+        if (inProgressAudits.length > 0) {
+          console.log(`Loja ${loja.nome} has ${inProgressAudits.length} in-progress audits:`, inProgressAudits);
+        }
+      });
       
       // Enhance the data to ensure all auditorias have the necessary properties
       const enhancedData = data?.map(loja => {

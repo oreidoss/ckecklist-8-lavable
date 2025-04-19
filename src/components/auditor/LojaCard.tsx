@@ -23,13 +23,19 @@ export const LojaCard: React.FC<LojaCardProps> = ({
   isCreatingAudit
 }) => {
   const navigate = useNavigate();
+  
+  // Get latest audit by date
   const latestAudit = loja.auditorias?.sort((a, b) => 
     new Date(b.data || '').getTime() - new Date(a.data || '').getTime()
   )[0];
   
-  // Verificar corretamente se existe uma auditoria em andamento
+  // Find an in-progress audit if it exists
   const auditoriaEmAndamento = loja.auditorias?.find(a => a.status === 'em_andamento');
-  const hasOngoingAudit = !!auditoriaEmAndamento;
+  
+  // Make sure we're not incorrectly marking an audit as in progress
+  const hasOngoingAudit = !!auditoriaEmAndamento && auditoriaEmAndamento.status === 'em_andamento';
+  
+  console.log(`Loja ${loja.nome} - Has ongoing audit: ${hasOngoingAudit}`, auditoriaEmAndamento);
   
   const getTotalScore = (audit: Auditoria) => {
     if (!audit || !audit.respostas) return 0;
@@ -64,8 +70,10 @@ export const LojaCard: React.FC<LojaCardProps> = ({
     }
   };
 
-  const totalScore = auditoriaEmAndamento ? getTotalScore(auditoriaEmAndamento) : 
-                    latestAudit ? getTotalScore(latestAudit) : 0;
+  // Determine which audit to use for displaying the score
+  // If there's an ongoing audit, use that; otherwise use the latest completed audit
+  const displayAudit = hasOngoingAudit ? auditoriaEmAndamento : latestAudit;
+  const totalScore = displayAudit ? getTotalScore(displayAudit) : 0;
 
   return (
     <Card className="overflow-hidden bg-white hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.02] active:scale-[0.98]">
