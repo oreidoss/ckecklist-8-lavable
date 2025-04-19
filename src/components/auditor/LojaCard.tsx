@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Store, Calendar, User, Plus, History, AlertCircle, PlayCircle } from 'lucide-react';
@@ -26,9 +27,9 @@ export const LojaCard: React.FC<LojaCardProps> = ({
     new Date(b.data || '').getTime() - new Date(a.data || '').getTime()
   )[0];
   
-  const hasOngoingAudit = loja.auditorias?.some(a => a.status === 'em_andamento');
-  const ongoingAudit = hasOngoingAudit ? 
-    loja.auditorias.find(a => a.status === 'em_andamento') : null;
+  // Verificar corretamente se existe uma auditoria em andamento
+  const auditoriaEmAndamento = loja.auditorias?.find(a => a.status === 'em_andamento');
+  const hasOngoingAudit = !!auditoriaEmAndamento;
   
   const getTotalScore = (audit: Auditoria) => {
     if (!audit || !audit.respostas) return 0;
@@ -58,12 +59,12 @@ export const LojaCard: React.FC<LojaCardProps> = ({
   };
 
   const handleContinueAudit = () => {
-    if (ongoingAudit) {
-      navigate(`/checklist/${ongoingAudit.id}`);
+    if (auditoriaEmAndamento) {
+      navigate(`/checklist/${auditoriaEmAndamento.id}`);
     }
   };
 
-  const totalScore = ongoingAudit ? getTotalScore(ongoingAudit) : 
+  const totalScore = auditoriaEmAndamento ? getTotalScore(auditoriaEmAndamento) : 
                     latestAudit ? getTotalScore(latestAudit) : 0;
 
   return (

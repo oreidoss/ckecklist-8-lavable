@@ -67,6 +67,10 @@ const ChecklistHeader: React.FC<ChecklistHeaderProps> = ({
     u.nome?.toLowerCase().includes('gerente')
   );
 
+  // Verificação melhorada para garantir que a lista de usuários não esteja vazia
+  const hasSupervisores = supervisores && supervisores.length > 0;
+  const hasGerentes = gerentes && gerentes.length > 0;
+
   return (
     <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
@@ -101,8 +105,8 @@ const ChecklistHeader: React.FC<ChecklistHeaderProps> = ({
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Selecione um supervisor" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      {supervisores?.length > 0 
+                    <SelectContent className="bg-white max-h-[300px] overflow-y-auto z-50">
+                      {hasSupervisores 
                         ? supervisores.map((usuario) => (
                             <SelectItem key={usuario.id} value={usuario.nome}>
                               {usuario.nome}
@@ -165,8 +169,8 @@ const ChecklistHeader: React.FC<ChecklistHeaderProps> = ({
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Selecione um gerente" />
                     </SelectTrigger>
-                    <SelectContent position="popper" sideOffset={4} className="bg-white z-50">
-                      {gerentes?.length > 0 
+                    <SelectContent position="popper" sideOffset={4} className="bg-white max-h-[300px] overflow-y-auto z-50">
+                      {hasGerentes 
                         ? gerentes.map((usuario) => (
                             <SelectItem key={usuario.id} value={usuario.nome}>
                               {usuario.nome}

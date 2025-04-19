@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Usuario } from '@/lib/types';
 
 type UseUserSelectorHandlersProps = {
   auditoriaId: string | undefined;
@@ -8,7 +9,7 @@ type UseUserSelectorHandlersProps = {
   gerente: string;
   isEditingSupervisor: boolean;
   isEditingGerente: boolean;
-  usuarios: any[];
+  usuarios: Usuario[];
   setIsEditingSupervisor: (value: boolean) => void;
   setIsEditingGerente: (value: boolean) => void;
   setSupervisor: (value: string) => void;
@@ -34,6 +35,7 @@ export const useUserSelectorHandlers = (props: UseUserSelectorHandlersProps) => 
     if (!auditoriaId) return;
     
     try {
+      console.log("Salvando supervisor:", supervisor);
       const { error } = await supabase
         .from('auditorias')
         .update({ supervisor })
@@ -88,21 +90,25 @@ export const useUserSelectorHandlers = (props: UseUserSelectorHandlersProps) => 
   };
 
   // Filter users by role
-  const getSupervisores = (usuarios: any[]) => {
+  const getSupervisores = (usuarios: Usuario[]) => {
+    if (!usuarios || usuarios.length === 0) return [];
+    
     return usuarios.filter(u => 
       u.role === 'supervisor' || 
       u.funcao === 'supervisor' || 
-      u.email?.toLowerCase().includes('supervisor') || 
-      u.nome?.toLowerCase().includes('supervisor')
+      (u.email && u.email.toLowerCase().includes('supervisor')) || 
+      (u.nome && u.nome.toLowerCase().includes('supervisor'))
     );
   };
   
-  const getGerentes = (usuarios: any[]) => {
+  const getGerentes = (usuarios: Usuario[]) => {
+    if (!usuarios || usuarios.length === 0) return [];
+    
     return usuarios.filter(u => 
       u.role === 'gerente' || 
       u.funcao === 'gerente' || 
-      u.email?.toLowerCase().includes('gerente') || 
-      u.nome?.toLowerCase().includes('gerente')
+      (u.email && u.email.toLowerCase().includes('gerente')) || 
+      (u.nome && u.nome.toLowerCase().includes('gerente'))
     );
   };
 
