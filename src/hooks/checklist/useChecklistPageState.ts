@@ -1,10 +1,15 @@
 
 import { useChecklistData } from './useChecklistData';
 import { useChecklist } from './';
+import { useActiveSection } from './useActiveSection';
 import { useSectionNavigation } from './useSectionNavigation';
 import { useChecklistProcessor } from './useChecklistProcessor';
 import { useSectionState } from './useSectionState';
 import { useSaveProgress } from './useSaveProgress';
+import { useResponseHandlers } from './useResponseHandlers';
+import { useNavigationHandlers } from './useNavigationHandlers';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 export const useChecklistPageState = (
   auditoriaId: string | undefined,
@@ -31,6 +36,16 @@ export const useChecklistPageState = (
     refetchAuditoria
   } = checklistData;
 
+  // Use active section management
+  const {
+    activeSecao,
+    setActiveSecao,
+    isEditingActive,
+    toggleEditMode
+  } = useActiveSection(secoes, []);
+
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+
   // Use checklist functionality
   const {
     respostas,
@@ -42,6 +57,7 @@ export const useChecklistPageState = (
     observacoes,
     uploading,
     fileUrls,
+    isSaving,
     handleResposta,
     handleFileUpload,
     handleObservacaoChange,
@@ -56,37 +72,52 @@ export const useChecklistPageState = (
     getPerguntasBySecao,
     updateIncompleteSections,
     goToNextSection,
-    goToPreviousSection,
-    handleSetActiveSecao
+    goToPreviousSection
   } = useSectionNavigation({
     secoes,
     perguntas,
     respostas,
-    activeSecao: null,
-    setActiveSecao: handleSetActiveSecao
-  });
-
-  // Use section state management
-  const {
-    isEditingActive,
-    editingSections,
-    setEditingSections,
-    toggleEditMode
-  } = useSectionState({
-    secoes,
-    activeSecao: null,
-    completedSections,
-    setCompletedSections,
-    respostas,
-    perguntas
+    activeSecao,
+    setActiveSecao
   });
 
   // Use save progress functionality
   const {
-    isSaving,
-    setIsSaving,
-    saveAndNavigateHome
-  } = useSaveProgress(saveAllResponses, saveAllResponses);
+    saveAndNavigateHome: saveAndNavigateHomeBase
+  } = useSaveProgress(
+    saveAllResponses,
+    saveAllResponses
+  );
+  
+  // Use response handlers
+  const {
+    handleRespostaWrapped,
+    handleFileUploadWrapped,
+    handleSaveObservacaoWrapped
+  } = useResponseHandlers(
+    handleResposta,
+    handleFileUpload,
+    handleSaveObservacao,
+    respostasExistentes,
+    perguntas,
+    updateIncompleteSections
+  );
+
+  // Use navigation handlers
+  const {
+    handleSetActiveSecao,
+    hasUnansweredQuestions,
+    isLastPerguntaInSection,
+    saveAndNavigateToNextSection
+  } = useNavigationHandlers(
+    activeSecao,
+    setActiveSecao,
+    secoes,
+    goToNextSection,
+    goToPreviousSection,
+    saveAllResponses,
+    saveAndNavigateHomeBase
+  );
 
   // Return all the necessary values and functions
   return {
@@ -105,6 +136,7 @@ export const useChecklistPageState = (
     
     // State management
     respostas,
+    activeSecao,
     progresso,
     completedSections,
     incompleteSections,
@@ -112,6 +144,7 @@ export const useChecklistPageState = (
     uploading,
     fileUrls,
     isSaving,
+    isSendingEmail,
     isEditingActive,
     
     // Setters
@@ -124,15 +157,18 @@ export const useChecklistPageState = (
     refetchAuditoria,
     getPerguntasBySecao,
     handleSetActiveSecao,
-    handleResposta,
+    handleRespostaWrapped,
     handleObservacaoChange,
-    handleSaveObservacao,
-    handleFileUpload,
+    handleSaveObservacaoWrapped,
+    handleFileUploadWrapped,
     goToPreviousSection,
     goToNextSection,
-    saveAndNavigateHome,
+    hasUnansweredQuestions,
+    isLastPerguntaInSection,
     saveAllResponses,
     updateCompletedSections,
-    toggleEditMode
+    toggleEditMode,
+    saveAndNavigateHomeBase,
+    saveAndNavigateToNextSection
   };
 };

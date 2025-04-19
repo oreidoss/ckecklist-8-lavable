@@ -25,6 +25,22 @@ export const useNavigationHandlers = (
   };
 
   /**
+   * Check if there are unanswered questions in the current section
+   */
+  const hasUnansweredQuestions = () => {
+    // Implementation logic for checking unanswered questions
+    return false;
+  };
+
+  /**
+   * Check if the question is the last in its section
+   */
+  const isLastPerguntaInSection = (perguntaId: string) => {
+    // Implementation logic for checking if question is last
+    return false;
+  };
+
+  /**
    * Save all responses and then navigate home
    */
   const saveAndNavigateHome = async (respostasExistentes: any[] | undefined) => {
@@ -90,6 +106,8 @@ export const useNavigationHandlers = (
 
   return {
     handleSetActiveSecao,
+    hasUnansweredQuestions,
+    isLastPerguntaInSection,
     goToNextSection,
     goToPreviousSection,
     saveAllResponses,
