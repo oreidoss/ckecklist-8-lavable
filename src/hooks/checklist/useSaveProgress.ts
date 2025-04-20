@@ -15,11 +15,17 @@ export const useSaveProgress = (
     if (!respostasExistentes) return false;
     
     try {
+      setIsSaving(true);
+      // Primeiro salvamos todas as respostas
       await saveAllResponsesBase();
+      
+      // Depois executamos a função de salvamento e navegação
       const success = await saveAndNavigateHomeBase(respostasExistentes);
+      
       if (success) {
         navigate('/');
       }
+      
       return success;
     } catch (error) {
       console.error("Error saving progress:", error);
@@ -29,6 +35,8 @@ export const useSaveProgress = (
         variant: "destructive"
       });
       return false;
+    } finally {
+      setIsSaving(false);
     }
   };
 

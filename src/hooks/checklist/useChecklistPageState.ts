@@ -81,15 +81,23 @@ export const useChecklistPageState = (
     setActiveSecao
   });
 
+  // Corrigindo a função de wrapper para garantir que retorna um boolean
+  const saveAllAndReturnBoolean = async (respostasExistentes: any[]): Promise<boolean> => {
+    try {
+      await saveAllResponses();
+      return true;
+    } catch (error) {
+      console.error("Error in saveAllAndReturnBoolean:", error);
+      return false;
+    }
+  };
+
   // Use save progress functionality
   const {
     saveAndNavigateHome: saveAndNavigateHomeBase
   } = useSaveProgress(
     saveAllResponses,
-    async (respostasExistentes: any[]) => {
-      await saveAllResponses();
-      return true; // Return boolean to match expected type
-    }
+    saveAllAndReturnBoolean
   );
   
   // Use response handlers

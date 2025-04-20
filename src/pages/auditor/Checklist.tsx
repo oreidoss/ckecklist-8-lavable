@@ -81,16 +81,18 @@ const Checklist: React.FC = () => {
   const saveAndNavigateHome = async () => {
     if (respostasExistentes) {
       try {
-        // Pass just the respostasExistentes array, not the progresso parameter
+        // Chamar a função base com os parâmetros corretos
         const success = await saveAndNavigateHomeBase(respostasExistentes);
         if (success) {
           navigate('/');
         }
-        return;
+        return success;
       } catch (error) {
         console.error("Error navigating home:", error);
+        return false;
       }
     }
+    return false;
   };
 
   return (
