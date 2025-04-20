@@ -79,15 +79,21 @@ const Checklist: React.FC = () => {
   const saveAndNavigateHome = async () => {
     if (respostasExistentes) {
       try {
+        console.log("Iniciando saveAndNavigateHome em componente Checklist");
         const success = await saveAndNavigateHomeBase(respostasExistentes);
+        console.log("Resultado saveAndNavigateHomeBase:", success);
+        
         if (success) {
+          console.log("Navegando para home após salvar com sucesso");
           navigate('/');
         }
-        return;
+        return success;
       } catch (error) {
         console.error("Error navigating home:", error);
+        return false;
       }
     }
+    return false;
   };
 
   return (

@@ -24,6 +24,7 @@ export const useSaveProgress = (
       
       if (success) {
         navigate('/');
+        return true; // Garantindo retorno booleano explícito
       }
       
       return success;

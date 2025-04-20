@@ -81,18 +81,26 @@ const Checklist: React.FC = () => {
   const saveAndNavigateHome = async () => {
     if (respostasExistentes) {
       try {
+        console.log("Iniciando saveAndNavigateHome com", respostasExistentes.length, "respostas");
         // Chamar a função base com os parâmetros corretos
         const success = await saveAndNavigateHomeBase(respostasExistentes);
+        console.log("saveAndNavigateHome resultado:", success);
+        
         if (success) {
+          console.log("Navegando para home após salvar");
           navigate('/');
+        } else {
+          console.log("Não navegando: success é", success);
         }
         return success;
       } catch (error) {
         console.error("Error navigating home:", error);
         return false;
       }
+    } else {
+      console.log("Nenhuma resposta existente para salvar");
+      return false;
     }
-    return false;
   };
 
   return (

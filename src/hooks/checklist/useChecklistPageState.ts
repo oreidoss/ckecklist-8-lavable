@@ -81,10 +81,11 @@ export const useChecklistPageState = (
     setActiveSecao
   });
 
-  // Corrigindo a função de wrapper para garantir que retorna um boolean
+  // Função wrapper garantindo retorno booleano explícito
   const saveAllAndReturnBoolean = async (respostasExistentes: any[]): Promise<boolean> => {
     try {
       await saveAllResponses();
+      console.log("saveAllAndReturnBoolean: respostas salvas com sucesso");
       return true;
     } catch (error) {
       console.error("Error in saveAllAndReturnBoolean:", error);
