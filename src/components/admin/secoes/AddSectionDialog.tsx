@@ -23,12 +23,24 @@ export const AddSectionDialog: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [errorMessage, setErrorMessage] = useState('');
+  const [open, setOpen] = useState(false);
 
   const adicionarSecaoMutation = useMutation({
     mutationFn: async (novaSecao: { nome: string }) => {
+      // Verificar se já existe uma seção com este nome antes de inserir
+      const { data: existingSection, error: checkError } = await supabase
+        .from('secoes')
+        .select('*')
+        .ilike('nome', novaSecao.nome.trim())
+        .maybeSingle();
+      
+      if (existingSection) {
+        throw new Error('Já existe uma seção com esse nome.');
+      }
+      
       const { data, error } = await supabase
         .from('secoes')
-        .insert([{ nome: novaSecao.nome }])
+        .insert([{ nome: novaSecao.nome.trim() }])
         .select();
       
       if (error) throw error;
@@ -38,6 +50,7 @@ export const AddSectionDialog: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['secoes'] });
       setNovaSecao({ nome: '' });
       setErrorMessage('');
+      setOpen(false);
       toast({
         title: "Seção adicionada",
         description: "A seção foi adicionada com sucesso."
@@ -52,6 +65,8 @@ export const AddSectionDialog: React.FC = () => {
         error.message.includes('unique_nome')
       ) {
         setErrorMessage('Já existe uma seção com esse nome.');
+      } else if (error.message.includes('com esse nome')) {
+        setErrorMessage('Já existe uma seção com esse nome.');
       } else {
         setErrorMessage('');
         toast({
@@ -64,7 +79,7 @@ export const AddSectionDialog: React.FC = () => {
   });
 
   const handleAdicionarSecao = () => {
-    if (!novaSecao.nome) {
+    if (!novaSecao.nome.trim()) {
       setErrorMessage('');
       toast({
         title: "Campo obrigatório",
@@ -78,7 +93,7 @@ export const AddSectionDialog: React.FC = () => {
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
@@ -112,12 +127,10 @@ export const AddSectionDialog: React.FC = () => {
           </div>
         </div>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancelar</Button>
-          </DialogClose>
-          <DialogClose asChild>
-            <Button onClick={handleAdicionarSecao}>Adicionar</Button>
-          </DialogClose>
+          <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button onClick={handleAdicionarSecao} disabled={adicionarSecaoMutation.isPending}>
+            {adicionarSecaoMutation.isPending ? "Adicionando..." : "Adicionar"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
