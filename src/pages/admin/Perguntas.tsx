@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Card, 
@@ -15,6 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useToast } from '@/hooks/use-toast';
 import { SectionFilter } from '@/components/admin/perguntas/SectionFilter';
+import { ExportPerguntasSecoesExcelButton } from '@/components/admin/perguntas/ExportPerguntasSecoesExcelButton';
 
 const AdminPerguntas: React.FC = () => {
   const { toast } = useToast();
@@ -48,11 +48,13 @@ const AdminPerguntas: React.FC = () => {
           selectedSecaoId={selectedSecaoId}
           onSelectSecao={setSelectedSecaoId}
         />
-        
-        <AddPerguntaDialog 
-          secoes={secoes} 
-          onPerguntaAdded={refetchPerguntas} 
-        />
+        <div className="flex flex-col space-y-1 sm:space-y-0 sm:flex-row sm:space-x-2">
+          <ExportPerguntasSecoesExcelButton />
+          <AddPerguntaDialog 
+            secoes={secoes} 
+            onPerguntaAdded={refetchPerguntas} 
+          />
+        </div>
       </div>
       
       <Card className="overflow-hidden">
