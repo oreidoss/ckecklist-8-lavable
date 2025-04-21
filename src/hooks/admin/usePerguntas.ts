@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,7 +33,13 @@ export function usePerguntas() {
         throw error;
       }
       
-      return data as Pergunta[];
+      // Garantir que todas as propriedades necessárias existem e não são nulas
+      return (data || []).map(pergunta => ({
+        ...pergunta,
+        id: pergunta.id?.toString() || '',
+        secao_id: pergunta.secao_id?.toString() || '',
+        texto: pergunta.texto || ''
+      }));
     }
   });
   
@@ -62,7 +69,12 @@ export function usePerguntas() {
         throw error;
       }
       
-      return data as Secao[];
+      // Garantir que todas as propriedades necessárias existem e não são nulas
+      return (data || []).map(secao => ({
+        ...secao,
+        id: secao.id?.toString() || '',
+        nome: secao.nome || ''
+      }));
     }
   });
   

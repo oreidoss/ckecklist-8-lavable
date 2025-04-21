@@ -36,6 +36,7 @@ export function PerguntasTable({
   const [editedPerguntas, setEditedPerguntas] = useState<Record<string, Pergunta>>({});
   
   const getSecaoNome = (secaoId: string) => {
+    if (!secaoId) return 'Seção não encontrada';
     const secao = secoes.find(s => s.id === secaoId);
     return secao ? secao.nome : 'Seção não encontrada';
   };
@@ -80,13 +81,18 @@ export function PerguntasTable({
       </TableHeader>
       <TableBody>
         {perguntas.map((pergunta, index) => {
+          if (!pergunta || !pergunta.id) {
+            console.error("Pergunta inválida:", pergunta);
+            return null; // Pula renderização se a pergunta for inválida
+          }
+          
           const currentPergunta = editedPerguntas[pergunta.id] || pergunta;
           
           return (
             <TableRow key={pergunta.id}>
               <TableCell className="font-medium">{index + 1}</TableCell>
-              <TableCell>{getSecaoNome(currentPergunta.secao_id)}</TableCell>
-              <TableCell>{currentPergunta.texto}</TableCell>
+              <TableCell>{getSecaoNome(currentPergunta.secao_id || '')}</TableCell>
+              <TableCell>{currentPergunta.texto || ''}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end space-x-2">
                   <EditPerguntaDialog 

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -40,16 +40,33 @@ export function EditPerguntaDialog({
   isSubmitting = false
 }: EditPerguntaDialogProps) {
   // Create a local state to manage pergunta data during editing
-  const [localPergunta, setLocalPergunta] = useState<Pergunta>(pergunta);
+  const [localPergunta, setLocalPergunta] = useState<Pergunta>({
+    id: pergunta?.id || '',
+    secao_id: pergunta?.secao_id || '',
+    texto: pergunta?.texto || ''
+  });
   const [isOpen, setIsOpen] = useState(false);
   
   // Reset local state when dialog opens with the current pergunta
   const handleOpenChange = (open: boolean) => {
     if (open) {
-      setLocalPergunta(pergunta);
+      setLocalPergunta({
+        id: pergunta?.id || '',
+        secao_id: pergunta?.secao_id || '',
+        texto: pergunta?.texto || ''
+      });
     }
     setIsOpen(open);
   };
+
+  // Update when pergunta prop changes
+  useEffect(() => {
+    setLocalPergunta({
+      id: pergunta?.id || '',
+      secao_id: pergunta?.secao_id || '',
+      texto: pergunta?.texto || ''
+    });
+  }, [pergunta]);
 
   // Update local state
   const handleChange = (field: keyof Pergunta, value: string) => {
@@ -86,7 +103,7 @@ export function EditPerguntaDialog({
               Seção
             </Label>
             <Select 
-              value={localPergunta.secao_id.toString()} 
+              value={localPergunta.secao_id || ''} 
               onValueChange={(value) => handleChange('secao_id', value)}
             >
               <SelectTrigger className="col-span-3">
@@ -94,7 +111,7 @@ export function EditPerguntaDialog({
               </SelectTrigger>
               <SelectContent>
                 {secoes.map((secao) => (
-                  <SelectItem key={secao.id} value={secao.id.toString()}>
+                  <SelectItem key={secao.id} value={secao.id}>
                     {secao.nome}
                   </SelectItem>
                 ))}
@@ -108,7 +125,7 @@ export function EditPerguntaDialog({
             <div className="col-span-3">
               <Textarea
                 id="edit-texto"
-                value={localPergunta.texto}
+                value={localPergunta.texto || ''}
                 onChange={(e) => handleChange('texto', e.target.value)}
                 className="min-h-[100px]"
               />
