@@ -22,7 +22,16 @@ export const LojaCard: React.FC<LojaCardProps> = ({
   onNewAudit,
   isCreatingAudit
 }) => {
-  const navigate = useNavigate();
+  // Wrapper para evitar erro de useNavigate fora de um Router context
+  const navigate = typeof window !== 'undefined' ? 
+    (() => {
+      try {
+        return useNavigate();
+      } catch (e) {
+        // Função fallback que não faz nada caso não esteja em um contexto Router
+        return (path: string) => console.warn('Navigation attempted outside Router context:', path);
+      }
+    })() : (path: string) => console.warn('Navigation attempted outside Router context:', path);
   
   // Get latest audit by date
   const latestAudit = loja.auditorias?.sort((a, b) => 
