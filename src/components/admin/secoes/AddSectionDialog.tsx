@@ -22,6 +22,7 @@ export const AddSectionDialog: React.FC = () => {
   const [novaSecao, setNovaSecao] = useState({ nome: '' });
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [errorMessage, setErrorMessage] = useState('');
 
   const adicionarSecaoMutation = useMutation({
     mutationFn: async (novaSecao: { nome: string }) => {
@@ -36,22 +37,35 @@ export const AddSectionDialog: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['secoes'] });
       setNovaSecao({ nome: '' });
+      setErrorMessage('');
       toast({
         title: "Seção adicionada",
         description: "A seção foi adicionada com sucesso."
       });
     },
-    onError: (error) => {
-      toast({
-        title: "Erro ao adicionar seção",
-        description: error.message,
-        variant: "destructive"
-      });
+    onError: (error: any) => {
+      // Check for duplicate error (constraint violation)
+      if (
+        error &&
+        error.code === '23505' && // unique_violation
+        typeof error.message === 'string' &&
+        error.message.includes('unique_nome')
+      ) {
+        setErrorMessage('Já existe uma seção com esse nome.');
+      } else {
+        setErrorMessage('');
+        toast({
+          title: "Erro ao adicionar seção",
+          description: error.message,
+          variant: "destructive"
+        });
+      }
     }
   });
 
   const handleAdicionarSecao = () => {
     if (!novaSecao.nome) {
+      setErrorMessage('');
       toast({
         title: "Campo obrigatório",
         description: "Preencha o nome da seção.",
@@ -59,7 +73,7 @@ export const AddSectionDialog: React.FC = () => {
       });
       return;
     }
-    
+    setErrorMessage('');
     adicionarSecaoMutation.mutate(novaSecao);
   };
 
@@ -83,13 +97,18 @@ export const AddSectionDialog: React.FC = () => {
             <Label htmlFor="nome" className="text-right">
               Nome
             </Label>
-            <Input
-              id="nome"
-              value={novaSecao.nome}
-              onChange={(e) => setNovaSecao({ nome: e.target.value })}
-              className="col-span-3"
-              placeholder="Limpeza"
-            />
+            <div className="col-span-3 flex flex-col space-y-2">
+              <Input
+                id="nome"
+                value={novaSecao.nome}
+                onChange={(e) => setNovaSecao({ nome: e.target.value })}
+                className="col-span-3"
+                placeholder="Limpeza"
+              />
+              {errorMessage && (
+                <span className="text-sm text-destructive">{errorMessage}</span>
+              )}
+            </div>
           </div>
         </div>
         <DialogFooter>
