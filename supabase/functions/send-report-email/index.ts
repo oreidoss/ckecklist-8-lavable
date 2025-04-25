@@ -27,7 +27,10 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { auditoriaId, lojaName, userEmail, userName }: ReportEmailRequest = await req.json();
     
+    console.log("Received email request:", { auditoriaId, lojaName, userEmail, userName });
+    
     if (!auditoriaId || !lojaName || !userEmail) {
+      console.error("Missing required email parameters");
       throw new Error("Dados incompletos para envio do email");
     }
 
@@ -77,7 +80,7 @@ const handler = async (req: Request): Promise<Response> => {
       ]
     });
 
-    console.log("Emails sent successfully:", adminEmail, userEmailResponse);
+    console.log("Emails sent successfully:", { adminEmail, userEmailResponse });
 
     return new Response(JSON.stringify({ 
       success: true, 
