@@ -12,9 +12,6 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  /**
-   * Send report via email
-   */
   const sendReportEmail = async (lojaName: string) => {
     if (!auditoriaId || !user) {
       console.error("Missing required data for email:", { auditoriaId, user });
@@ -29,16 +26,12 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
     setIsSendingEmail(true);
     
     try {
-      console.log("Iniciando processo de envio de email...", {
+      console.log("Iniciando envio de email...", {
         auditoriaId,
         lojaName,
         userEmail: user.email,
         userName: user.nome,
       });
-      
-      // Teste de log antes da chamada
-      console.log("Chamando edge function send-report-email com URL completa:", 
-        "https://plskhjrrwofdroicafnr.supabase.co/functions/v1/send-report-email");
       
       const response = await supabase.functions.invoke('send-report-email', {
         body: {
@@ -49,14 +42,11 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         },
       });
       
-      console.log("Resposta recebida da API de email:", response);
+      console.log("Resposta do envio de email:", response);
       
       if (response.error) {
-        console.error("Erro na resposta da edge function:", response.error);
         throw new Error(response.error.message || 'Erro ao enviar email do relatório');
       }
-      
-      console.log("Email enviado com sucesso:", response.data);
       
       toast({
         title: "Email enviado",
@@ -79,9 +69,6 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
     }
   };
 
-  /**
-   * Save checklist data and navigate home
-   */
   const saveAndNavigateHome = async (respostasExistentes: any[]) => {
     if (isSaving || !auditoriaId) {
       console.log("Não pode salvar:", { isSaving, auditoriaId });
@@ -99,7 +86,6 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
       
       console.log("Calculando pontuação total:", pontuacaoTotal);
       
-      // Get loja information for the email
       const { data: auditoria, error: auditoriaError } = await supabase
         .from('auditorias')
         .select('*, loja:lojas(*)')
@@ -113,10 +99,8 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
       
       console.log("Dados da auditoria obtidos:", auditoria);
       
-      // Calculate progress based on respostas
       const progresso = respostasExistentes.length > 0 ? 100 : 0;
       
-      // Update auditoria
       const { error: updateError } = await supabase
         .from('auditorias')
         .update({ 
@@ -137,7 +121,6 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         description: "Todas as respostas foram salvas com sucesso!",
       });
       
-      // Try to send email report
       if (auditoria?.loja?.nome) {
         console.log("Tentando enviar relatório por email...");
         await sendReportEmail(auditoria.loja.nome);

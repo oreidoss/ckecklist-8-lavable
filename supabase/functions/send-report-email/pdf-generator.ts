@@ -1,4 +1,3 @@
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.43.1";
 import { Buffer } from "https://deno.land/std@0.182.0/io/buffer.ts";
 import * as puppeteer from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
@@ -8,8 +7,10 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export async function generatePdf(auditoriaId: string): Promise<Buffer> {
+export async function generatePdf(auditoriaId: string): Promise<Uint8Array> {
   try {
+    console.log("Iniciando geração do PDF para auditoria:", auditoriaId);
+    
     // Fetch audit data
     const { data: auditoria, error: auditoriaError } = await supabase
       .from('auditorias')
@@ -17,7 +18,12 @@ export async function generatePdf(auditoriaId: string): Promise<Buffer> {
       .eq('id', auditoriaId)
       .single();
 
-    if (auditoriaError) throw auditoriaError;
+    if (auditoriaError) {
+      console.error("Erro ao buscar dados da auditoria:", auditoriaError);
+      throw auditoriaError;
+    }
+    
+    console.log("Dados da auditoria obtidos:", auditoria);
 
     // Fetch related data
     const { data: respostas, error: respostasError } = await supabase
@@ -25,28 +31,30 @@ export async function generatePdf(auditoriaId: string): Promise<Buffer> {
       .select('*')
       .eq('auditoria_id', auditoriaId);
 
-    if (respostasError) throw respostasError;
+    if (respostasError) {
+      console.error("Erro ao buscar respostas:", respostasError);
+      throw respostasError;
+    }
+    
+    console.log(`${respostas?.length || 0} respostas encontradas`);
 
     const { data: perguntas, error: perguntasError } = await supabase
       .from('perguntas')
       .select('*');
 
-    if (perguntasError) throw perguntasError;
+    if (perguntasError) {
+      console.error("Erro ao buscar perguntas:", perguntasError);
+      throw perguntasError;
+    }
 
     const { data: secoes, error: secoesError } = await supabase
       .from('secoes')
       .select('*');
 
-    if (secoesError) throw secoesError;
-
-    // Fetch previous audits for the same store
-    const { data: auditorias, error: auditoriasError } = await supabase
-      .from('auditorias')
-      .select('*')
-      .eq('loja_id', auditoria.loja_id)
-      .order('data', { ascending: false });
-
-    if (auditoriasError) throw auditoriasError;
+    if (secoesError) {
+      console.error("Erro ao buscar seções:", secoesError);
+      throw secoesError;
+    }
 
     // Generate HTML content for the report
     const reportHtml = generateReportHtml({
@@ -54,16 +62,20 @@ export async function generatePdf(auditoriaId: string): Promise<Buffer> {
       loja: auditoria.loja,
       respostas,
       perguntas,
-      secoes,
-      auditorias
+      secoes
     });
 
     // Launch puppeteer to generate PDF
     const browser = await puppeteer.launch({ 
       args: ["--no-sandbox", "--disable-setuid-sandbox"]
     });
+    
+    console.log("Browser iniciado");
+    
     const page = await browser.newPage();
     await page.setContent(reportHtml, { waitUntil: "networkidle0" });
+    
+    console.log("Conteúdo HTML carregado na página");
     
     // Generate PDF
     const pdf = await page.pdf({
@@ -77,11 +89,14 @@ export async function generatePdf(auditoriaId: string): Promise<Buffer> {
       }
     });
     
+    console.log("PDF gerado com sucesso");
+    
     await browser.close();
+    console.log("Browser fechado");
     
     return pdf;
   } catch (error) {
-    console.error("Error generating PDF:", error);
+    console.error("Erro detalhado na geração do PDF:", error);
     throw error;
   }
 }
