@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,6 +34,14 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         userName: user.nome,
       });
       
+      // Incluindo logs detalhados para o processo
+      console.log("Chamando função send-report-email com payload:", JSON.stringify({
+        auditoriaId,
+        lojaName,
+        userEmail: user.email,
+        userName: user.nome,
+      }));
+      
       const response = await supabase.functions.invoke('send-report-email', {
         body: {
           auditoriaId,
@@ -42,9 +51,10 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         },
       });
       
-      console.log("Resposta do envio de email:", response);
+      console.log("Resposta completa da função send-report-email:", JSON.stringify(response));
       
       if (response.error) {
+        console.error("Erro retornado pela função:", response.error);
         throw new Error(response.error.message || 'Erro ao enviar email do relatório');
       }
       

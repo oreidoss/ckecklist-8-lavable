@@ -52,8 +52,8 @@ const ChecklistActions: React.FC<ChecklistActionsProps> = ({
             </>
           ) : isSendingEmail ? (
             <>
-              <Mail className="mr-1 h-3 w-3" />
-              Enviando...
+              <Mail className="mr-1 h-3 w-3 animate-spin" />
+              Enviando email...
             </>
           ) : (
             <>

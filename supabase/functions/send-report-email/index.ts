@@ -39,7 +39,7 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     console.log("Tentando ler corpo da requisição...");
     const requestData = await req.json();
-    console.log("Dados recebidos:", requestData);
+    console.log("Dados recebidos:", JSON.stringify(requestData));
     
     const { auditoriaId, lojaName, userEmail, userName }: ReportEmailRequest = requestData;
     
@@ -55,13 +55,14 @@ const handler = async (req: Request): Promise<Response> => {
     const today = new Date();
     const formattedDate = today.toLocaleDateString('pt-BR');
     
-    console.log("Enviando email para o usuário...");
+    console.log(`Enviando email para ${userEmail}...`);
     const emailResponse = await resend.emails.send({
       from: "Checklist 9.0 <onboarding@resend.dev>",
       to: [userEmail],
       subject: `Checklist da loja ${lojaName} finalizado - ${formattedDate}`,
       html: `
         <h1>Checklist finalizado com sucesso!</h1>
+        <p>Olá ${userName || "usuário"},</p>
         <p>O checklist da loja <strong>${lojaName}</strong> foi finalizado em ${formattedDate}.</p>
         <p>O relatório completo está em anexo.</p>
         <p>Atenciosamente,<br>Sistema Checklist 9.0</p>
