@@ -2,7 +2,6 @@
 import React, { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Resposta } from '@/lib/types';
 
 interface SectionScoresProps {
   auditoriaId?: string;
@@ -39,7 +38,7 @@ const SectionScores: React.FC<SectionScoresProps> = ({
     console.log("Atualizando pontuações de seção para auditoria:", auditoriaId);
     
     try {
-      // Consulta direta ao Supabase para cálculo mais preciso de pontuação
+      // Get latest responses from Supabase
       const { data: respostasData, error: respostasError } = await supabase
         .from('respostas')
         .select('*')
@@ -54,27 +53,16 @@ const SectionScores: React.FC<SectionScoresProps> = ({
         .select('*');
         
       if (perguntasError) throw perguntasError;
-      console.log(`Encontradas ${perguntasData?.length || 0} perguntas no total`);
       
-      // Calcular pontuações diretamente
+      // Initialize scores
       const scores: Record<string, number> = {};
-      
-      // Inicializar todas as pontuações de seção em 0
       perguntasData.forEach(pergunta => {
         if (pergunta.secao_id && !scores[pergunta.secao_id]) {
           scores[pergunta.secao_id] = 0;
         }
       });
       
-      // Mapeamento direto de pontuação
-      const pontuacaoMap: Record<string, number> = {
-        'Sim': 1,
-        'Não': -1,
-        'Regular': 0.5,
-        'N/A': 0
-      };
-      
-      // Criar um mapa de pergunta -> seção para acesso mais rápido
+      // Create pergunta -> seção mapping
       const perguntaPorSecao = perguntasData.reduce((acc, pergunta) => {
         if (pergunta.secao_id) {
           acc[pergunta.id] = pergunta.secao_id;
@@ -82,41 +70,25 @@ const SectionScores: React.FC<SectionScoresProps> = ({
         return acc;
       }, {} as Record<string, string>);
       
-      // Mapear respostas por ID da pergunta para pegar a resposta mais recente usando created_at
+      // Get only the most recent response for each question
       const ultimasRespostas = new Map();
-      
-      // Ordenar as respostas por data, mais recentes primeiro
       const respostasOrdenadas = [...respostasData].sort((a, b) => {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
       
-      // Pegar apenas a resposta mais recente para cada pergunta
-      respostasOrdenadas.forEach((resposta: Resposta) => {
+      respostasOrdenadas.forEach(resposta => {
         const perguntaId = resposta.pergunta_id;
         if (!ultimasRespostas.has(perguntaId)) {
           ultimasRespostas.set(perguntaId, resposta);
         }
       });
       
-      console.log(`Usando ${ultimasRespostas.size} respostas únicas de ${respostasData.length} totais`);
-      
-      // Agora processar apenas as respostas mais recentes
+      // Calculate section scores
       ultimasRespostas.forEach((resposta) => {
         const secaoId = perguntaPorSecao[resposta.pergunta_id];
         if (secaoId) {
-          // Obter nome da seção para melhor logging
-          const secao = secoes?.find(s => s.id === secaoId);
-          const secaoNome = secao ? secao.nome : 'seção desconhecida';
-          
-          // Usar pontuacao_obtida se disponível, caso contrário calcular a partir da resposta
           if (resposta.pontuacao_obtida !== null && resposta.pontuacao_obtida !== undefined) {
-            const pontuacao = Number(resposta.pontuacao_obtida);
-            scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
-            console.log(`  Adicionada pontuacao_obtida ${pontuacao} à seção "${secaoNome}", novo total: ${scores[secaoId]}`);
-          } else if (resposta.resposta) {
-            const pontuacao = pontuacaoMap[resposta.resposta] !== undefined ? pontuacaoMap[resposta.resposta] : 0;
-            scores[secaoId] = (scores[secaoId] || 0) + pontuacao;
-            console.log(`  Calculada pontuação ${pontuacao} da resposta "${resposta.resposta}" para seção "${secaoNome}", novo total: ${scores[secaoId]}`);
+            scores[secaoId] = (scores[secaoId] || 0) + Number(resposta.pontuacao_obtida);
           }
         }
       });
@@ -124,46 +96,11 @@ const SectionScores: React.FC<SectionScoresProps> = ({
       console.log("Pontuações finais calculadas:", scores);
       updateScores(scores);
       
-      // Atualizar pontuação total da auditoria
-      await updateAuditoriaPontuacaoTotal(auditoriaId, ultimasRespostas);
-      
-    } catch (error) {
-      console.error("Erro ao calcular pontuações diretamente:", error);
-      
-      // Mostrar toast de erro
-      toast({
-        title: "Erro ao calcular pontuações",
-        description: "Ocorreu um erro ao calcular as pontuações das seções.",
-        variant: "destructive"
-      });
-    }
-  };
-  
-  // Função auxiliar para atualizar a pontuação total da auditoria
-  const updateAuditoriaPontuacaoTotal = async (auditoriaId: string, uniqueRespostas: Map<string, any>) => {
-    try {
-      // Mapeamento direto de pontuação
-      const pontuacaoMap: Record<string, number> = {
-        'Sim': 1,
-        'Não': -1,
-        'Regular': 0.5,
-        'N/A': 0
-      };
-      
-      // Calcular pontuação total somando apenas as respostas únicas
+      // Update total score in auditoria
       let pontuacaoTotal = 0;
-      
-      uniqueRespostas.forEach(resposta => {
-        if (resposta.pontuacao_obtida !== null && resposta.pontuacao_obtida !== undefined) {
-          pontuacaoTotal += Number(resposta.pontuacao_obtida);
-        } else if (resposta.resposta) {
-          // Se não tiver pontuacao_obtida, calcular com base na resposta
-          const pontuacao = pontuacaoMap[resposta.resposta] !== undefined ? pontuacaoMap[resposta.resposta] : 0;
-          pontuacaoTotal += pontuacao;
-        }
+      ultimasRespostas.forEach(r => {
+        pontuacaoTotal += r.pontuacao_obtida || 0;
       });
-      
-      console.log(`Atualizando pontuacao_total da auditoria ${auditoriaId}: ${pontuacaoTotal} (de ${uniqueRespostas.size} respostas únicas)`);
       
       const { error } = await supabase
         .from('auditorias')
@@ -171,12 +108,18 @@ const SectionScores: React.FC<SectionScoresProps> = ({
         .eq('id', auditoriaId);
         
       if (error) throw error;
+      
     } catch (error) {
-      console.error("Erro ao atualizar pontuação total da auditoria:", error);
+      console.error("Erro ao calcular pontuações:", error);
+      toast({
+        title: "Erro ao calcular pontuações",
+        description: "Ocorreu um erro ao calcular as pontuações das seções.",
+        variant: "destructive"
+      });
     }
   };
 
-  // Calcular pontuações das seções quando o componente monta ou respostasExistentes muda
+  // Update scores when component mounts or respostas change
   useEffect(() => {
     if (auditoriaId) {
       console.log("Carregamento inicial - atualizando pontuações das seções");
@@ -184,7 +127,6 @@ const SectionScores: React.FC<SectionScoresProps> = ({
     }
   }, [auditoriaId]);
 
-  // Recalcular pontuações quando as respostas mudam
   useEffect(() => {
     if (respostasExistentes?.length) {
       console.log("Respostas alteradas - atualizando pontuações das seções");
@@ -192,7 +134,7 @@ const SectionScores: React.FC<SectionScoresProps> = ({
     }
   }, [respostasExistentes]);
 
-  return null; // Este é um componente lógico sem UI
-};
+  return null;
+});
 
 export default SectionScores;
