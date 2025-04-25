@@ -1,42 +1,64 @@
 
-import { useState, useCallback, useEffect } from 'react';
-import { Secao } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import { Secao, Pergunta } from '@/lib/types';
+import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 
+/**
+ * Hook for managing active section state and editing mode
+ */
 export const useActiveSection = (
   secoes: Secao[] | undefined,
-  completedSections: string[]
+  completedSections: string[],
 ) => {
   const [activeSecao, setActiveSecao] = useState<string | null>(null);
-  const [isEditingActive, setIsEditingActive] = useState<boolean>(true);
-  
-  // Configurar a primeira seção por padrão quando os dados são carregados
+  const [editingSections, setEditingSections] = useState<Record<string, boolean>>({});
+
+  // Initialize editing sections state based on completed sections
   useEffect(() => {
-    if (secoes && secoes.length > 0 && !activeSecao) {
+    if (secoes && completedSections) {
+      console.log("Inicializando estado de edição para seções");
+      const initialEditState: Record<string, boolean> = {};
+      secoes.forEach(secao => {
+        // Seções incompletas começam em modo de edição
+        initialEditState[secao.id] = !completedSections.includes(secao.id);
+      });
+      console.log("Estado inicial de edição:", initialEditState);
+      setEditingSections(initialEditState);
+    }
+  }, [secoes, completedSections]);
+
+  // Set initial active section
+  useEffect(() => {
+    if (secoes?.length && activeSecao === null) {
       setActiveSecao(secoes[0].id);
     }
   }, [secoes, activeSecao]);
 
-  // Se a seção ativa estiver concluída, por padrão desative o modo de edição
-  useEffect(() => {
-    if (activeSecao && completedSections.includes(activeSecao)) {
-      setIsEditingActive(false);
-    } else {
-      // Se a seção não estiver concluída, sempre ativamos o modo de edição
-      setIsEditingActive(true);
-    }
-  }, [activeSecao, completedSections]);
+  // Verify if current section is in editing mode
+  const isEditingActive = activeSecao ? editingSections[activeSecao] === true : false;
 
-  // Função para alternar o modo de edição
-  const toggleEditMode = useCallback(() => {
-    console.log("Alternando modo de edição:", !isEditingActive);
-    setIsEditingActive(prev => !prev);
-  }, [isEditingActive]);
+  // Toggle editing mode for current section
+  const toggleEditMode = () => {
+    if (!activeSecao) return;
+    
+    console.log(`Alternando modo de edição para seção ${activeSecao}. Atual: ${editingSections[activeSecao]}`);
+    
+    setEditingSections(prev => {
+      const newState = {
+        ...prev,
+        [activeSecao]: !prev[activeSecao]
+      };
+      console.log("Novo estado de edição:", newState);
+      return newState;
+    });
+  };
 
   return {
     activeSecao,
     setActiveSecao,
+    editingSections,
+    setEditingSections,
     isEditingActive,
-    setIsEditingActive,
     toggleEditMode
   };
 };

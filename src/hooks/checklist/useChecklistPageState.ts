@@ -9,7 +9,7 @@ import { useSaveProgress } from './useSaveProgress';
 import { useResponseHandlers } from './useResponseHandlers';
 import { useNavigationHandlers } from './useNavigationHandlers';
 import { useToast } from '@/hooks/use-toast';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export const useChecklistPageState = (
   auditoriaId: string | undefined,
@@ -36,11 +36,15 @@ export const useChecklistPageState = (
     refetchAuditoria
   } = checklistData;
 
-  // Initialize pontuacaoPorSecao state here so it's part of the hook's return value
-  const [pontuacaoPorSecao, setPontuacaoPorSecaoInternal] = useState<Record<string, number>>({});
+  // Use active section management
+  const {
+    activeSecao,
+    setActiveSecao,
+    isEditingActive,
+    toggleEditMode
+  } = useActiveSection(secoes, []);
 
-  // Use the prop version if provided, otherwise use our internal state
-  const pontuacaoSetter = setPontuacaoPorSecao || setPontuacaoPorSecaoInternal;
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   // Use checklist functionality
   const {
@@ -60,17 +64,7 @@ export const useChecklistPageState = (
     handleSaveObservacao,
     saveAllResponses,
     updateCompletedSections
-  } = useChecklist(auditoriaId, perguntas, pontuacaoSetter);
-
-  // Use active section management with completedSections
-  const {
-    activeSecao,
-    setActiveSecao,
-    isEditingActive,
-    toggleEditMode
-  } = useActiveSection(secoes, completedSections);
-
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  } = useChecklist(auditoriaId, perguntas, setPontuacaoPorSecao);
 
   // Use section navigation
   const {
@@ -86,34 +80,6 @@ export const useChecklistPageState = (
     activeSecao,
     setActiveSecao
   });
-
-  // Carregar respostas quando o componente montar ou quando mudar de seção
-  useEffect(() => {
-    if (respostasExistentes && respostasExistentes.length > 0) {
-      console.log("Processando respostas existentes...");
-      
-      // Mapear respostas existentes para o formato esperado
-      const respostasMap: Record<string, any> = {};
-      
-      // Ordenar respostas por data (mais recentes primeiro)
-      const respostasOrdenadas = [...respostasExistentes].sort((a, b) => {
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
-      
-      // Mapa para controlar perguntas já processadas
-      const perguntasProcessadas = new Map();
-      
-      respostasOrdenadas.forEach(resposta => {
-        if (!perguntasProcessadas.has(resposta.pergunta_id)) {
-          respostasMap[resposta.pergunta_id] = resposta.resposta;
-          perguntasProcessadas.set(resposta.pergunta_id, true);
-        }
-      });
-      
-      console.log("Respostas mapeadas:", respostasMap);
-      setRespostas(respostasMap);
-    }
-  }, [respostasExistentes, setRespostas]);
 
   // Função wrapper garantindo retorno booleano explícito
   const saveAllAndReturnBoolean = async (respostasExistentes: any[]): Promise<boolean> => {
@@ -192,7 +158,6 @@ export const useChecklistPageState = (
     isSaving,
     isSendingEmail,
     isEditingActive,
-    pontuacaoPorSecao, // Include pontuacaoPorSecao in the return type
     
     // Setters
     setSupervisor,

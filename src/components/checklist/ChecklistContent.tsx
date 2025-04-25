@@ -80,12 +80,6 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
 
   console.log("ChecklistContent - pontuacaoPorSecao:", pontuacaoPorSecao);
   console.log("ChecklistContent - isEditingActive:", isEditingActive);
-  console.log("ChecklistContent - respostas para seção ativa:", 
-    perguntasSecaoAtiva.map(p => ({
-      perguntaId: p.id, 
-      resposta: respostas[p.id]
-    }))
-  );
 
   if (!activeSecaoObj) return null;
   
