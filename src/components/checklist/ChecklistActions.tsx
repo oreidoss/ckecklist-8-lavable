@@ -25,7 +25,7 @@ const ChecklistActions: React.FC<ChecklistActionsProps> = ({
 
   const navigateToReport = () => {
     if (!auditoriaId) {
-      console.error("[ERRO] Não é possível navegar para o relatório: auditoriaId não definido");
+      console.error("[ERRO] auditoriaId não definido para navegação");
       toast({
         title: "Erro de navegação",
         description: "ID da auditoria não encontrado. Não é possível acessar o relatório.",
@@ -33,17 +33,17 @@ const ChecklistActions: React.FC<ChecklistActionsProps> = ({
       });
       return;
     }
+    
     console.log("[INFO] Navegando para relatório:", `/relatorio/${auditoriaId}`);
     navigate(`/relatorio/${auditoriaId}`);
   };
 
-  const handleSaveClick = () => {
-    console.log("[INFO] Botão Salvar clicado, iniciando salvamento...");
+  const handleSaveClick = async () => {
     if (!auditoriaId) {
       console.error("[ERRO] Tentativa de salvar sem auditoriaId");
       toast({
         title: "Erro ao salvar",
-        description: "ID da auditoria não encontrado",
+        description: "ID da auditoria não encontrado. Por favor, recarregue a página.",
         variant: "destructive"
       });
       return;
@@ -55,13 +55,16 @@ const ChecklistActions: React.FC<ChecklistActionsProps> = ({
     }
 
     try {
-      console.log("[INFO] Chamando saveAndNavigateHome");
-      saveAndNavigateHome();
+      console.log("[INFO] Iniciando salvamento...");
+      await saveAndNavigateHome();
+      console.log("[SUCESSO] Salvamento concluído");
     } catch (error: any) {
-      console.error("[ERRO] Exceção em handleSaveClick:", error);
+      console.error("[ERRO] Falha ao salvar:", error);
+      console.error("[ERRO] Stack trace:", error.stack);
+      
       toast({
-        title: "Erro inesperado",
-        description: "Ocorreu um erro ao tentar salvar a auditoria.",
+        title: "Erro ao salvar",
+        description: "Ocorreu um erro ao salvar. Verifique sua conexão e tente novamente.",
         variant: "destructive"
       });
     }
