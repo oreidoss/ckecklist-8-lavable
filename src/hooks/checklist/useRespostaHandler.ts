@@ -17,7 +17,7 @@ export const useRespostaHandler = (
   const [isSaving, setIsSaving] = useState(false);
   const { pontuacaoMap } = usePontuacao();
 
-  const handleResposta = async (perguntaId: string, resposta: RespostaValor, respostasExistentes: any[], perguntas?: any[]) => {
+  const handleResposta = async (perguntaId: string, resposta: RespostaValor, existingRespostas: any[], perguntas?: any[]) => {
     if (!auditoriaId) {
       console.error("auditoriaId não fornecido");
       return;
@@ -51,7 +51,7 @@ export const useRespostaHandler = (
 
       // Calculate progress if we have perguntas
       if (perguntas?.length) {
-        const respostasCount = Object.keys(respostas).length;
+        const respostasCount = Object.keys(existingRespostas).length + 1;
         const novoProgresso = (respostasCount / perguntas.length) * 100;
         setProgresso(novoProgresso);
       }
