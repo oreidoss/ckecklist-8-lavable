@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,13 +19,27 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
   const sendReportEmail = async (lojaName: string) => {
     if (!auditoriaId || !user) {
       console.error("Missing required data for email:", { auditoriaId, user });
+      toast({
+        title: "Erro de dados",
+        description: "Faltam dados necessários para enviar o email (auditoriaId ou usuário)",
+        variant: "destructive"
+      });
       return false;
     }
     
     setIsSendingEmail(true);
     
     try {
-      console.log("Starting email send process...");
+      console.log("Iniciando processo de envio de email...", {
+        auditoriaId,
+        lojaName,
+        userEmail: user.email,
+        userName: user.nome,
+      });
+      
+      // Teste de log antes da chamada
+      console.log("Chamando edge function send-report-email com URL completa:", 
+        "https://plskhjrrwofdroicafnr.supabase.co/functions/v1/send-report-email");
       
       const response = await supabase.functions.invoke('send-report-email', {
         body: {
@@ -35,13 +50,14 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         },
       });
       
-      console.log("Email API response:", response);
+      console.log("Resposta recebida da API de email:", response);
       
       if (response.error) {
+        console.error("Erro na resposta da edge function:", response.error);
         throw new Error(response.error.message || 'Erro ao enviar email do relatório');
       }
       
-      console.log("Email send success response:", response.data);
+      console.log("Email enviado com sucesso:", response.data);
       
       toast({
         title: "Email enviado",
@@ -50,7 +66,9 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
       
       return true;
     } catch (error: any) {
-      console.error('Error sending report email:', error);
+      console.error('Erro detalhado ao enviar email:', error);
+      console.error('Stack trace do erro:', error.stack);
+      
       toast({
         title: "Erro ao enviar email",
         description: error.message || "O relatório foi salvo, mas não foi possível enviar o email.",
@@ -76,7 +94,7 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         pontuacaoTotal += r.pontuacao_obtida || 0;
       });
       
-      console.log("Calculating score and saving audit...");
+      console.log("Calculando pontuação e salvando auditoria...");
       
       // Get loja information for the email
       const { data: auditoria, error: auditoriaError } = await supabase
@@ -86,11 +104,11 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         .single();
         
       if (auditoriaError) {
-        console.error("Error fetching audit:", auditoriaError);
+        console.error("Erro ao buscar dados da auditoria:", auditoriaError);
         throw auditoriaError;
       }
       
-      console.log("Fetched audit data for email:", auditoria);
+      console.log("Dados da auditoria obtidos para email:", auditoria);
       
       // Calculate progress based on respostas
       const progresso = respostasExistentes.length > 0 ? 100 : 0;
@@ -104,7 +122,7 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         .eq('id', auditoriaId);
         
       if (error) {
-        console.error("Error updating audit:", error);
+        console.error("Erro ao atualizar auditoria:", error);
         throw error;
       }
       
@@ -115,18 +133,25 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
       
       // Always try to send the report via email when user clicks save
       if (auditoria?.loja?.nome) {
-        console.log("Sending email report...");
+        console.log("Enviando relatório por email...");
         await sendReportEmail(auditoria.loja.nome);
       } else {
-        console.error("Cannot send email: missing loja name");
+        console.error("Não foi possível enviar email: nome da loja não encontrado");
+        toast({
+          title: "Alerta",
+          description: "Não foi possível enviar o email: dados da loja incompletos.",
+          variant: "destructive"
+        });
       }
       
       return true;
-    } catch (error) {
-      console.error('Error saving audit:', error);
+    } catch (error: any) {
+      console.error('Erro ao salvar auditoria:', error);
+      console.error('Stack trace do erro:', error.stack);
+      
       toast({
         title: "Erro",
-        description: "Não foi possível salvar as respostas.",
+        description: "Não foi possível salvar as respostas: " + (error.message || "erro desconhecido"),
         variant: "destructive"
       });
       return false;
@@ -135,5 +160,5 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
     }
   };
 
-  return { saveAndNavigateHome, isSaving, setIsSaving, isSendingEmail };
+  return { saveAndNavigateHome, isSaving, setIsSaving, isSendingEmail, sendReportEmail };
 };

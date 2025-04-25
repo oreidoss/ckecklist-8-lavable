@@ -5,10 +5,12 @@ import { useChecklistPageState } from '@/hooks/checklist/useChecklistPageState';
 import { useUserSelectorHandlers } from '@/hooks/checklist/useUserSelectorHandlers';
 import ChecklistContainer from '@/components/checklist/ChecklistContainer';
 import SectionScores from '@/components/checklist/SectionScores';
+import { useToast } from '@/hooks/use-toast';
 
 const Checklist: React.FC = () => {
   const { auditoriaId } = useParams<{ auditoriaId: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [pontuacaoPorSecao, setPontuacaoPorSecao] = useState<Record<string, number>>({});
   
   // Use our hooks to manage state
@@ -82,6 +84,29 @@ const Checklist: React.FC = () => {
     if (respostasExistentes) {
       try {
         console.log("Iniciando saveAndNavigateHome com", respostasExistentes.length, "respostas");
+        console.log("Verificando parâmetros:", { auditoriaId, auditoria });
+        
+        // Checar se temos os dados necessários
+        if (!auditoriaId) {
+          console.error("auditoriaId não definido");
+          toast({
+            title: "Erro",
+            description: "ID da auditoria não encontrado. Por favor, recarregue a página.",
+            variant: "destructive"
+          });
+          return false;
+        }
+        
+        if (!auditoria?.loja) {
+          console.error("Dados da loja não encontrados");
+          toast({
+            title: "Erro",
+            description: "Dados da loja não encontrados. Por favor, recarregue a página.",
+            variant: "destructive"
+          });
+          return false;
+        }
+        
         // Chamar a função base com os parâmetros corretos
         const success = await saveAndNavigateHomeBase(respostasExistentes);
         console.log("saveAndNavigateHome resultado:", success);
@@ -93,12 +118,23 @@ const Checklist: React.FC = () => {
           console.log("Não navegando: success é", success);
         }
         return success;
-      } catch (error) {
-        console.error("Error navigating home:", error);
+      } catch (error: any) {
+        console.error("Erro ao salvar e navegar:", error);
+        console.error("Stack trace:", error.stack);
+        toast({
+          title: "Erro",
+          description: "Ocorreu um erro ao salvar o checklist: " + (error.message || "erro desconhecido"),
+          variant: "destructive"
+        });
         return false;
       }
     } else {
       console.log("Nenhuma resposta existente para salvar");
+      toast({
+        title: "Alerta",
+        description: "Não há respostas para salvar.",
+        variant: "destructive"
+      });
       return false;
     }
   };

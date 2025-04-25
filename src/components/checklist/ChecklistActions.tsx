@@ -22,8 +22,17 @@ const ChecklistActions: React.FC<ChecklistActionsProps> = ({
   const navigate = useNavigate();
 
   const navigateToReport = () => {
-    if (!auditoriaId) return;
+    if (!auditoriaId) {
+      console.error("Não é possível navegar para o relatório: auditoriaId não definido");
+      return;
+    }
+    console.log("Navegando para relatório:", `/relatorio/${auditoriaId}`);
     navigate(`/relatorio/${auditoriaId}`);
+  };
+
+  const handleSaveClick = () => {
+    console.log("Botão Salvar clicado, chamando saveAndNavigateHome");
+    saveAndNavigateHome();
   };
 
   return (
@@ -32,7 +41,7 @@ const ChecklistActions: React.FC<ChecklistActionsProps> = ({
         <Button
           variant="default"
           size="sm"
-          onClick={saveAndNavigateHome}
+          onClick={handleSaveClick}
           disabled={isSaving || isSendingEmail}
           className="flex-1 text-xs h-8"
         >
