@@ -58,7 +58,7 @@ const ChecklistMainContainer: React.FC = () => {
       isLastPerguntaInSection={pageState.isLastPerguntaInSection}
       saveAndNavigateHome={saveAndNavigateHome}
       saveAllResponses={pageState.saveAllResponses}
-      pontuacaoPorSecao={pageState.pontuacaoPorSecao}
+      pontuacaoPorSecao={pageState.pontuacaoPorSecao || {}}
       saveAndNavigateToNextSection={pageState.saveAndNavigateToNextSection}
     />
   );

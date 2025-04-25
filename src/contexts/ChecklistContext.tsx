@@ -73,7 +73,10 @@ export const ChecklistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     <ChecklistContext.Provider 
       value={{
         auditoriaId,
-        pageState,
+        pageState: {
+          ...pageState,
+          pontuacaoPorSecao // Make sure pontuacaoPorSecao is available in pageState
+        },
         userHandlers,
         saveAndNavigateHome,
         navigate

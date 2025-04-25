@@ -8,7 +8,7 @@ interface SectionScoresProps {
   auditoriaId?: string;
   secoes?: any[];
   respostasExistentes?: any[];
-  setPontuacaoPorSecao: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  setPontuacaoPorSecao?: React.Dispatch<React.SetStateAction<Record<string, number>>>;
 }
 
 const SectionScores: React.FC<SectionScoresProps> = ({
@@ -18,6 +18,16 @@ const SectionScores: React.FC<SectionScoresProps> = ({
   setPontuacaoPorSecao
 }) => {
   const { toast } = useToast();
+  const [internalScores, setInternalScores] = React.useState<Record<string, number>>({});
+
+  // Function to update scores either via prop or internal state
+  const updateScores = (scores: Record<string, number>) => {
+    if (setPontuacaoPorSecao) {
+      setPontuacaoPorSecao(scores);
+    } else {
+      setInternalScores(scores);
+    }
+  };
 
   // Calcular e atualizar pontuações das seções
   const updateSectionScores = async () => {
@@ -112,7 +122,7 @@ const SectionScores: React.FC<SectionScoresProps> = ({
       });
       
       console.log("Pontuações finais calculadas:", scores);
-      setPontuacaoPorSecao(scores);
+      updateScores(scores);
       
       // Atualizar pontuação total da auditoria
       await updateAuditoriaPontuacaoTotal(auditoriaId, ultimasRespostas);
