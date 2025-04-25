@@ -135,6 +135,6 @@ const SectionScores: React.FC<SectionScoresProps> = ({
   }, [respostasExistentes]);
 
   return null;
-});
+};
 
 export default SectionScores;
