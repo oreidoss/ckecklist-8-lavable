@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -84,9 +83,13 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
    * Save checklist data and navigate home
    */
   const saveAndNavigateHome = async (respostasExistentes: any[]) => {
-    if (isSaving || !auditoriaId) return false;
+    if (isSaving || !auditoriaId) {
+      console.log("Não pode salvar:", { isSaving, auditoriaId });
+      return false;
+    }
     
     setIsSaving(true);
+    console.log("Iniciando saveAndNavigateHome para auditoria:", auditoriaId);
     
     try {
       let pontuacaoTotal = 0;
@@ -94,7 +97,7 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         pontuacaoTotal += r.pontuacao_obtida || 0;
       });
       
-      console.log("Calculando pontuação e salvando auditoria...");
+      console.log("Calculando pontuação total:", pontuacaoTotal);
       
       // Get loja information for the email
       const { data: auditoria, error: auditoriaError } = await supabase
@@ -108,12 +111,13 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         throw auditoriaError;
       }
       
-      console.log("Dados da auditoria obtidos para email:", auditoria);
+      console.log("Dados da auditoria obtidos:", auditoria);
       
       // Calculate progress based on respostas
       const progresso = respostasExistentes.length > 0 ? 100 : 0;
       
-      const { error } = await supabase
+      // Update auditoria
+      const { error: updateError } = await supabase
         .from('auditorias')
         .update({ 
           pontuacao_total: pontuacaoTotal,
@@ -121,22 +125,24 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         })
         .eq('id', auditoriaId);
         
-      if (error) {
-        console.error("Erro ao atualizar auditoria:", error);
-        throw error;
+      if (updateError) {
+        console.error("Erro ao atualizar auditoria:", updateError);
+        throw updateError;
       }
+      
+      console.log("Auditoria atualizada com sucesso");
       
       toast({
         title: "Respostas salvas",
         description: "Todas as respostas foram salvas com sucesso!",
       });
       
-      // Always try to send the report via email when user clicks save
+      // Try to send email report
       if (auditoria?.loja?.nome) {
-        console.log("Enviando relatório por email...");
+        console.log("Tentando enviar relatório por email...");
         await sendReportEmail(auditoria.loja.nome);
       } else {
-        console.error("Não foi possível enviar email: nome da loja não encontrado");
+        console.error("Não foi possível enviar email: dados da loja incompletos");
         toast({
           title: "Alerta",
           description: "Não foi possível enviar o email: dados da loja incompletos.",
@@ -146,7 +152,7 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
       
       return true;
     } catch (error: any) {
-      console.error('Erro ao salvar auditoria:', error);
+      console.error('Erro detalhado ao salvar auditoria:', error);
       console.error('Stack trace do erro:', error.stack);
       
       toast({
@@ -160,5 +166,11 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
     }
   };
 
-  return { saveAndNavigateHome, isSaving, setIsSaving, isSendingEmail, sendReportEmail };
+  return { 
+    saveAndNavigateHome, 
+    isSaving, 
+    setIsSaving, 
+    isSendingEmail,
+    sendReportEmail 
+  };
 };

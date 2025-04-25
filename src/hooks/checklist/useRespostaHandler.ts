@@ -29,32 +29,44 @@ export const useRespostaHandler = (
 
   const handleResposta = async (perguntaId: string, resposta: RespostaValor, respostasExistentes: any[], perguntas?: Pergunta[]) => {
     if (!auditoriaId) {
-      console.error("Não é possível salvar resposta sem auditoriaId");
+      console.error("Não é possível salvar resposta sem auditoriaId", { perguntaId, resposta });
+      toast({
+        title: "Erro ao salvar resposta",
+        description: "ID da auditoria não encontrado",
+        variant: "destructive"
+      });
       return;
     }
-    
-    console.log(`Manipulando resposta para pergunta ${perguntaId}: ${resposta}`);
-    setIsSaving(true);
-    
-    // Atualiza o estado local ANTES de operações assíncronas para feedback imediato na UI
-    setRespostas(prev => {
-      const updatedRespostas = {
-        ...prev,
-        [perguntaId]: resposta
-      };
-      
-      // Atualiza progresso se tivermos perguntas
-      if (perguntas?.length) {
-        const respostasCount = Object.keys(updatedRespostas).length;
-        const novoProgresso = (respostasCount / perguntas.length) * 100;
-        setProgresso(novoProgresso);
-      }
-      
-      return updatedRespostas;
+
+    console.log("Iniciando salvamento de resposta:", {
+      auditoriaId,
+      perguntaId,
+      resposta,
+      observacao: observacoes[perguntaId],
+      anexo_url: fileUrls[perguntaId]
     });
     
+    setIsSaving(true);
+    
     try {
-      // Calcula a pontuação com base no valor da resposta com verificação adicional
+      // Atualiza o estado local ANTES de operações assíncronas para feedback imediato na UI
+      setRespostas(prev => {
+        const updatedRespostas = {
+          ...prev,
+          [perguntaId]: resposta
+        };
+        
+        // Atualiza progresso se tivermos perguntas
+        if (perguntas?.length) {
+          const respostasCount = Object.keys(updatedRespostas).length;
+          const novoProgresso = (respostasCount / perguntas.length) * 100;
+          setProgresso(novoProgresso);
+        }
+        
+        return updatedRespostas;
+      });
+      
+      // Calcula a pontuação com base no valor da resposta
       let pontuacao = 0;
       if (resposta !== null) {
         pontuacao = pontuacaoMap[resposta] !== undefined ? pontuacaoMap[resposta] : 0;
@@ -68,22 +80,20 @@ export const useRespostaHandler = (
       const respostaExistente = respostasExistentes?.find(r => r.pergunta_id === perguntaId);
       
       // Log para depuração
+      console.log("Estado atual:", {
+        respostaExistente,
+        auditoriaId,
+        perguntaId,
+        resposta,
+        pontuacao,
+        observacao,
+        anexo_url
+      });
+
+      let result;
       if (respostaExistente) {
-        console.log(`Resposta existente encontrada:`, respostaExistente);
-        console.log(`Alterando resposta de "${respostaExistente.resposta}" para "${resposta}"`);
-        console.log(`Alterando pontuação de ${respostaExistente.pontuacao_obtida} para ${pontuacao}`);
-      }
-      
-      if (respostaExistente) {
-        // Atualizar a resposta existente no banco de dados
-        console.log(`Atualizando resposta existente para pergunta ${perguntaId}:`, {
-          resposta: resposta,
-          pontuacao_obtida: pontuacao,
-          observacao,
-          anexo_url
-        });
-        
-        const { error } = await supabase
+        console.log("Atualizando resposta existente:", respostaExistente.id);
+        result = await supabase
           .from('respostas')
           .update({
             resposta: resposta,
@@ -92,28 +102,9 @@ export const useRespostaHandler = (
             anexo_url: anexo_url
           })
           .eq('id', respostaExistente.id);
-        
-        if (error) {
-          console.error("Erro ao atualizar resposta:", error);
-          throw error;
-        } else {
-          console.log("Resposta atualizada com sucesso!");
-          // Notificação de sucesso
-          toast({
-            title: "Resposta atualizada",
-            description: `Resposta "${resposta}" registrada com pontuação ${pontuacao}.`,
-          });
-        }
       } else {
-        // Criar uma nova resposta no banco de dados
-        console.log(`Criando nova resposta para pergunta ${perguntaId}:`, {
-          resposta: resposta,
-          pontuacao_obtida: pontuacao,
-          observacao,
-          anexo_url
-        });
-        
-        const { error } = await supabase
+        console.log("Criando nova resposta");
+        result = await supabase
           .from('respostas')
           .insert({
             auditoria_id: auditoriaId,
@@ -123,33 +114,30 @@ export const useRespostaHandler = (
             observacao: observacao,
             anexo_url: anexo_url
           });
-        
-        if (error) {
-          console.error("Erro ao criar resposta:", error);
-          throw error;
-        } else {
-          console.log("Nova resposta criada com sucesso!");
-          // Notificação de sucesso
-          toast({
-            title: "Resposta salva",
-            description: `Resposta "${resposta}" registrada com pontuação ${pontuacao}.`,
-          });
-        }
       }
       
-      try {
-        // Atualize as pontuações após cada alteração de resposta
-        await updatePontuacaoPorSecao();
-        console.log("Pontuações por seção atualizadas após salvar resposta");
-      } catch (error) {
-        console.error("Erro ao atualizar pontuações de seção após salvar resposta:", error);
+      if (result.error) {
+        console.error("Erro ao salvar no Supabase:", result.error);
+        throw result.error;
       }
+
+      console.log("Resposta salva com sucesso:", result.data);
       
-    } catch (error) {
-      console.error("Erro ao processar resposta:", error);
+      // Atualiza pontuações após salvar resposta
+      await updatePontuacaoPorSecao();
+      
       toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao processar a resposta.",
+        title: "Resposta salva",
+        description: `Resposta "${resposta}" registrada com pontuação ${pontuacao}.`,
+      });
+      
+    } catch (error: any) {
+      console.error("Erro detalhado ao salvar resposta:", error);
+      console.error("Stack trace:", error.stack);
+      
+      toast({
+        title: "Erro ao salvar",
+        description: error.message || "Ocorreu um erro ao salvar a resposta.",
         variant: "destructive"
       });
     } finally {

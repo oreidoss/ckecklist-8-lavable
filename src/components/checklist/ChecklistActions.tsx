@@ -31,7 +31,7 @@ const ChecklistActions: React.FC<ChecklistActionsProps> = ({
   };
 
   const handleSaveClick = () => {
-    console.log("Botão Salvar clicado, chamando saveAndNavigateHome");
+    console.log("Botão Salvar clicado, iniciando salvamento...");
     saveAndNavigateHome();
   };
 
