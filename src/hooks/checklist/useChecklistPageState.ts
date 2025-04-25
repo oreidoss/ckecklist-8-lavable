@@ -1,4 +1,3 @@
-
 import { useChecklistData } from './useChecklistData';
 import { useChecklist } from './';
 import { useActiveSection } from './useActiveSection';
@@ -58,6 +57,7 @@ export const useChecklistPageState = (
     uploading,
     fileUrls,
     isSaving,
+    isSendingEmail,
     handleResposta,
     handleFileUpload,
     handleObservacaoChange,

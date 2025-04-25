@@ -56,7 +56,7 @@ const handler = async (req: Request): Promise<Response> => {
     const formattedDate = today.toLocaleDateString('pt-BR');
     
     console.log(`Enviando email para ${userEmail}...`);
-    const emailResponse = await resend.emails.send({
+    const data = {
       from: "Checklist 9.0 <onboarding@resend.dev>",
       to: [userEmail],
       subject: `Checklist da loja ${lojaName} finalizado - ${formattedDate}`,
@@ -73,7 +73,16 @@ const handler = async (req: Request): Promise<Response> => {
           content: pdfBuffer
         }
       ]
-    });
+    };
+    
+    console.log("Configuração do email:", JSON.stringify({
+      from: data.from,
+      to: data.to,
+      subject: data.subject,
+      attachmentSize: pdfBuffer.length
+    }));
+    
+    const emailResponse = await resend.emails.send(data);
     
     console.log("Email enviado com sucesso:", emailResponse);
 

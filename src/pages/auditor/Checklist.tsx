@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useChecklistPageState } from '@/hooks/checklist/useChecklistPageState';
@@ -185,7 +184,7 @@ const Checklist: React.FC = () => {
         handleResposta={handleRespostaWrapped}
         handleObservacaoChange={handleObservacaoChange}
         handleSaveObservacao={handleSaveObservacaoWrapped}
-        handleFileUpload={handleFileUploadWrapped}
+        handleFileUploadWrapped={handleFileUploadWrapped}
         goToPreviousSection={goToPreviousSection}
         goToNextSection={goToNextSection}
         hasUnansweredQuestions={hasUnansweredQuestions}

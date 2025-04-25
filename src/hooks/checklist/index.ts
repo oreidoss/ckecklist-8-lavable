@@ -37,7 +37,7 @@ export const useChecklist = (
   );
   
   // Get save functionality
-  const { saveAndNavigateHome, isSaving, setIsSaving, isSendingEmail } = useChecklistSave(auditoriaId);
+  const { saveAndNavigateHome, isSaving, setIsSaving, isSendingEmail, sendReportEmail } = useChecklistSave(auditoriaId);
   
   // Get observacoes functionality
   const {

@@ -34,21 +34,22 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         userName: user.nome,
       });
       
-      // Incluindo logs detalhados para o processo
-      console.log("Chamando função send-report-email com payload:", JSON.stringify({
+      // Preparando payload para envio
+      const payload = {
         auditoriaId,
         lojaName,
         userEmail: user.email,
         userName: user.nome,
-      }));
+      };
+      
+      console.log("Chamando função send-report-email com payload:", JSON.stringify(payload));
+      
+      // Verificando URL da função
+      const functionUrl = await supabase.functions.getUrl('send-report-email');
+      console.log("URL da função Edge:", functionUrl);
       
       const response = await supabase.functions.invoke('send-report-email', {
-        body: {
-          auditoriaId,
-          lojaName,
-          userEmail: user.email,
-          userName: user.nome,
-        },
+        body: payload
       });
       
       console.log("Resposta completa da função send-report-email:", JSON.stringify(response));
