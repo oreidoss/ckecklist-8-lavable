@@ -9,7 +9,7 @@ import { useSaveProgress } from './useSaveProgress';
 import { useResponseHandlers } from './useResponseHandlers';
 import { useNavigationHandlers } from './useNavigationHandlers';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export const useChecklistPageState = (
   auditoriaId: string | undefined,
@@ -36,16 +36,6 @@ export const useChecklistPageState = (
     refetchAuditoria
   } = checklistData;
 
-  // Use active section management
-  const {
-    activeSecao,
-    setActiveSecao,
-    isEditingActive,
-    toggleEditMode
-  } = useActiveSection(secoes, []);
-
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
-
   // Use checklist functionality
   const {
     respostas,
@@ -66,6 +56,16 @@ export const useChecklistPageState = (
     updateCompletedSections
   } = useChecklist(auditoriaId, perguntas, setPontuacaoPorSecao);
 
+  // Use active section management with completedSections
+  const {
+    activeSecao,
+    setActiveSecao,
+    isEditingActive,
+    toggleEditMode
+  } = useActiveSection(secoes, completedSections);
+
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+
   // Use section navigation
   const {
     incompleteSections,
@@ -80,6 +80,34 @@ export const useChecklistPageState = (
     activeSecao,
     setActiveSecao
   });
+
+  // Carregar respostas quando o componente montar ou quando mudar de seção
+  useEffect(() => {
+    if (respostasExistentes && respostasExistentes.length > 0) {
+      console.log("Processando respostas existentes...");
+      
+      // Mapear respostas existentes para o formato esperado
+      const respostasMap: Record<string, any> = {};
+      
+      // Ordenar respostas por data (mais recentes primeiro)
+      const respostasOrdenadas = [...respostasExistentes].sort((a, b) => {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      
+      // Mapa para controlar perguntas já processadas
+      const perguntasProcessadas = new Map();
+      
+      respostasOrdenadas.forEach(resposta => {
+        if (!perguntasProcessadas.has(resposta.pergunta_id)) {
+          respostasMap[resposta.pergunta_id] = resposta.resposta;
+          perguntasProcessadas.set(resposta.pergunta_id, true);
+        }
+      });
+      
+      console.log("Respostas mapeadas:", respostasMap);
+      setRespostas(respostasMap);
+    }
+  }, [respostasExistentes, setRespostas]);
 
   // Função wrapper garantindo retorno booleano explícito
   const saveAllAndReturnBoolean = async (respostasExistentes: any[]): Promise<boolean> => {

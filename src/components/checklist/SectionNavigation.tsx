@@ -22,27 +22,27 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
   pontuacaoPorSecao = {}
 }) => {
   const getButtonVariant = (secao: Secao) => {
-    // If it's the active section, use default style
+    // Se for a seção ativa, use o estilo padrão
     if (activeSecao === secao.id) return "default";
     
-    // Check if section has pontuacao but no completions
+    // Verifique se a seção tem pontuação (significa que tem respostas salvas)
     const pontuacao = pontuacaoPorSecao[secao.id] || 0;
-    if (pontuacao > 0 && !completedSections.includes(secao.id)) {
-      // This means section has responses but may not be fully completed
-      return "success"; // Green for sections with responses
+    if (pontuacao > 0) {
+      // Seção tem respostas salvas
+      return "success"; // Verde para seções com respostas salvas
     }
     
-    // Check if section is in completedSections
+    // Verifique se a seção está em completedSections
     if (completedSections.includes(secao.id)) {
-      return "success"; // Green for fully completed
+      return "success"; // Verde para seções totalmente concluídas
     }
     
-    // Sections started but not completed are yellow
+    // Seções iniciadas mas não concluídas são amarelas
     if (incompleteSections.includes(secao.id)) {
-      return "warning"; // Yellow for in-progress sections
+      return "warning"; // Amarelo para seções em andamento
     }
     
-    // Not started sections are outline/white
+    // Seções não iniciadas são outline/branco
     return "outline";
   };
 
@@ -65,15 +65,15 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
                 : ''
             }`}
           >
-            {/* Show check icon if completed OR if has pontuacao but not marked as completed */}
+            {/* Mostrar ícone de verificação se completa OU se tem pontuação mas não está marcada como completada */}
             {(isCompleted || (!isCompleted && hasPontuacao)) && <Check className="h-4 w-4" />}
             
-            {/* Only show warning icon if incomplete and no pontuacao */}
+            {/* Mostrar ícone de alerta apenas se incompleta e sem pontuação */}
             {isIncomplete && !hasPontuacao && <AlertTriangle className="h-4 w-4 text-bright-orange" />}
             
             {secao.nome}
             
-            {/* Always show score if it's available */}
+            {/* Sempre mostrar a pontuação se estiver disponível */}
             {hasPontuacao && (
               <span 
                 className="absolute -top-1 -right-1 bg-white text-black text-xs px-1 py-0 rounded-full border border-gray-300 font-semibold"
@@ -90,4 +90,3 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
 };
 
 export default SectionNavigation;
-
