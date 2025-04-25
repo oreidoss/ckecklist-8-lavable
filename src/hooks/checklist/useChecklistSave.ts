@@ -44,10 +44,7 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
       
       console.log("Chamando função send-report-email com payload:", JSON.stringify(payload));
       
-      // Verificando URL da função
-      const functionUrl = await supabase.functions.getUrl('send-report-email');
-      console.log("URL da função Edge:", functionUrl);
-      
+      // Removida a verificação de URL da função, usando diretamente invoke
       const response = await supabase.functions.invoke('send-report-email', {
         body: payload
       });

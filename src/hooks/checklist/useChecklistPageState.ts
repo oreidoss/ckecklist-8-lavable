@@ -1,3 +1,4 @@
+
 import { useChecklistData } from './useChecklistData';
 import { useChecklist } from './';
 import { useActiveSection } from './useActiveSection';
@@ -43,8 +44,6 @@ export const useChecklistPageState = (
     toggleEditMode
   } = useActiveSection(secoes, []);
 
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
-
   // Use checklist functionality
   const {
     respostas,
@@ -57,7 +56,7 @@ export const useChecklistPageState = (
     uploading,
     fileUrls,
     isSaving,
-    isSendingEmail,
+    isSendingEmail, // Using isSendingEmail from useChecklist
     handleResposta,
     handleFileUpload,
     handleObservacaoChange,
@@ -156,7 +155,7 @@ export const useChecklistPageState = (
     uploading,
     fileUrls,
     isSaving,
-    isSendingEmail,
+    isSendingEmail, // Using isSendingEmail from useChecklist
     isEditingActive,
     
     // Setters
