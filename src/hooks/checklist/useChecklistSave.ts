@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,8 +10,48 @@ import { useAuth } from '@/contexts/AuthContext';
 export const useChecklistSave = (auditoriaId: string | undefined) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [isConnected, setIsConnected] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+
+  /**
+   * Verificar conexão com Supabase
+   */
+  const checkConnection = async (): Promise<boolean> => {
+    try {
+      console.log("[INFO] Verificando conexão com o banco de dados...");
+      const startTime = performance.now();
+      
+      const { error } = await supabase.from('auditorias').select('count', { count: 'exact', head: true });
+      
+      const endTime = performance.now();
+      console.log(`[INFO] Tempo de resposta do Supabase: ${(endTime - startTime).toFixed(2)}ms`);
+      
+      if (error) {
+        console.error("[ERRO] Falha na verificação de conexão:", error);
+        setIsConnected(false);
+        toast({
+          title: "Erro de conexão",
+          description: "Erro ao verificar conexão com o banco de dados.",
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      setIsConnected(true);
+      console.log("[INFO] Conexão com Supabase verificada com sucesso");
+      return true;
+    } catch (error) {
+      console.error("[ERRO] Exceção ao verificar conexão:", error);
+      setIsConnected(false);
+      toast({
+        title: "Erro de conexão",
+        description: "Erro ao verificar conexão com o banco de dados.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
 
   /**
    * Send report via email
@@ -29,6 +70,12 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
     setIsSendingEmail(true);
     
     try {
+      // Verificar conexão antes de enviar email
+      const connectionOk = await checkConnection();
+      if (!connectionOk) {
+        return false;
+      }
+      
       console.log("Iniciando processo de envio de email...", {
         auditoriaId,
         lojaName,
@@ -92,6 +139,18 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
     console.log("Iniciando saveAndNavigateHome para auditoria:", auditoriaId);
     
     try {
+      // Verificar conexão antes de salvar
+      const connectionOk = await checkConnection();
+      if (!connectionOk) {
+        console.error("Não foi possível salvar devido a problemas de conexão");
+        toast({
+          title: "Erro ao salvar",
+          description: "Erro ao verificar conexão com o banco de dados.",
+          variant: "destructive"
+        });
+        return false;
+      }
+      
       let pontuacaoTotal = 0;
       respostasExistentes?.forEach(r => {
         pontuacaoTotal += r.pontuacao_obtida || 0;
@@ -155,9 +214,22 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
       console.error('Erro detalhado ao salvar auditoria:', error);
       console.error('Stack trace do erro:', error.stack);
       
+      let errorMessage = "Não foi possível salvar as respostas: " + (error.message || "erro desconhecido");
+      
+      // Determinar se é um erro de conexão
+      if (error.message && (
+          error.message.includes('network') || 
+          error.message.includes('fetch') || 
+          error.message.includes('timeout') ||
+          error.message.includes('conexão')
+        )) {
+        errorMessage = "Erro de conexão com o banco de dados. Verifique sua internet e tente novamente.";
+        setIsConnected(false);
+      }
+      
       toast({
         title: "Erro",
-        description: "Não foi possível salvar as respostas: " + (error.message || "erro desconhecido"),
+        description: errorMessage,
         variant: "destructive"
       });
       return false;
@@ -171,6 +243,8 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
     isSaving, 
     setIsSaving, 
     isSendingEmail,
+    isConnected,
+    checkConnection,
     sendReportEmail 
   };
 };

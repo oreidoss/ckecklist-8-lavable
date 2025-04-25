@@ -15,6 +15,7 @@ export const useRespostaHandler = (
 ) => {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [isConnected, setIsConnected] = useState(true);
 
   // Mapa de pontuação para cada tipo de resposta
   const pontuacaoMap: Record<string, number> = {
@@ -22,6 +23,33 @@ export const useRespostaHandler = (
     'Não': -1,
     'Regular': 0.5,
     'N/A': 0
+  };
+
+  // Função para verificar conexão
+  const verifyConnection = async (): Promise<boolean> => {
+    try {
+      console.log("[INFO] Verificando conexão com Supabase...");
+      const startTime = performance.now();
+      
+      const { error } = await supabase.from('respostas').select('count', { count: 'exact', head: true });
+      
+      const endTime = performance.now();
+      console.log(`[INFO] Tempo de resposta do Supabase: ${(endTime - startTime).toFixed(2)}ms`);
+      
+      if (error) {
+        console.error("[ERRO] Falha na verificação de conexão:", error);
+        setIsConnected(false);
+        return false;
+      }
+      
+      setIsConnected(true);
+      console.log("[INFO] Conexão com Supabase verificada com sucesso");
+      return true;
+    } catch (error) {
+      console.error("[ERRO] Exceção ao verificar conexão:", error);
+      setIsConnected(false);
+      return false;
+    }
   };
 
   const handleResposta = async (perguntaId: string, resposta: RespostaValor, respostasExistentes: any[], perguntas?: Pergunta[]) => {
@@ -56,24 +84,22 @@ export const useRespostaHandler = (
 
     // Verificar conexão com Supabase
     try {
-      console.log("[INFO] Verificando conexão com Supabase...");
-      const { data: testConnection, error: connectionError } = await supabase.from('respostas').select('count');
+      console.log("[INFO] Verificando conexão com Supabase antes de salvar resposta...");
+      const isConnectionOk = await verifyConnection();
       
-      if (connectionError) {
-        console.error("[ERRO] Problema de conexão com Supabase:", connectionError);
+      if (!isConnectionOk) {
         toast({
           title: "Erro de conexão",
-          description: "Não foi possível conectar ao servidor. Verifique sua conexão.",
+          description: "Não foi possível conectar ao banco de dados. Verifique sua conexão com a internet e tente novamente.",
           variant: "destructive"
         });
         return;
       }
-      console.log("[INFO] Conexão com Supabase OK");
     } catch (connectionError) {
       console.error("[ERRO] Falha ao verificar conexão:", connectionError);
       toast({
         title: "Erro de conexão",
-        description: "Erro ao verificar conexão com o servidor.",
+        description: "Erro ao verificar conexão com o banco de dados.",
         variant: "destructive"
       });
       return;
@@ -128,32 +154,71 @@ export const useRespostaHandler = (
       });
 
       let result;
-      if (respostaExistente) {
-        console.log("[INFO] Atualizando resposta existente:", respostaExistente.id);
-        result = await supabase
-          .from('respostas')
-          .update({
-            resposta,
-            pontuacao_obtida: pontuacao,
-            observacao,
-            anexo_url
-          })
-          .eq('id', respostaExistente.id);
-      } else {
-        console.log("[INFO] Criando nova resposta");
-        result = await supabase
-          .from('respostas')
-          .insert({
-            auditoria_id: auditoriaId,
-            pergunta_id: perguntaId,
-            resposta,
-            pontuacao_obtida: pontuacao,
-            observacao,
-            anexo_url
-          });
+      let retries = 0;
+      const maxRetries = 2;
+      
+      while (retries <= maxRetries) {
+        try {
+          if (retries > 0) {
+            console.log(`[INFO] Tentativa ${retries} de salvar resposta...`);
+          }
+          
+          if (respostaExistente) {
+            console.log("[INFO] Atualizando resposta existente:", respostaExistente.id);
+            result = await supabase
+              .from('respostas')
+              .update({
+                resposta,
+                pontuacao_obtida: pontuacao,
+                observacao,
+                anexo_url
+              })
+              .eq('id', respostaExistente.id);
+          } else {
+            console.log("[INFO] Criando nova resposta");
+            result = await supabase
+              .from('respostas')
+              .insert({
+                auditoria_id: auditoriaId,
+                pergunta_id: perguntaId,
+                resposta,
+                pontuacao_obtida: pontuacao,
+                observacao,
+                anexo_url
+              });
+          }
+          
+          if (!result.error) {
+            break; // Sucesso, sair do loop
+          }
+          
+          // Tratar erro na resposta
+          console.error(`[ERRO] Falha na tentativa ${retries+1}:`, result.error);
+          retries++;
+          
+          if (retries <= maxRetries) {
+            // Espera progressiva antes de tentar novamente
+            const waitTime = 1000 * retries;
+            console.log(`[INFO] Aguardando ${waitTime/1000}s antes de tentar novamente...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            
+            // Verificar conexão novamente antes de tentar
+            const connectionOk = await verifyConnection();
+            if (!connectionOk) {
+              throw new Error("Conexão com o banco de dados não disponível");
+            }
+          }
+        } catch (innerError) {
+          console.error(`[ERRO] Exceção na tentativa ${retries+1}:`, innerError);
+          retries++;
+          
+          if (retries > maxRetries) {
+            throw innerError;
+          }
+        }
       }
       
-      if (result.error) {
+      if (result?.error) {
         console.error("[ERRO] Erro Supabase detalhado:", {
           codigo: result.error.code,
           mensagem: result.error.message,
@@ -185,9 +250,22 @@ export const useRespostaHandler = (
         });
       }
       
+      // Determinar se é um erro de conexão
+      let errorMessage = "Ocorreu um erro ao salvar a resposta. Tente novamente.";
+      
+      if (error.message && (
+          error.message.includes('network') || 
+          error.message.includes('fetch') || 
+          error.message.includes('timeout') ||
+          error.message.includes('conexão')
+        )) {
+        errorMessage = "Erro de conexão ao salvar. Verifique sua internet e tente novamente.";
+        setIsConnected(false);
+      }
+      
       toast({
         title: "Erro ao salvar",
-        description: error.message || "Ocorreu um erro ao salvar a resposta. Tente novamente.",
+        description: errorMessage,
         variant: "destructive"
       });
       
@@ -205,6 +283,8 @@ export const useRespostaHandler = (
   return {
     handleResposta,
     pontuacaoMap,
-    isSaving
+    isSaving,
+    isConnected,
+    verifyConnection
   };
 };
