@@ -36,6 +36,12 @@ export const useChecklistPageState = (
     refetchAuditoria
   } = checklistData;
 
+  // Initialize pontuacaoPorSecao state here so it's part of the hook's return value
+  const [pontuacaoPorSecao, setPontuacaoPorSecaoInternal] = useState<Record<string, number>>({});
+
+  // Use the prop version if provided, otherwise use our internal state
+  const pontuacaoSetter = setPontuacaoPorSecao || setPontuacaoPorSecaoInternal;
+
   // Use checklist functionality
   const {
     respostas,
@@ -54,7 +60,7 @@ export const useChecklistPageState = (
     handleSaveObservacao,
     saveAllResponses,
     updateCompletedSections
-  } = useChecklist(auditoriaId, perguntas, setPontuacaoPorSecao);
+  } = useChecklist(auditoriaId, perguntas, pontuacaoSetter);
 
   // Use active section management with completedSections
   const {
@@ -186,6 +192,7 @@ export const useChecklistPageState = (
     isSaving,
     isSendingEmail,
     isEditingActive,
+    pontuacaoPorSecao, // Include pontuacaoPorSecao in the return type
     
     // Setters
     setSupervisor,

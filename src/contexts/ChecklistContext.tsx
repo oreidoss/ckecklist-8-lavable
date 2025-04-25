@@ -29,6 +29,7 @@ export const ChecklistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const { toast } = useToast();
   const [pontuacaoPorSecao, setPontuacaoPorSecao] = React.useState<Record<string, number>>({});
 
+  // Pass setPontuacaoPorSecao to useChecklistPageState
   const pageState = useChecklistPageState(auditoriaId, setPontuacaoPorSecao);
   
   const userHandlers = useUserSelectorHandlers({
@@ -73,10 +74,7 @@ export const ChecklistProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     <ChecklistContext.Provider 
       value={{
         auditoriaId,
-        pageState: {
-          ...pageState,
-          pontuacaoPorSecao // Make sure pontuacaoPorSecao is available in pageState
-        },
+        pageState, // pageState already includes pontuacaoPorSecao now
         userHandlers,
         saveAndNavigateHome,
         navigate
