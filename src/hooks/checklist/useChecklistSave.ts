@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,55 +16,32 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
    * Send report via email
    */
   const sendReportEmail = async (lojaName: string) => {
-    if (!auditoriaId || !user) return false;
+    if (!auditoriaId || !user) {
+      console.error("Missing required data for email:", { auditoriaId, user });
+      return false;
+    }
     
     setIsSendingEmail(true);
     
     try {
       console.log("Starting email send process...");
       
-      // Ensure we have the proper environment variables
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      
-      if (!supabaseUrl || !supabaseKey) {
-        throw new Error('Supabase configuration is missing');
-      }
-      
-      const response = await fetch(`${supabaseUrl}/functions/v1/send-report-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`,
-        },
-        body: JSON.stringify({
+      const response = await supabase.functions.invoke('send-report-email', {
+        body: {
           auditoriaId,
           lojaName,
           userEmail: user.email,
           userName: user.nome,
-        }),
+        },
       });
       
-      console.log("Email API response status:", response.status);
+      console.log("Email API response:", response);
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        let errorMessage;
-        
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = errorData.error || 'Erro desconhecido ao enviar email do relatório';
-          console.error("Error response data:", errorData);
-        } catch (e) {
-          errorMessage = errorText || 'Erro ao processar resposta do servidor';
-          console.error("Error text:", errorText);
-        }
-        
-        throw new Error(errorMessage);
+      if (response.error) {
+        throw new Error(response.error.message || 'Erro ao enviar email do relatório');
       }
       
-      const responseData = await response.json();
-      console.log("Email send success response:", responseData);
+      console.log("Email send success response:", response.data);
       
       toast({
         title: "Email enviado",
@@ -73,11 +49,11 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
       });
       
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending report email:', error);
       toast({
         title: "Erro ao enviar email",
-        description: "O relatório foi salvo, mas não foi possível enviar o email.",
+        description: error.message || "O relatório foi salvo, mas não foi possível enviar o email.",
         variant: "destructive"
       });
       return false;

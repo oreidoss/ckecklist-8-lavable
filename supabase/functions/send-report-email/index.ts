@@ -5,6 +5,9 @@ import { generatePdf } from "./pdf-generator.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
+console.log("Edge function initialized. Checking RESEND_API_KEY:", 
+  Deno.env.get("RESEND_API_KEY") ? "Present" : "Missing");
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -19,28 +22,36 @@ interface ReportEmailRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  console.log("Request received:", req.method);
+  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { auditoriaId, lojaName, userEmail, userName }: ReportEmailRequest = await req.json();
+    const requestData = await req.json();
+    console.log("Request data received:", requestData);
     
-    console.log("Received email request:", { auditoriaId, lojaName, userEmail, userName });
+    const { auditoriaId, lojaName, userEmail, userName }: ReportEmailRequest = requestData;
+    
+    console.log("Validated email request data:", { auditoriaId, lojaName, userEmail, userName });
     
     if (!auditoriaId || !lojaName || !userEmail) {
-      console.error("Missing required email parameters");
+      console.error("Missing required email parameters:", { auditoriaId, lojaName, userEmail });
       throw new Error("Dados incompletos para envio do email");
     }
 
+    console.log("Generating PDF report...");
     // Generate the report PDF
     const pdfBuffer = await generatePdf(auditoriaId);
+    console.log("PDF generated successfully");
     
     // Format current date
     const today = new Date();
     const formattedDate = today.toLocaleDateString('pt-BR');
     
+    console.log("Sending admin email...");
     // Send email to admin (Rogerio)
     const adminEmail = await resend.emails.send({
       from: "Checklist 9.0 <onboarding@resend.dev>",
@@ -60,7 +71,9 @@ const handler = async (req: Request): Promise<Response> => {
         }
       ]
     });
+    console.log("Admin email sent successfully:", adminEmail);
     
+    console.log("Sending user email...");
     // Send email to user who completed the checklist
     const userEmailResponse = await resend.emails.send({
       from: "Checklist 9.0 <onboarding@resend.dev>",
@@ -79,8 +92,7 @@ const handler = async (req: Request): Promise<Response> => {
         }
       ]
     });
-
-    console.log("Emails sent successfully:", { adminEmail, userEmailResponse });
+    console.log("User email sent successfully:", userEmailResponse);
 
     return new Response(JSON.stringify({ 
       success: true, 
@@ -94,9 +106,18 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
   } catch (error: any) {
-    console.error("Error sending report email:", error);
+    console.error("Error in edge function:", error);
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      cause: error.cause
+    });
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.cause
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
