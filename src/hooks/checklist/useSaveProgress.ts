@@ -1,49 +1,44 @@
 
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { useChecklistSave } from './useChecklistSave';
 
+/**
+ * Hook for managing the save progress functionality
+ */
 export const useSaveProgress = (
-  saveAllResponsesBase: () => Promise<void>,
-  saveAndNavigateHomeBase: (respostasExistentes: any[]) => Promise<boolean>
+  saveAllResponses: () => Promise<void>,
+  saveAllAndReturnBoolean: (respostasExistentes: any[]) => Promise<boolean>
 ) => {
-  const [isSaving, setIsSaving] = useState(false);
-  const { toast } = useToast();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
-  const saveAndNavigateHome = async (respostasExistentes: any[] | undefined) => {
-    if (!respostasExistentes) return false;
-    
+  // Navigate to home page after saving
+  const saveAndNavigateHome = async (respostasExistentes: any[]): Promise<boolean> => {
     try {
-      setIsSaving(true);
-      // Primeiro salvamos todas as respostas
-      await saveAllResponsesBase();
+      const result = await saveAllAndReturnBoolean(respostasExistentes);
       
-      // Depois executamos a função de salvamento e navegação
-      const success = await saveAndNavigateHomeBase(respostasExistentes);
-      
-      if (success) {
+      if (result) {
+        toast({
+          title: "Sucesso",
+          description: "Checklist salvo com sucesso!"
+        });
+        
         navigate('/');
-        return true; // Garantindo retorno booleano explícito
       }
       
-      return success;
+      return result;
     } catch (error) {
-      console.error("Error saving progress:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível salvar o progresso.",
-        variant: "destructive"
-      });
+      console.error("Error in saveAndNavigateHome:", error);
       return false;
-    } finally {
-      setIsSaving(false);
     }
   };
 
   return {
-    isSaving,
-    setIsSaving,
+    isSendingEmail,
+    setIsSendingEmail,
     saveAndNavigateHome
   };
 };

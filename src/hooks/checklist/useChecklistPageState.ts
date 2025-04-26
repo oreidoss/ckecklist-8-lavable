@@ -97,6 +97,7 @@ export const useChecklistPageState = (
   // Use save progress functionality
   const {
     isSendingEmail,
+    setIsSendingEmail,
     saveAndNavigateHome: saveAndNavigateHomeBase
   } = useSaveProgress(
     saveAllResponses,

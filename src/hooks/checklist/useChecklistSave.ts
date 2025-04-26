@@ -162,6 +162,7 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
     isSaving, 
     setIsSaving, 
     isSendingEmail,
+    setIsSendingEmail,
     sendReportEmail 
   };
 };
