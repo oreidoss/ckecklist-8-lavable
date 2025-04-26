@@ -4,19 +4,19 @@ import { Button } from '@/components/ui/button';
 import { Save } from 'lucide-react';
 
 interface ObservacaoFieldProps {
-  perguntaId: string;
   observacao: string;
-  onChange: (perguntaId: string, value: string) => void;
-  onSave: (perguntaId: string) => void;
+  onChange: (value: string) => void;
+  onSave: () => void;
   disabled?: boolean;
+  perguntaId?: string; // Make perguntaId optional to maintain backward compatibility
 }
 
 const ObservacaoField: React.FC<ObservacaoFieldProps> = ({
-  perguntaId,
   observacao,
   onChange,
   onSave,
-  disabled = false
+  disabled = false,
+  perguntaId = '' // Provide default value
 }) => {
   return (
     <div className="mt-2 space-y-1">
@@ -26,7 +26,7 @@ const ObservacaoField: React.FC<ObservacaoFieldProps> = ({
         }`}
         rows={2}
         value={observacao}
-        onChange={(e) => onChange(perguntaId, e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
         placeholder="Digite sua observação aqui..."
         disabled={disabled}
       />
@@ -36,7 +36,7 @@ const ObservacaoField: React.FC<ObservacaoFieldProps> = ({
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => onSave(perguntaId)}
+          onClick={onSave}
           className="text-xs h-7 border-[#00bfa5] text-[#00bfa5] py-0"
         >
           <Save className="h-3 w-3 mr-1" />

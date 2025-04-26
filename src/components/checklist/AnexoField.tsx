@@ -4,19 +4,19 @@ import { Button } from '@/components/ui/button';
 import { Upload, Paperclip, Loader2 } from 'lucide-react';
 
 interface AnexoFieldProps {
-  perguntaId: string;
   fileUrl: string;
+  onFileUpload: (file: File) => void; // Changed from onFileSelect to onFileUpload
   isUploading: boolean;
-  onFileUpload: (perguntaId: string, file: File) => void;
   disabled?: boolean;
+  perguntaId?: string; // Make perguntaId optional to maintain backward compatibility
 }
 
 const AnexoField: React.FC<AnexoFieldProps> = ({
-  perguntaId,
   fileUrl,
-  isUploading,
   onFileUpload,
-  disabled = false
+  isUploading,
+  disabled = false,
+  perguntaId = '' // Provide default value
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -29,9 +29,9 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && !disabled) {
-      onFileUpload(perguntaId, file);
+      onFileUpload(file);
       
-      // Limpar input para permitir selecionar o mesmo arquivo novamente
+      // Clear input to allow selecting the same file again
       if (event.target) {
         event.target.value = '';
       }

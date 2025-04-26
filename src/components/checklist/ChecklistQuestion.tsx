@@ -40,7 +40,7 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
 }) => {
   const [showFields, setShowFields] = useState(false);
   
-  // Efeito para mostrar os campos adicionais quando já existe observação ou anexo
+  // Show additional fields when observation or attachment exists
   useEffect(() => {
     if (observacao || fileUrl) {
       setShowFields(true);
@@ -51,7 +51,7 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
     console.log(`Respondendo pergunta ${pergunta.id} com valor ${valor}`);
     onResponder(pergunta.id, valor);
     
-    // Mostrar campos adicionais automaticamente quando resposta for "Não"
+    // Show additional fields automatically when response is "Não"
     if (valor === 'Não') {
       setShowFields(true);
     }
@@ -127,13 +127,15 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
             onChange={(value) => onObservacaoChange(pergunta.id, value)}
             onSave={() => onSaveObservacao(pergunta.id)}
             disabled={disabled}
+            perguntaId={pergunta.id}
           />
           
           <AnexoField
             fileUrl={fileUrl}
-            onFileSelect={(file) => onFileUpload(pergunta.id, file)}
+            onFileUpload={(file) => onFileUpload(pergunta.id, file)}
             isUploading={isUploading}
             disabled={disabled}
+            perguntaId={pergunta.id}
           />
         </div>
       )}
