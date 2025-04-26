@@ -84,7 +84,12 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
 
   if (!activeSecaoObj) return null;
   
-  // Use saveAndNavigateToNextSection if available
+  const handleSendEmail = async () => {
+    if (!reportRef.current) return;
+    const { sendReportEmail } = useChecklistSave(auditoriaId);
+    await sendReportEmail(activeSecaoObj.nome, reportRef);
+  };
+
   const handleNextSection = async () => {
     console.log("ChecklistContent: handleNextSection chamado");
     
@@ -154,6 +159,7 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
             isSaving={isSaving}
             isSendingEmail={isSendingEmail}
             isEditingActive={isEditingActive}
+            onSendEmail={handleSendEmail}
           />
         </div>
       </div>

@@ -10,6 +10,8 @@ interface ChecklistActionsProps {
   isSaving: boolean;
   isEditingActive?: boolean;
   isSendingEmail?: boolean;
+  reportRef?: React.RefObject<HTMLDivElement>;
+  onSendEmail?: () => void;
 }
 
 const ChecklistActions: React.FC<ChecklistActionsProps> = ({
@@ -17,37 +19,55 @@ const ChecklistActions: React.FC<ChecklistActionsProps> = ({
   saveAndNavigateHome,
   isSaving,
   isEditingActive = true,
-  isSendingEmail = false
+  isSendingEmail = false,
+  onSendEmail
 }) => {
   const navigate = useNavigate();
 
   return (
     <div className="flex gap-1">
       {isEditingActive && (
-        <Button
-          variant="default"
-          size="sm"
-          onClick={saveAndNavigateHome}
-          disabled={isSaving || isSendingEmail}
-          className="flex-1 text-xs h-8"
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-              Salvando...
-            </>
-          ) : isSendingEmail ? (
-            <>
-              <Mail className="mr-1 h-3 w-3 animate-spin" />
-              Enviando email...
-            </>
-          ) : (
-            <>
-              <Save className="mr-1 h-3 w-3" />
-              Salvar
-            </>
-          )}
-        </Button>
+        <>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={saveAndNavigateHome}
+            disabled={isSaving || isSendingEmail}
+            className="flex-1 text-xs h-8"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              <>
+                <Save className="mr-1 h-3 w-3" />
+                Salvar
+              </>
+            )}
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onSendEmail}
+            disabled={isSaving || isSendingEmail}
+            className="flex-1 text-xs h-8"
+          >
+            {isSendingEmail ? (
+              <>
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                Enviando...
+              </>
+            ) : (
+              <>
+                <Mail className="mr-1 h-3 w-3" />
+                Enviar Email
+              </>
+            )}
+          </Button>
+        </>
       )}
       
       <Button
