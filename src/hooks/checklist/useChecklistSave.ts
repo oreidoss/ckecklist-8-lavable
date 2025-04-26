@@ -44,7 +44,7 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
       
       console.log("Chamando função send-report-email com payload:", JSON.stringify(payload));
       
-      // Removida a verificação de URL da função, usando diretamente invoke
+      // Call invoke directly without trying to get URL
       const response = await supabase.functions.invoke('send-report-email', {
         body: payload
       });

@@ -30,6 +30,13 @@ const ChecklistPage: React.FC = () => {
     refetchAuditoria: checklistState.refetchAuditoria
   });
 
+  // Create wrapper function for saveAndNavigateHomeBase to match expected signature
+  const saveAndNavigateHome = () => {
+    if (checklistState.respostasExistentes) {
+      checklistState.saveAndNavigateHomeBase(checklistState.respostasExistentes);
+    }
+  };
+
   return (
     <>
       <SectionScores 
@@ -79,7 +86,7 @@ const ChecklistPage: React.FC = () => {
         goToNextSection={checklistState.goToNextSection}
         hasUnansweredQuestions={checklistState.hasUnansweredQuestions}
         isLastPerguntaInSection={checklistState.isLastPerguntaInSection}
-        saveAndNavigateHome={checklistState.saveAndNavigateHomeBase}
+        saveAndNavigateHome={saveAndNavigateHome}
         saveAllResponses={checklistState.saveAllResponses}
         pontuacaoPorSecao={pontuacaoPorSecao}
         saveAndNavigateToNextSection={checklistState.saveAndNavigateToNextSection}

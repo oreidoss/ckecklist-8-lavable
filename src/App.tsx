@@ -14,7 +14,7 @@ import Login from "./pages/Login";
 
 // Páginas do Auditor
 import AuditorHome from "./pages/auditor/Home";
-import Checklist from "./pages/auditor/Checklist";
+import ChecklistPage from "./pages/auditor/ChecklistPage";
 import Relatorio from "./pages/auditor/Relatorio";
 
 // Páginas do Admin
@@ -56,7 +56,7 @@ const App = () => {
                 {/* Protected routes */}
                 {/* Rotas do Auditor */}
                 <Route path="/" element={<ProtectedRoute element={<AuditorHome />} />} />
-                <Route path="/checklist/:auditoriaId" element={<ProtectedRoute element={<Checklist />} />} />
+                <Route path="/checklist/:auditoriaId" element={<ProtectedRoute element={<ChecklistPage />} />} />
                 <Route path="/relatorio/:auditoriaId" element={<ProtectedRoute element={<Relatorio />} />} />
                 <Route path="/relatorio/loja/:lojaId" element={<ProtectedRoute element={<Relatorio />} />} />
                 
