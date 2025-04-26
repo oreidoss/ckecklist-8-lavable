@@ -1,9 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, Edit } from 'lucide-react';
+import { ArrowLeft, Download, Edit, Mail, Loader2 } from 'lucide-react';
 import { EditInformacoesDialog } from './EditInformacoesDialog';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface RelatorioActionsProps {
   auditoria: any;
@@ -19,10 +21,51 @@ export const RelatorioActions: React.FC<RelatorioActionsProps> = ({
   exportarPDF 
 }) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   // Filter usuarios by role if available
   const supervisores = usuarios.filter(u => u.role === 'supervisor' || !u.role);
   const gerentes = usuarios.filter(u => u.role === 'gerente' || !u.role);
+
+  const handleSendEmail = async () => {
+    if (!auditoria?.loja?.nome || !auditoria?.id) {
+      toast({
+        title: "Erro",
+        description: "Dados da loja ou auditoria incompletos",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSendingEmail(true);
+    try {
+      const { error } = await supabase.functions.invoke('send-report-email', {
+        body: { 
+          auditoriaId: auditoria.id,
+          lojaName: auditoria.loja.nome,
+          userEmail: auditoria.usuario?.email,
+          userName: auditoria.usuario?.nome
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email enviado",
+        description: "O relatório foi enviado por email com sucesso",
+      });
+    } catch (error: any) {
+      console.error('Erro ao enviar email:', error);
+      toast({
+        title: "Erro ao enviar email",
+        description: error.message || "Ocorreu um erro ao tentar enviar o email",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
 
   return (
     <div className="flex items-center justify-between mb-6">
@@ -43,7 +86,26 @@ export const RelatorioActions: React.FC<RelatorioActionsProps> = ({
           <Download className="mr-2 h-4 w-4" />
           Exportar PDF
         </Button>
+
+        <Button 
+          onClick={handleSendEmail} 
+          disabled={isSendingEmail}
+          variant="outline"
+        >
+          {isSendingEmail ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Enviando...
+            </>
+          ) : (
+            <>
+              <Mail className="mr-2 h-4 w-4" />
+              Enviar por Email
+            </>
+          )}
+        </Button>
       </div>
     </div>
   );
 };
+
