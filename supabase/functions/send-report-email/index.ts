@@ -1,7 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
-import { generatePdf } from "./pdf-generator.ts";
 
 console.log("Função send-report-email inicializada");
 
@@ -25,6 +24,7 @@ interface ReportEmailRequest {
   lojaName: string;
   userEmail: string;
   userName: string;
+  pdfBase64: string; // New field to receive the PDF as base64
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -39,18 +39,25 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     console.log("Tentando ler corpo da requisição...");
     const requestData = await req.json();
-    console.log("Dados recebidos:", JSON.stringify(requestData));
+    console.log("Dados recebidos:", JSON.stringify({
+      auditoriaId: requestData.auditoriaId,
+      lojaName: requestData.lojaName,
+      userEmail: requestData.userEmail,
+      userName: requestData.userName,
+      pdfBase64Length: requestData.pdfBase64?.length || 0
+    }));
     
-    const { auditoriaId, lojaName, userEmail, userName }: ReportEmailRequest = requestData;
+    const { auditoriaId, lojaName, userEmail, userName, pdfBase64 }: ReportEmailRequest = requestData;
     
-    if (!auditoriaId || !lojaName || !userEmail) {
-      console.error("Dados incompletos:", { auditoriaId, lojaName, userEmail });
+    if (!auditoriaId || !lojaName || !userEmail || !pdfBase64) {
+      console.error("Dados incompletos:", { auditoriaId, lojaName, userEmail, pdfBase64: !!pdfBase64 });
       throw new Error("Dados incompletos para envio do email");
     }
 
-    console.log("Iniciando geração do PDF...");
-    const pdfBuffer = await generatePdf(auditoriaId);
-    console.log("PDF gerado, tamanho:", pdfBuffer.length);
+    // Convert base64 string to Uint8Array buffer
+    console.log("Convertendo PDF base64 para buffer...");
+    const pdfBuffer = Uint8Array.from(atob(pdfBase64), c => c.charCodeAt(0));
+    console.log("PDF convertido, tamanho:", pdfBuffer.length);
     
     const today = new Date();
     const formattedDate = today.toLocaleDateString('pt-BR');

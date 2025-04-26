@@ -42,6 +42,7 @@ const RelatorioView: React.FC<RelatorioViewProps> = ({
       <RelatorioActions 
         auditoria={auditoria} 
         usuarios={usuarios} 
+        reportRef={reportRef}
         refetchAuditoria={refetchAuditoria}
         exportarPDF={handleExportPDF} 
       />

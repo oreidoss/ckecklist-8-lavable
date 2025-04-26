@@ -6,10 +6,12 @@ import { ArrowLeft, Download, Edit, Mail, Loader2 } from 'lucide-react';
 import { EditInformacoesDialog } from './EditInformacoesDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { generatePdfBase64 } from '@/utils/pdf';
 
 interface RelatorioActionsProps {
   auditoria: any;
   usuarios: any[];
+  reportRef: React.RefObject<HTMLDivElement>;
   refetchAuditoria: () => void;
   exportarPDF: () => void;
 }
@@ -17,6 +19,7 @@ interface RelatorioActionsProps {
 export const RelatorioActions: React.FC<RelatorioActionsProps> = ({ 
   auditoria, 
   usuarios, 
+  reportRef,
   refetchAuditoria, 
   exportarPDF 
 }) => {
@@ -38,14 +41,32 @@ export const RelatorioActions: React.FC<RelatorioActionsProps> = ({
       return;
     }
 
+    if (!reportRef.current) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o relatório PDF",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSendingEmail(true);
     try {
-      const { error } = await supabase.functions.invoke('send-report-email', {
+      // First generate PDF as base64 string
+      const pdfBase64 = await generatePdfBase64(reportRef.current, {
+        filename: `Checklist_${auditoria.loja.nome}_${new Date().toLocaleDateString('pt-BR')}.pdf`,
+      });
+      
+      console.log("PDF gerado com sucesso, tamanho:", pdfBase64.length);
+      
+      // Then send PDF to edge function
+      const { data, error } = await supabase.functions.invoke('send-report-email', {
         body: { 
           auditoriaId: auditoria.id,
           lojaName: auditoria.loja.nome,
           userEmail: auditoria.usuario?.email,
-          userName: auditoria.usuario?.nome
+          userName: auditoria.usuario?.nome,
+          pdfBase64: pdfBase64 // Send the PDF as base64
         }
       });
 
@@ -108,4 +129,3 @@ export const RelatorioActions: React.FC<RelatorioActionsProps> = ({
     </div>
   );
 };
-
