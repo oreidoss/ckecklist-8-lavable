@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import ChecklistQuestion, { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 import { Button } from "@/components/ui/button";
 import { Pencil } from 'lucide-react';
@@ -35,9 +35,38 @@ const SectionContent: React.FC<SectionContentProps> = ({
   isEditingActive = true,
   toggleEditMode
 }) => {
+  // Estado local para armazenar respostas existentes mapeadas por ID da pergunta
+  const [respostasMap, setRespostasMap] = useState<Record<string, any>>({});
+  
+  // Processar respostasExistentes para criar um mapa
+  useEffect(() => {
+    if (respostasExistentes && respostasExistentes.length > 0) {
+      console.log("Processando respostas existentes:", respostasExistentes);
+      
+      // Primeiro, ordenamos por data de criação (mais recente primeiro)
+      const sortedRespostas = [...respostasExistentes].sort((a, b) => {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      
+      // Criar um mapa para armazenar apenas a resposta mais recente para cada pergunta
+      const novoMapa: Record<string, any> = {};
+      
+      sortedRespostas.forEach(resp => {
+        const perguntaId = resp.pergunta_id;
+        // Só adicionar se ainda não existir uma resposta mais recente para esta pergunta
+        if (!novoMapa[perguntaId]) {
+          novoMapa[perguntaId] = resp;
+        }
+      });
+      
+      console.log("Mapa de respostas criado:", novoMapa);
+      setRespostasMap(novoMapa);
+    }
+  }, [respostasExistentes]);
+  
   // Verifica se alguma pergunta já foi respondida
   const hasResponses = perguntasSecaoAtiva.some(pergunta => 
-    respostas[pergunta.id] !== undefined
+    respostas[pergunta.id] !== undefined || respostasMap[pergunta.id] !== undefined
   );
   
   const handleToggleEditMode = () => {
@@ -65,23 +94,31 @@ const SectionContent: React.FC<SectionContentProps> = ({
         </div>
       )}
       
-      {perguntasSecaoAtiva.map((pergunta, index) => (
-        <ChecklistQuestion
-          key={pergunta.id}
-          pergunta={pergunta}
-          resposta={respostas[pergunta.id]}
-          observacao={observacoes[pergunta.id] || ''}
-          fileUrl={fileUrls[pergunta.id] || ''}
-          isUploading={uploading[pergunta.id] || false}
-          onResponder={handleResposta}
-          onObservacaoChange={handleObservacaoChange}
-          onSaveObservacao={handleSaveObservacao}
-          onFileUpload={handleFileUpload}
-          isLastPergunta={isLastPerguntaInSection(pergunta.id)}
-          disabled={!isEditingActive}
-          questionNumber={index + 1}
-        />
-      ))}
+      {perguntasSecaoAtiva.map((pergunta, index) => {
+        // Buscar resposta do estado ou do mapa de respostas existentes
+        const respostaExistente = respostasMap[pergunta.id];
+        const respostaAtual = respostas[pergunta.id] || (respostaExistente ? respostaExistente.resposta : null);
+        const observacaoAtual = observacoes[pergunta.id] || (respostaExistente ? respostaExistente.observacao || '' : '');
+        const fileUrlAtual = fileUrls[pergunta.id] || (respostaExistente ? respostaExistente.anexo_url || '' : '');
+        
+        return (
+          <ChecklistQuestion
+            key={pergunta.id}
+            pergunta={pergunta}
+            resposta={respostaAtual}
+            observacao={observacaoAtual}
+            fileUrl={fileUrlAtual}
+            isUploading={uploading[pergunta.id] || false}
+            onResponder={handleResposta}
+            onObservacaoChange={handleObservacaoChange}
+            onSaveObservacao={handleSaveObservacao}
+            onFileUpload={handleFileUpload}
+            isLastPergunta={isLastPerguntaInSection(pergunta.id)}
+            disabled={!isEditingActive}
+            questionNumber={index + 1}
+          />
+        );
+      })}
     </>
   );
 };

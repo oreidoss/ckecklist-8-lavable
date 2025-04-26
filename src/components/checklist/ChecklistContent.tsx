@@ -79,6 +79,7 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
   const isLastSection = secaoIndex === totalSecoes - 1;
 
   console.log("ChecklistContent - pontuacaoPorSecao:", pontuacaoPorSecao);
+  console.log("ChecklistContent - respostasExistentes:", respostasExistentes?.length);
   console.log("ChecklistContent - isEditingActive:", isEditingActive);
 
   if (!activeSecaoObj) return null;

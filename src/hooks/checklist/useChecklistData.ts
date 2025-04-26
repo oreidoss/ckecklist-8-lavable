@@ -97,7 +97,7 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
     }
   });
   
-  const { data: respostasExistentes, isLoading: loadingRespostas } = useQuery({
+  const { data: respostasExistentes, isLoading: loadingRespostas, refetch: refetchRespostas } = useQuery({
     queryKey: ['respostas', auditoriaId],
     queryFn: async () => {
       if (!auditoriaId) throw new Error('ID da auditoria não fornecido');
@@ -116,8 +116,8 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
       console.log(`Fetched ${data?.length || 0} responses for auditoria ${auditoriaId}`);
       return data as Resposta[];
     },
-    refetchOnWindowFocus: false,
-    staleTime: 60000 // 1 minute
+    refetchOnWindowFocus: true, // Mudar para true para atualizar dados quando o usuário volta à página
+    staleTime: 30000 // 30 segundos - reduzir para atualizar mais frequentemente
   });
 
   // Update supervisor and gerente whenever auditoria data changes
@@ -146,6 +146,7 @@ export const useChecklistData = (auditoriaId: string | undefined) => {
     setGerente,
     setIsEditingSupervisor,
     setIsEditingGerente,
-    refetchAuditoria
+    refetchAuditoria,
+    refetchRespostas
   };
 };

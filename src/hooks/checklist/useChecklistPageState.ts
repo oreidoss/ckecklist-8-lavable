@@ -33,7 +33,8 @@ export const useChecklistPageState = (
     setGerente,
     setIsEditingSupervisor,
     setIsEditingGerente,
-    refetchAuditoria
+    refetchAuditoria,
+    refetchRespostas
   } = checklistData;
 
   // Use active section management
@@ -56,7 +57,6 @@ export const useChecklistPageState = (
     uploading,
     fileUrls,
     isSaving,
-    isSendingEmail, // Using isSendingEmail from useChecklist
     handleResposta,
     handleFileUpload,
     handleObservacaoChange,
@@ -85,6 +85,8 @@ export const useChecklistPageState = (
     try {
       await saveAllResponses();
       console.log("saveAllAndReturnBoolean: respostas salvas com sucesso");
+      // Após salvar, atualize as respostas existentes
+      await refetchRespostas();
       return true;
     } catch (error) {
       console.error("Error in saveAllAndReturnBoolean:", error);
@@ -94,6 +96,7 @@ export const useChecklistPageState = (
 
   // Use save progress functionality
   const {
+    isSendingEmail,
     saveAndNavigateHome: saveAndNavigateHomeBase
   } = useSaveProgress(
     saveAllResponses,
@@ -155,7 +158,7 @@ export const useChecklistPageState = (
     uploading,
     fileUrls,
     isSaving,
-    isSendingEmail, // Using isSendingEmail from useChecklist
+    isSendingEmail,
     isEditingActive,
     
     // Setters
@@ -166,6 +169,7 @@ export const useChecklistPageState = (
     
     // Methods
     refetchAuditoria,
+    refetchRespostas,
     getPerguntasBySecao,
     handleSetActiveSecao,
     handleRespostaWrapped,
