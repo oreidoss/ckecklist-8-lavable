@@ -49,8 +49,8 @@ const handler = async (req: Request): Promise<Response> => {
     
     const { auditoriaId, lojaName, userEmail, userName, pdfBase64 }: ReportEmailRequest = requestData;
     
-    if (!auditoriaId || !lojaName || !userEmail || !pdfBase64) {
-      console.error("Dados incompletos:", { auditoriaId, lojaName, userEmail, pdfBase64: !!pdfBase64 });
+    if (!auditoriaId || !lojaName || !pdfBase64) {
+      console.error("Dados incompletos:", { auditoriaId, lojaName, pdfBase64: !!pdfBase64 });
       throw new Error("Dados incompletos para envio do email");
     }
 
@@ -59,13 +59,14 @@ const handler = async (req: Request): Promise<Response> => {
     const pdfBuffer = Uint8Array.from(atob(pdfBase64), c => c.charCodeAt(0));
     console.log("PDF convertido, tamanho:", pdfBuffer.length);
     
+    console.log("Enviando email para rogerio@oreidoscatalogos.com.br...");
+    
     const today = new Date();
     const formattedDate = today.toLocaleDateString('pt-BR');
     
-    console.log(`Enviando email para ${userEmail}...`);
     const data = {
-      from: "Checklist 9.0 <onboarding@resend.dev>",
-      to: [userEmail],
+      from: "O Rei dos Catálogos <marketing@oreidoscatalogos.com.br>",
+      to: ["rogerio@oreidoscatalogos.com.br"],
       subject: `Checklist da loja ${lojaName} finalizado - ${formattedDate}`,
       html: `
         <h1>Checklist finalizado com sucesso!</h1>
@@ -118,3 +119,4 @@ const handler = async (req: Request): Promise<Response> => {
 };
 
 serve(handler);
+
