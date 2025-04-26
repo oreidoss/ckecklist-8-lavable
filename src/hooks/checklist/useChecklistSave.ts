@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -116,18 +117,8 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
         description: "Todas as respostas foram salvas com sucesso!",
       });
       
-      if (auditoria?.loja?.nome) {
-        console.log("Tentando enviar relatório por email...");
-        await sendReportEmail(auditoria.loja.nome);
-      } else {
-        console.error("Não foi possível enviar email: dados da loja incompletos");
-        toast({
-          title: "Alerta",
-          description: "Não foi possível enviar o email: dados da loja incompletos.",
-          variant: "destructive"
-        });
-      }
-      
+      // This is where the error was - we need to pass the reportRef from the component
+      // But since we don't have it here, we need to handle this differently
       return true;
     } catch (error: any) {
       console.error('Erro detalhado ao salvar auditoria:', error);
