@@ -21,27 +21,13 @@ const ChecklistActions: React.FC<ChecklistActionsProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  const navigateToReport = () => {
-    if (!auditoriaId) {
-      console.error("Não é possível navegar para o relatório: auditoriaId não definido");
-      return;
-    }
-    console.log("Navegando para relatório:", `/relatorio/${auditoriaId}`);
-    navigate(`/relatorio/${auditoriaId}`);
-  };
-
-  const handleSaveClick = () => {
-    console.log("Botão Salvar clicado, iniciando salvamento...");
-    saveAndNavigateHome();
-  };
-
   return (
     <div className="flex gap-1">
       {isEditingActive && (
         <Button
           variant="default"
           size="sm"
-          onClick={handleSaveClick}
+          onClick={saveAndNavigateHome}
           disabled={isSaving || isSendingEmail}
           className="flex-1 text-xs h-8"
         >
@@ -67,7 +53,7 @@ const ChecklistActions: React.FC<ChecklistActionsProps> = ({
       <Button
         variant="outline"
         size="sm"
-        onClick={navigateToReport}
+        onClick={() => navigate(`/relatorio/${auditoriaId}`)}
         disabled={isSaving || isSendingEmail}
         className="flex-1 text-xs h-8"
       >

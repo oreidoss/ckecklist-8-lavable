@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import SectionNavigation from '@/components/checklist/SectionNavigation';
 import SectionContent from '@/components/checklist/SectionContent';
@@ -70,6 +69,7 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
   saveAndNavigateToNextSection
 }) => {
   const { auditoriaId } = useParams<{ auditoriaId: string }>();
+  const reportRef = useRef<HTMLDivElement>(null);
   
   const activeSecaoObj = secoes?.find(s => s.id === activeSecao);
   const perguntasSecaoAtiva = getPerguntasBySecao(activeSecao || '');
@@ -99,7 +99,7 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
   };
   
   return (
-    <>
+    <div ref={reportRef}>
       <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
         <SectionNavigation
           secoes={secoes || []}
@@ -157,7 +157,7 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
           />
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

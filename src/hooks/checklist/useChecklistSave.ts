@@ -1,8 +1,8 @@
-
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { generatePdfBase64 } from '@/utils/pdf';
 
 /**
  * Hook to manage saving checklist data
@@ -13,12 +13,12 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const sendReportEmail = async (lojaName: string) => {
-    if (!auditoriaId || !user) {
-      console.error("Missing required data for email:", { auditoriaId, user });
+  const sendReportEmail = async (lojaName: string, reportRef: React.RefObject<HTMLDivElement>) => {
+    if (!auditoriaId || !user || !reportRef.current) {
+      console.error("Missing required data for email:", { auditoriaId, user, reportRef });
       toast({
         title: "Erro de dados",
-        description: "Faltam dados necessários para enviar o email (auditoriaId ou usuário)",
+        description: "Faltam dados necessários para enviar o email",
         variant: "destructive"
       });
       return false;
@@ -27,34 +27,22 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
     setIsSendingEmail(true);
     
     try {
-      console.log("Iniciando envio de email...", {
-        auditoriaId,
-        lojaName,
-        userEmail: user.email,
-        userName: user.nome,
+      // Generate PDF as base64
+      const pdfBase64 = await generatePdfBase64(reportRef.current);
+      
+      console.log("Iniciando envio de email...");
+      
+      const { error } = await supabase.functions.invoke('send-report-email', {
+        body: {
+          auditoriaId,
+          lojaName,
+          userEmail: user.email,
+          userName: user.nome,
+          pdfBase64
+        }
       });
       
-      // Preparando payload para envio
-      const payload = {
-        auditoriaId,
-        lojaName,
-        userEmail: user.email,
-        userName: user.nome,
-      };
-      
-      console.log("Chamando função send-report-email com payload:", JSON.stringify(payload));
-      
-      // Call invoke directly without trying to get URL
-      const response = await supabase.functions.invoke('send-report-email', {
-        body: payload
-      });
-      
-      console.log("Resposta completa da função send-report-email:", JSON.stringify(response));
-      
-      if (response.error) {
-        console.error("Erro retornado pela função:", response.error);
-        throw new Error(response.error.message || 'Erro ao enviar email do relatório');
-      }
+      if (error) throw error;
       
       toast({
         title: "Email enviado",
@@ -63,12 +51,11 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
       
       return true;
     } catch (error: any) {
-      console.error('Erro detalhado ao enviar email:', error);
-      console.error('Stack trace do erro:', error.stack);
+      console.error('Erro ao enviar email:', error);
       
       toast({
         title: "Erro ao enviar email",
-        description: error.message || "O relatório foi salvo, mas não foi possível enviar o email.",
+        description: "Não foi possível enviar o email do relatório: " + (error.message || "erro desconhecido"),
         variant: "destructive"
       });
       return false;
