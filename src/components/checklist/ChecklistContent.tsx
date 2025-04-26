@@ -6,6 +6,7 @@ import SectionNavigationButtons from '@/components/checklist/SectionNavigationBu
 import ChecklistActions from '@/components/checklist/ChecklistActions';
 import SectionWarning from '@/components/checklist/SectionWarning';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
+import { useChecklistSave } from '@/hooks/checklist/useChecklistSave';
 
 interface ChecklistContentProps {
   activeSecao: string | null;
