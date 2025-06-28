@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { generatePdfBase64 } from '@/utils/pdf';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * Hook to manage saving checklist data
@@ -13,6 +14,7 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const sendReportEmail = async (lojaName: string, reportRef: React.RefObject<HTMLDivElement>) => {
     if (!auditoriaId || !user || !reportRef.current) {
@@ -65,7 +67,11 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
     }
   };
 
-  const saveAndNavigateHome = async (respostasExistentes: any[]) => {
+  const saveAndNavigateHome = async (
+    respostasExistentes: any[], 
+    supervisorSignature?: string, 
+    gerenteSignature?: string
+  ) => {
     if (isSaving || !auditoriaId) {
       console.log("Não pode salvar:", { isSaving, auditoriaId });
       return false;
@@ -97,12 +103,23 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
       
       const progresso = respostasExistentes.length > 0 ? 100 : 0;
       
+      // Prepare update data
+      const updateData: any = { 
+        pontuacao_total: pontuacaoTotal,
+        status: progresso === 100 ? 'concluido' : 'em_andamento'
+      };
+
+      // Add signatures if provided
+      if (supervisorSignature) {
+        updateData.assinatura_supervisor = supervisorSignature;
+      }
+      if (gerenteSignature) {
+        updateData.assinatura_gerente = gerenteSignature;
+      }
+      
       const { error: updateError } = await supabase
         .from('auditorias')
-        .update({ 
-          pontuacao_total: pontuacaoTotal,
-          status: progresso === 100 ? 'concluido' : 'em_andamento'
-        })
+        .update(updateData)
         .eq('id', auditoriaId);
         
       if (updateError) {
@@ -112,13 +129,18 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
       
       console.log("Auditoria atualizada com sucesso");
       
+      const successMessage = supervisorSignature && gerenteSignature 
+        ? "Auditoria finalizada com assinaturas digitais!"
+        : "Todas as respostas foram salvas com sucesso!";
+      
       toast({
-        title: "Respostas salvas",
-        description: "Todas as respostas foram salvas com sucesso!",
+        title: "Auditoria salva",
+        description: successMessage,
       });
       
-      // This is where the error was - we need to pass the reportRef from the component
-      // But since we don't have it here, we need to handle this differently
+      // Navigate to home after successful save
+      navigate('/');
+      
       return true;
     } catch (error: any) {
       console.error('Erro detalhado ao salvar auditoria:', error);

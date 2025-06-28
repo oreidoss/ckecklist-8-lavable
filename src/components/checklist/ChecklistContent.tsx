@@ -1,10 +1,11 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import SectionNavigation from '@/components/checklist/SectionNavigation';
 import SectionContent from '@/components/checklist/SectionContent';
 import SectionNavigationButtons from '@/components/checklist/SectionNavigationButtons';
 import ChecklistActions from '@/components/checklist/ChecklistActions';
 import SectionWarning from '@/components/checklist/SectionWarning';
+import SignatureDialog from '@/components/checklist/SignatureDialog';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 import { useChecklistSave } from '@/hooks/checklist/useChecklistSave';
 
@@ -23,6 +24,8 @@ interface ChecklistContentProps {
   isSendingEmail?: boolean;
   isEditingActive?: boolean;
   toggleEditMode?: () => void;
+  supervisor: string;
+  gerente: string;
   getPerguntasBySecao: (secaoId: string) => any[];
   handleSetActiveSecao: (secaoId: string) => void;
   handleResposta: (perguntaId: string, resposta: RespostaValor) => void;
@@ -54,6 +57,8 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
   isSendingEmail,
   isEditingActive = true,
   toggleEditMode,
+  supervisor,
+  gerente,
   getPerguntasBySecao,
   handleSetActiveSecao,
   handleResposta,
@@ -71,6 +76,8 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
 }) => {
   const { auditoriaId } = useParams<{ auditoriaId: string }>();
   const reportRef = useRef<HTMLDivElement>(null);
+  const [showSignatureDialog, setShowSignatureDialog] = useState(false);
+  const [isFinalizingWithSignatures, setIsFinalizingWithSignatures] = useState(false);
   
   const activeSecaoObj = secoes?.find(s => s.id === activeSecao);
   const perguntasSecaoAtiva = getPerguntasBySecao(activeSecao || '');
@@ -79,15 +86,20 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
   const isFirstSection = secaoIndex === 0;
   const isLastSection = secaoIndex === totalSecoes - 1;
 
+  // Check if checklist is complete (all sections have answers)
+  const isChecklistComplete = incompleteSections.length === 0 && completedSections.length > 0;
+
   console.log("ChecklistContent - pontuacaoPorSecao:", pontuacaoPorSecao);
   console.log("ChecklistContent - respostasExistentes:", respostasExistentes?.length);
   console.log("ChecklistContent - isEditingActive:", isEditingActive);
+  console.log("ChecklistContent - isChecklistComplete:", isChecklistComplete);
 
   if (!activeSecaoObj) return null;
   
+  const { sendReportEmail, saveAndNavigateHome: saveAndNavigateHomeBase } = useChecklistSave(auditoriaId);
+
   const handleSendEmail = async () => {
     if (!reportRef.current) return;
-    const { sendReportEmail } = useChecklistSave(auditoriaId);
     await sendReportEmail(activeSecaoObj.nome, reportRef);
   };
 
@@ -101,6 +113,30 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
       console.log("Usando goToNextSection direto");
       goToNextSection();
       return true;
+    }
+  };
+
+  const handleSaveAndNavigateHome = () => {
+    if (isChecklistComplete && isEditingActive) {
+      // If checklist is complete, show signature dialog
+      setShowSignatureDialog(true);
+    } else {
+      // Otherwise, just save normally
+      saveAndNavigateHome();
+    }
+  };
+
+  const handleSignatureConfirm = async (supervisorSignature: string, gerenteSignature: string) => {
+    setIsFinalizingWithSignatures(true);
+    
+    try {
+      // Save signatures and finalize audit
+      await saveAndNavigateHomeBase(respostasExistentes || [], supervisorSignature, gerenteSignature);
+      setShowSignatureDialog(false);
+    } catch (error) {
+      console.error('Error finalizing with signatures:', error);
+    } finally {
+      setIsFinalizingWithSignatures(false);
     }
   };
   
@@ -156,14 +192,24 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
           
           <ChecklistActions 
             auditoriaId={auditoriaId}
-            saveAndNavigateHome={saveAndNavigateHome}
+            saveAndNavigateHome={handleSaveAndNavigateHome}
             isSaving={isSaving}
             isSendingEmail={isSendingEmail}
             isEditingActive={isEditingActive}
             onSendEmail={handleSendEmail}
+            isChecklistComplete={isChecklistComplete}
           />
         </div>
       </div>
+
+      <SignatureDialog
+        open={showSignatureDialog}
+        onOpenChange={setShowSignatureDialog}
+        supervisorName={supervisor}
+        gerenteName={gerente}
+        onConfirm={handleSignatureConfirm}
+        isLoading={isFinalizingWithSignatures}
+      />
     </div>
   );
 };

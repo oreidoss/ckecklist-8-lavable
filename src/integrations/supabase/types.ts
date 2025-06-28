@@ -11,6 +11,8 @@ export type Database = {
     Tables: {
       auditorias: {
         Row: {
+          assinatura_gerente: string | null
+          assinatura_supervisor: string | null
           data: string | null
           gerente: string | null
           id: string
@@ -21,6 +23,8 @@ export type Database = {
           usuario_id: string | null
         }
         Insert: {
+          assinatura_gerente?: string | null
+          assinatura_supervisor?: string | null
           data?: string | null
           gerente?: string | null
           id?: string
@@ -31,6 +35,8 @@ export type Database = {
           usuario_id?: string | null
         }
         Update: {
+          assinatura_gerente?: string | null
+          assinatura_supervisor?: string | null
           data?: string | null
           gerente?: string | null
           id?: string

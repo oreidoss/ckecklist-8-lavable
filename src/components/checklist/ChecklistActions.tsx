@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { FileText, Save, Mail, Loader2 } from 'lucide-react';
+import { FileText, Save, Mail, Loader2, PenTool } from 'lucide-react';
 
 interface ChecklistActionsProps {
   auditoriaId: string | undefined;
@@ -12,6 +12,7 @@ interface ChecklistActionsProps {
   isSendingEmail?: boolean;
   reportRef?: React.RefObject<HTMLDivElement>;
   onSendEmail?: () => void;
+  isChecklistComplete?: boolean;
 }
 
 const ChecklistActions: React.FC<ChecklistActionsProps> = ({
@@ -20,9 +21,37 @@ const ChecklistActions: React.FC<ChecklistActionsProps> = ({
   isSaving,
   isEditingActive = true,
   isSendingEmail = false,
-  onSendEmail
+  onSendEmail,
+  isChecklistComplete = false
 }) => {
   const navigate = useNavigate();
+
+  const getSaveButtonText = () => {
+    if (isSaving) {
+      return (
+        <>
+          <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+          Salvando...
+        </>
+      );
+    }
+    
+    if (isChecklistComplete && isEditingActive) {
+      return (
+        <>
+          <PenTool className="mr-1 h-3 w-3" />
+          Assinar e Finalizar
+        </>
+      );
+    }
+    
+    return (
+      <>
+        <Save className="mr-1 h-3 w-3" />
+        Salvar
+      </>
+    );
+  };
 
   return (
     <div className="flex gap-1">
@@ -35,17 +64,7 @@ const ChecklistActions: React.FC<ChecklistActionsProps> = ({
             disabled={isSaving || isSendingEmail}
             className="flex-1 text-xs h-8"
           >
-            {isSaving ? (
-              <>
-                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                Salvando...
-              </>
-            ) : (
-              <>
-                <Save className="mr-1 h-3 w-3" />
-                Salvar
-              </>
-            )}
+            {getSaveButtonText()}
           </Button>
           
           <Button
