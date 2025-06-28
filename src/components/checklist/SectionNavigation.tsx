@@ -28,18 +28,17 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
     if (activeSecao === secao.id) return "default";
     
     const percentage = completionPercentages[secao.id] || 0;
+    const pontuacao = pontuacaoPorSecao[secao.id] || 0;
     
-    // Verde para seções 100% completas
-    if (percentage === 100) {
-      return "success";
-    }
+    // Se não há respostas ainda (0%), usar outline
+    if (percentage === 0) return "outline";
     
-    // Vermelho para seções incompletas (menos de 100%)
-    if (percentage > 0) {
-      return "destructive";
-    }
+    // Se tem 100% das perguntas respondidas, usar verde
+    if (percentage === 100) return "success";
     
-    // Branco para seções não iniciadas
+    // Se tem respostas mas não está completo, usar vermelho
+    if (percentage > 0 && percentage < 100) return "destructive";
+    
     return "outline";
   };
 
