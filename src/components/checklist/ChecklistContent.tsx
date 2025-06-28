@@ -153,6 +153,7 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
           incompleteSections={incompleteSections}
           setActiveSecao={handleSetActiveSecao}
           completionPercentages={completionPercentages}
+          pontuacaoPorSecao={pontuacaoPorSecao}
         />
       </div>
       

@@ -11,6 +11,7 @@ interface SectionNavigationProps {
   incompleteSections: string[];
   setActiveSecao: (secaoId: string) => void;
   completionPercentages?: Record<string, number>;
+  pontuacaoPorSecao?: Record<string, number>;
 }
 
 const SectionNavigation: React.FC<SectionNavigationProps> = ({
@@ -19,7 +20,8 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
   completedSections,
   incompleteSections,
   setActiveSecao,
-  completionPercentages = {}
+  completionPercentages = {},
+  pontuacaoPorSecao = {}
 }) => {
   const getButtonVariant = (secao: Secao) => {
     // If it's the active section, use default style
@@ -27,17 +29,17 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
     
     const percentage = completionPercentages[secao.id] || 0;
     
-    // Check if section is completed (100%)
+    // Verde para seções 100% completas
     if (percentage === 100) {
-      return "success"; // Green for fully completed
+      return "success";
     }
     
-    // Check if section has some progress (1-99%)
+    // Vermelho para seções incompletas (menos de 100%)
     if (percentage > 0) {
-      return "warning"; // Yellow for in-progress sections
+      return "destructive";
     }
     
-    // Not started sections are outline/white
+    // Branco para seções não iniciadas
     return "outline";
   };
 
@@ -45,6 +47,7 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
     <div className="flex flex-wrap gap-2">
       {secoes?.map((secao) => {
         const percentage = completionPercentages[secao.id] || 0;
+        const pontuacao = pontuacaoPorSecao[secao.id] || 0;
         const isCompleted = percentage === 100;
         const isInProgress = percentage > 0 && percentage < 100;
         const isNotStarted = percentage === 0;
@@ -68,10 +71,18 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
             
             {secao.nome}
             
-            {/* Show percentage badge */}
+            {/* Badge com pontuação */}
             <span 
               className="absolute -top-1 -right-1 bg-white text-black text-xs px-1 py-0 rounded-full border border-gray-300 font-semibold"
-              style={{ fontSize: '10px', minWidth: '24px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ fontSize: '10px', minWidth: '30px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              {pontuacao.toFixed(1)}
+            </span>
+            
+            {/* Badge com porcentagem */}
+            <span 
+              className="absolute -top-1 -left-1 bg-blue-500 text-white text-xs px-1 py-0 rounded-full font-semibold"
+              style={{ fontSize: '9px', minWidth: '22px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               {percentage}%
             </span>
