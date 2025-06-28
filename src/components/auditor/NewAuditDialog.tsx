@@ -45,37 +45,47 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [selectedSupervisorId, setSelectedSupervisorId] = useState<string | null>(null);
-  const [selectedGerenteId, setSelectedGerenteId] = useState<string | null>(null);
+  const [selectedSupervisorId, setSelectedSupervisorId] = useState<string>("");
+  const [selectedGerenteId, setSelectedGerenteId] = useState<string>("");
   
   // Logs para debug
   console.log("Usuarios disponíveis:", usuarios);
   
   // Lógica melhorada para filtrar supervisores e gerentes
-  const supervisores = usuarios?.filter(u => 
-    u.role === 'supervisor' || 
-    u.funcao === 'supervisor' || 
-    u.email?.toLowerCase().includes('supervisor') || 
-    u.nome?.toLowerCase().includes('supervisor')
-  ) || [];
+  const supervisores = usuarios?.filter(u => {
+    const isSupervisor = u.role === 'supervisor' || 
+                        u.funcao === 'supervisor' || 
+                        u.email?.toLowerCase().includes('supervisor') || 
+                        u.nome?.toLowerCase().includes('supervisor');
+    
+    if (isSupervisor) {
+      console.log("Supervisor encontrado:", u.nome, "- Função:", u.funcao, "- Role:", u.role);
+    }
+    
+    return isSupervisor;
+  }) || [];
   
-  const gerentes = usuarios?.filter(u => 
-    u.role === 'gerente' || 
-    u.funcao === 'gerente' || 
-    u.email?.toLowerCase().includes('gerente') || 
-    u.nome?.toLowerCase().includes('gerente')
-  ) || [];
+  const gerentes = usuarios?.filter(u => {
+    const isGerente = u.role === 'gerente' || u.funcao === 'gerente';
+    
+    if (isGerente) {
+      console.log("Gerente encontrado:", u.nome, "- Função:", u.funcao, "- Role:", u.role);
+    }
+    
+    return isGerente;
+  }) || [];
   
   console.log("Supervisores filtrados:", supervisores);
   console.log("Gerentes filtrados:", gerentes);
 
-  // Reset de seleções quando o diálogo é aberto
+  // Reset de seleções quando o diálogo é aberto - sem auto-seleção para gerente
   useEffect(() => {
     if (open) {
-      setSelectedSupervisorId(supervisores.length > 0 ? supervisores[0].id : null);
-      setSelectedGerenteId(gerentes.length > 0 ? gerentes[0].id : null);
+      setSelectedSupervisorId(supervisores.length > 0 ? supervisores[0].id : "");
+      setSelectedGerenteId(""); // Não auto-selecionar gerente
+      console.log("Dialog aberto - resetando seleções");
     }
-  }, [open, supervisores, gerentes]);
+  }, [open, supervisores.length]);
 
   const createNewAudit = async () => {
     if (isCreatingAudit || !selectedLoja) return;
@@ -153,13 +163,13 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
             </Label>
             <div className="col-span-3">
               <Select 
-                value={selectedSupervisorId || ""}
+                value={selectedSupervisorId}
                 onValueChange={setSelectedSupervisorId}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecione um supervisor" />
                 </SelectTrigger>
-                <SelectContent position="popper" className="bg-white">
+                <SelectContent position="popper" className="bg-white z-[60]">
                   {supervisores.length > 0 ? (
                     supervisores.map(supervisor => (
                       <SelectItem key={supervisor.id} value={supervisor.id}>
@@ -188,7 +198,7 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
             </Label>
             <div className="col-span-3">
               <Select 
-                value={selectedGerenteId || ""}
+                value={selectedGerenteId}
                 onValueChange={(value) => {
                   console.log("Gerente selecionado ID:", value);
                   setSelectedGerenteId(value);
@@ -197,7 +207,7 @@ export const NewAuditDialog: React.FC<NewAuditDialogProps> = ({
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecione um gerente" />
                 </SelectTrigger>
-                <SelectContent position="popper" className="bg-white z-50">
+                <SelectContent position="popper" className="bg-white z-[60]">
                   {gerentes.length > 0 ? (
                     gerentes.map(gerente => (
                       <SelectItem key={gerente.id} value={gerente.id}>
