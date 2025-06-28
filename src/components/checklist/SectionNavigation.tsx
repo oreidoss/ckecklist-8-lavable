@@ -10,7 +10,7 @@ interface SectionNavigationProps {
   completedSections: string[];
   incompleteSections: string[];
   setActiveSecao: (secaoId: string) => void;
-  pontuacaoPorSecao?: Record<string, number>;
+  completionPercentages?: Record<string, number>;
 }
 
 const SectionNavigation: React.FC<SectionNavigationProps> = ({
@@ -19,26 +19,21 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
   completedSections,
   incompleteSections,
   setActiveSecao,
-  pontuacaoPorSecao = {}
+  completionPercentages = {}
 }) => {
   const getButtonVariant = (secao: Secao) => {
     // If it's the active section, use default style
     if (activeSecao === secao.id) return "default";
     
-    // Check if section has pontuacao but no completions
-    const pontuacao = pontuacaoPorSecao[secao.id] || 0;
-    if (pontuacao > 0 && !completedSections.includes(secao.id)) {
-      // This means section has responses but may not be fully completed
-      return "success"; // Green for sections with responses
-    }
+    const percentage = completionPercentages[secao.id] || 0;
     
-    // Check if section is in completedSections
-    if (completedSections.includes(secao.id)) {
+    // Check if section is completed (100%)
+    if (percentage === 100) {
       return "success"; // Green for fully completed
     }
     
-    // Sections started but not completed are yellow
-    if (incompleteSections.includes(secao.id)) {
+    // Check if section has some progress (1-99%)
+    if (percentage > 0) {
       return "warning"; // Yellow for in-progress sections
     }
     
@@ -49,10 +44,10 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
   return (
     <div className="flex flex-wrap gap-2">
       {secoes?.map((secao) => {
-        const isCompleted = completedSections.includes(secao.id);
-        const isIncomplete = incompleteSections.includes(secao.id);
-        const pontuacao = pontuacaoPorSecao[secao.id];
-        const hasPontuacao = pontuacao !== undefined && pontuacao !== 0;
+        const percentage = completionPercentages[secao.id] || 0;
+        const isCompleted = percentage === 100;
+        const isInProgress = percentage > 0 && percentage < 100;
+        const isNotStarted = percentage === 0;
         
         return (
           <Button
@@ -60,28 +55,26 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
             variant={getButtonVariant(secao)}
             onClick={() => setActiveSecao(secao.id)}
             className={`whitespace-nowrap flex items-center gap-1 relative ${
-              !isCompleted && !hasPontuacao 
+              isNotStarted 
                 ? 'bg-soft-orange/20 text-bright-orange border-soft-orange hover:bg-soft-orange/30' 
                 : ''
             }`}
           >
-            {/* Show check icon if completed OR if has pontuacao but not marked as completed */}
-            {(isCompleted || (!isCompleted && hasPontuacao)) && <Check className="h-4 w-4" />}
+            {/* Show check icon if completed */}
+            {isCompleted && <Check className="h-4 w-4" />}
             
-            {/* Only show warning icon if incomplete and no pontuacao */}
-            {isIncomplete && !hasPontuacao && <AlertTriangle className="h-4 w-4 text-bright-orange" />}
+            {/* Show warning icon if not started */}
+            {isNotStarted && <AlertTriangle className="h-4 w-4 text-bright-orange" />}
             
             {secao.nome}
             
-            {/* Always show score if it's available */}
-            {hasPontuacao && (
-              <span 
-                className="absolute -top-1 -right-1 bg-white text-black text-xs px-1 py-0 rounded-full border border-gray-300 font-semibold"
-                style={{ fontSize: '10px', minWidth: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                {typeof pontuacao === 'number' ? pontuacao.toFixed(1) : pontuacao}
-              </span>
-            )}
+            {/* Show percentage badge */}
+            <span 
+              className="absolute -top-1 -right-1 bg-white text-black text-xs px-1 py-0 rounded-full border border-gray-300 font-semibold"
+              style={{ fontSize: '10px', minWidth: '24px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              {percentage}%
+            </span>
           </Button>
         );
       })}
@@ -90,4 +83,3 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
 };
 
 export default SectionNavigation;
-

@@ -89,6 +89,7 @@ const ChecklistPage: React.FC = () => {
         saveAndNavigateHome={saveAndNavigateHome}
         saveAllResponses={checklistState.saveAllResponses}
         pontuacaoPorSecao={pontuacaoPorSecao}
+        completionPercentages={checklistState.completionPercentages}
         saveAndNavigateToNextSection={checklistState.saveAndNavigateToNextSection}
       />
     </>

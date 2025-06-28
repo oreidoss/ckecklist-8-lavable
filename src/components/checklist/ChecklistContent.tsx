@@ -8,6 +8,7 @@ import SectionWarning from '@/components/checklist/SectionWarning';
 import SignatureDialog from '@/components/checklist/SignatureDialog';
 import { RespostaValor } from '@/components/checklist/ChecklistQuestion';
 import { useChecklistSave } from '@/hooks/checklist/useChecklistSave';
+import { useCompletionPercentage } from '@/hooks/checklist/useCompletionPercentage';
 
 interface ChecklistContentProps {
   activeSecao: string | null;
@@ -86,13 +87,15 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
   const isFirstSection = secaoIndex === 0;
   const isLastSection = secaoIndex === totalSecoes - 1;
 
+  // Use completion percentage hook
+  const { completionPercentages } = useCompletionPercentage({
+    secoes,
+    perguntas,
+    respostas
+  });
+
   // Check if checklist is complete (all sections have answers)
   const isChecklistComplete = incompleteSections.length === 0 && completedSections.length > 0;
-
-  console.log("ChecklistContent - pontuacaoPorSecao:", pontuacaoPorSecao);
-  console.log("ChecklistContent - respostasExistentes:", respostasExistentes?.length);
-  console.log("ChecklistContent - isEditingActive:", isEditingActive);
-  console.log("ChecklistContent - isChecklistComplete:", isChecklistComplete);
 
   if (!activeSecaoObj) return null;
   
@@ -149,7 +152,7 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
           completedSections={completedSections}
           incompleteSections={incompleteSections}
           setActiveSecao={handleSetActiveSecao}
-          pontuacaoPorSecao={pontuacaoPorSecao}
+          completionPercentages={completionPercentages}
         />
       </div>
       

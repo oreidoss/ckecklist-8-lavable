@@ -8,6 +8,7 @@ import { useSectionState } from './useSectionState';
 import { useSaveProgress } from './useSaveProgress';
 import { useResponseHandlers } from './useResponseHandlers';
 import { useNavigationHandlers } from './useNavigationHandlers';
+import { useCompletionPercentage } from './useCompletionPercentage';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
@@ -78,6 +79,13 @@ export const useChecklistPageState = (
     respostas,
     activeSecao,
     setActiveSecao
+  });
+
+  // Use completion percentage calculation
+  const { completionPercentages } = useCompletionPercentage({
+    secoes,
+    perguntas,
+    respostas
   });
 
   // Função wrapper garantindo retorno booleano explícito
@@ -161,6 +169,9 @@ export const useChecklistPageState = (
     isSaving,
     isSendingEmail,
     isEditingActive,
+    
+    // New completion percentage data
+    completionPercentages,
     
     // Setters
     setSupervisor,
