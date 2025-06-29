@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
 import { Check, AlertTriangle } from 'lucide-react';
 import { Secao } from '@/lib/types';
 
@@ -28,23 +27,26 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
     
     console.log(`SectionNavigation - Seção ${secao.nome}: ${percentage}% - Ativa: ${activeSecao === secao.id}`);
     
+    // Classes base
+    const baseClasses = "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 relative";
+    
     // Se é a seção ativa, usar azul
     if (activeSecao === secao.id) {
-      return "bg-blue-500 text-white hover:bg-blue-600 border-blue-500";
+      return `${baseClasses} !bg-blue-500 !text-white hover:!bg-blue-600 !border-blue-500 border`;
     }
     
     // Se tem 100% das perguntas respondidas, usar verde sólido
     if (percentage === 100) {
-      return "bg-green-500 text-white hover:bg-green-600 border-green-500";
+      return `${baseClasses} !bg-green-500 !text-white hover:!bg-green-600 !border-green-500 border`;
     }
     
     // Se tem respostas mas não está completo, usar vermelho sólido
     if (percentage > 0 && percentage < 100) {
-      return "bg-red-500 text-white hover:bg-red-600 border-red-500";
+      return `${baseClasses} !bg-red-500 !text-white hover:!bg-red-600 !border-red-500 border`;
     }
     
     // Se não há respostas ainda (0%), usar cinza outline
-    return "bg-white text-gray-700 border-gray-300 hover:bg-gray-100";
+    return `${baseClasses} bg-white text-gray-700 border-gray-300 hover:bg-gray-100 border`;
   };
 
   return (
@@ -57,11 +59,10 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
         const isNotStarted = percentage === 0;
         
         return (
-          <Button
+          <button
             key={secao.id}
-            variant="outline"
             onClick={() => setActiveSecao(secao.id)}
-            className={`whitespace-nowrap flex items-center gap-1 relative ${getButtonClasses(secao)}`}
+            className={getButtonClasses(secao)}
           >
             {/* Show check icon if completed */}
             {isCompleted && <Check className="h-4 w-4" />}
@@ -86,7 +87,7 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
             >
               {percentage}%
             </span>
-          </Button>
+          </button>
         );
       })}
     </div>

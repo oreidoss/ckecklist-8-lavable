@@ -99,16 +99,14 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
               )}
             </Button>
             
-            <Button
+            <button
               type="button"
-              variant="outline"
-              size="sm"
               onClick={handleHideUploadSection}
-              className="text-xs h-7 text-red-600 hover:text-red-700 hover:bg-red-50 py-0 px-2 border-red-300 bg-red-50"
+              className="text-xs h-7 px-2 py-1 rounded border bg-red-100 border-red-300 text-red-700 hover:bg-red-200 hover:border-red-400 transition-colors flex items-center gap-1"
             >
-              <X className="h-3 w-3 mr-1" />
+              <X className="h-3 w-3" />
               Cancelar
-            </Button>
+            </button>
           </div>
         )}
         
