@@ -41,10 +41,12 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
   };
 
   const handleShowUploadSection = () => {
+    console.log("Mostrando seção de upload");
     setShowUploadSection(true);
   };
 
   const handleHideUploadSection = () => {
+    console.log("Escondendo seção de upload");
     setShowUploadSection(false);
   };
 
@@ -99,10 +101,10 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
             
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={handleHideUploadSection}
-              className="text-xs h-7 text-red-500 hover:text-red-700 hover:bg-red-50 py-0 px-2 border border-red-200"
+              className="text-xs h-7 text-red-600 hover:text-red-700 hover:bg-red-50 py-0 px-2 border-red-300 bg-red-50"
             >
               <X className="h-3 w-3 mr-1" />
               Cancelar

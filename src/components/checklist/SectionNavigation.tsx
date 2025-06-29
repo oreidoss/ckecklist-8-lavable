@@ -26,6 +26,8 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
   const getButtonClasses = (secao: Secao) => {
     const percentage = completionPercentages[secao.id] || 0;
     
+    console.log(`SectionNavigation - Seção ${secao.nome}: ${percentage}% - Ativa: ${activeSecao === secao.id}`);
+    
     // Se é a seção ativa, usar azul
     if (activeSecao === secao.id) {
       return "bg-blue-500 text-white hover:bg-blue-600 border-blue-500";
@@ -53,8 +55,6 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
         const isCompleted = percentage === 100;
         const isInProgress = percentage > 0 && percentage < 100;
         const isNotStarted = percentage === 0;
-        
-        console.log(`Seção ${secao.nome}: ${percentage}% completa`);
         
         return (
           <Button
