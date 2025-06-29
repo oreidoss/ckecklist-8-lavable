@@ -19,7 +19,7 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
   perguntaId = ''
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [showUploadOptions, setShowUploadOptions] = useState(false);
+  const [showUploadSection, setShowUploadSection] = useState(false);
 
   const handleClick = () => {
     if (fileInputRef.current && !disabled) {
@@ -31,7 +31,7 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
     const file = event.target.files?.[0];
     if (file && !disabled) {
       onFileUpload(file);
-      setShowUploadOptions(false);
+      setShowUploadSection(false);
       
       // Clear input to allow selecting the same file again
       if (event.target) {
@@ -40,12 +40,12 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
     }
   };
 
-  const handleShowUploadOptions = () => {
-    setShowUploadOptions(true);
+  const handleShowUploadSection = () => {
+    setShowUploadSection(true);
   };
 
-  const handleCancelUpload = () => {
-    setShowUploadOptions(false);
+  const handleHideUploadSection = () => {
+    setShowUploadSection(false);
   };
 
   return (
@@ -60,12 +60,12 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
       />
       
       <div className="flex items-center gap-2">
-        {!disabled && !showUploadOptions && (
+        {!disabled && !showUploadSection && (
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={handleShowUploadOptions}
+            onClick={handleShowUploadSection}
             disabled={isUploading || disabled}
             className="text-xs h-7 border-[#00bfa5] text-[#00bfa5] py-0"
           >
@@ -74,8 +74,8 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
           </Button>
         )}
 
-        {!disabled && showUploadOptions && (
-          <div className="flex items-center gap-2">
+        {!disabled && showUploadSection && (
+          <div className="flex items-center gap-2 p-2 bg-gray-50 rounded border">
             <Button
               type="button"
               variant="outline"
@@ -92,7 +92,7 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
               ) : (
                 <>
                   <Upload className="h-3 w-3 mr-1" />
-                  Enviar arquivo
+                  Selecionar arquivo
                 </>
               )}
             </Button>
@@ -101,7 +101,7 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
               type="button"
               variant="ghost"
               size="sm"
-              onClick={handleCancelUpload}
+              onClick={handleHideUploadSection}
               className="text-xs h-7 text-gray-500 hover:text-gray-700 py-0 px-2"
             >
               <X className="h-3 w-3" />
