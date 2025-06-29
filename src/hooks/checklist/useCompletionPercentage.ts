@@ -31,8 +31,8 @@ export const useCompletionPercentage = ({
       
       const answeredCount = requiredPerguntas.filter(p => {
         const resposta = respostas[p.id];
-        // Verificação mais simples para RespostaValor
-        return resposta !== null && resposta !== undefined;
+        // RespostaValor pode ser 'Sim', 'Não', 'Regular', 'N/A' - qualquer string é uma resposta válida
+        return resposta !== null && resposta !== undefined && resposta !== '';
       }).length;
       
       const percentage = Math.round((answeredCount / requiredPerguntas.length) * 100);

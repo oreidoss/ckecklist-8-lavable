@@ -1,14 +1,14 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Upload, Paperclip, Loader2 } from 'lucide-react';
+import { Upload, Paperclip, Loader2, X } from 'lucide-react';
 
 interface AnexoFieldProps {
   fileUrl: string;
-  onFileUpload: (file: File) => void; // Changed from onFileSelect to onFileUpload
+  onFileUpload: (file: File) => void;
   isUploading: boolean;
   disabled?: boolean;
-  perguntaId?: string; // Make perguntaId optional to maintain backward compatibility
+  perguntaId?: string;
 }
 
 const AnexoField: React.FC<AnexoFieldProps> = ({
@@ -16,9 +16,10 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
   onFileUpload,
   isUploading,
   disabled = false,
-  perguntaId = '' // Provide default value
+  perguntaId = ''
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showUploadOptions, setShowUploadOptions] = useState(false);
 
   const handleClick = () => {
     if (fileInputRef.current && !disabled) {
@@ -30,12 +31,21 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
     const file = event.target.files?.[0];
     if (file && !disabled) {
       onFileUpload(file);
+      setShowUploadOptions(false);
       
       // Clear input to allow selecting the same file again
       if (event.target) {
         event.target.value = '';
       }
     }
+  };
+
+  const handleShowUploadOptions = () => {
+    setShowUploadOptions(true);
+  };
+
+  const handleCancelUpload = () => {
+    setShowUploadOptions(false);
   };
 
   return (
@@ -49,28 +59,55 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
         disabled={disabled}
       />
       
-      <div className="flex">
-        {!disabled && (
+      <div className="flex items-center gap-2">
+        {!disabled && !showUploadOptions && (
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={handleClick}
+            onClick={handleShowUploadOptions}
             disabled={isUploading || disabled}
             className="text-xs h-7 border-[#00bfa5] text-[#00bfa5] py-0"
           >
-            {isUploading ? (
-              <>
-                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                Enviando...
-              </>
-            ) : (
-              <>
-                <Upload className="h-3 w-3 mr-1" />
-                Enviar arquivo
-              </>
-            )}
+            <Upload className="h-3 w-3 mr-1" />
+            Adicionar anexo
           </Button>
+        )}
+
+        {!disabled && showUploadOptions && (
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleClick}
+              disabled={isUploading || disabled}
+              className="text-xs h-7 border-[#00bfa5] text-[#00bfa5] py-0"
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-3 w-3 mr-1" />
+                  Enviar arquivo
+                </>
+              )}
+            </Button>
+            
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleCancelUpload}
+              className="text-xs h-7 text-gray-500 hover:text-gray-700 py-0 px-2"
+            >
+              <X className="h-3 w-3" />
+              Cancelar
+            </Button>
+          </div>
         )}
         
         {fileUrl && (
@@ -78,7 +115,7 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
             href={fileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-2 flex items-center text-xs text-blue-600 hover:underline"
+            className="flex items-center text-xs text-blue-600 hover:underline"
           >
             <Paperclip className="h-3 w-3 mr-1" />
             Ver anexo
