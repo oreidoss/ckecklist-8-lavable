@@ -31,11 +31,14 @@ export const useCompletionPercentage = ({
       
       const answeredCount = requiredPerguntas.filter(p => {
         const resposta = respostas[p.id];
-        // RespostaValor pode ser 'Sim', 'Não', 'Regular', 'N/A' - qualquer valor não nulo é uma resposta válida
-        return resposta !== null && resposta !== undefined;
+        // Verifica se há uma resposta válida (qualquer string não nula)
+        const hasValidAnswer = resposta !== null && resposta !== undefined && resposta !== '';
+        console.log(`Pergunta ${p.id}: resposta = "${resposta}", válida = ${hasValidAnswer}`);
+        return hasValidAnswer;
       }).length;
       
       const percentage = Math.round((answeredCount / requiredPerguntas.length) * 100);
+      console.log(`Seção ${secao.nome}: ${answeredCount}/${requiredPerguntas.length} = ${percentage}%`);
       percentages[secao.id] = percentage;
     });
     

@@ -67,7 +67,7 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
             size="sm"
             onClick={handleShowUploadSection}
             disabled={isUploading || disabled}
-            className="text-xs h-7 border-[#00bfa5] text-[#00bfa5] py-0"
+            className="text-xs h-7 border-[#00bfa5] text-[#00bfa5] hover:bg-[#00bfa5] hover:text-white py-0"
           >
             <Upload className="h-3 w-3 mr-1" />
             Adicionar anexo
@@ -75,14 +75,14 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
         )}
 
         {!disabled && showUploadSection && (
-          <div className="flex items-center gap-2 p-2 bg-gray-50 rounded border">
+          <div className="flex items-center gap-2 p-2 bg-gray-50 rounded border border-gray-200">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={handleClick}
               disabled={isUploading || disabled}
-              className="text-xs h-7 border-[#00bfa5] text-[#00bfa5] py-0"
+              className="text-xs h-7 border-[#00bfa5] text-[#00bfa5] hover:bg-[#00bfa5] hover:text-white py-0"
             >
               {isUploading ? (
                 <>
@@ -102,9 +102,9 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
               variant="ghost"
               size="sm"
               onClick={handleHideUploadSection}
-              className="text-xs h-7 text-gray-500 hover:text-gray-700 py-0 px-2"
+              className="text-xs h-7 text-red-500 hover:text-red-700 hover:bg-red-50 py-0 px-2 border border-red-200"
             >
-              <X className="h-3 w-3" />
+              <X className="h-3 w-3 mr-1" />
               Cancelar
             </Button>
           </div>
