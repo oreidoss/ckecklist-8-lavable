@@ -43,17 +43,12 @@ export const useCompletionPercentage = ({
       
       const answeredCount = requiredPerguntas.filter(p => {
         const resposta = respostas[p.id];
-        // Converter para string para fazer as comparações
-        const respostaStr = String(resposta);
         
-        // Verifica se há uma resposta válida
-        const hasValidAnswer = resposta !== null && 
-                              resposta !== undefined && 
-                              respostaStr !== '' &&
-                              respostaStr !== 'null' &&
-                              respostaStr.trim() !== '';
+        // Verifica se há uma resposta válida - RespostaValor pode ser 'Sim', 'Não', 'Regular', 'N/A', ou null
+        // Consideramos válida qualquer resposta que não seja null ou undefined
+        const hasValidAnswer = resposta !== null && resposta !== undefined;
         
-        console.log(`  Pergunta ${p.id}: resposta = "${resposta}" (tipo: ${typeof resposta}), string = "${respostaStr}", válida = ${hasValidAnswer}`);
+        console.log(`  Pergunta ${p.id}: resposta = "${resposta}" (tipo: ${typeof resposta}), válida = ${hasValidAnswer}`);
         return hasValidAnswer;
       }).length;
       
