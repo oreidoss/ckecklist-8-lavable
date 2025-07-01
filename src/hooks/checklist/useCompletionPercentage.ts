@@ -45,13 +45,12 @@ export const useCompletionPercentage = ({
       
       const answeredCount = requiredPerguntas.filter(p => {
         const resposta = respostas[p.id];
-        
-        // Verifica se há uma resposta válida nas respostas existentes também
         const respostaExistente = respostasExistentes?.find(r => r.pergunta_id === p.id);
         
-        // Considera válida se há resposta no estado atual OU se há resposta existente salva
-        const hasValidAnswer = (resposta !== null && resposta !== undefined) || 
-                              (respostaExistente && respostaExistente.resposta);
+        // Considera válida se há resposta no estado atual OU se há resposta existente salva no banco
+        const hasCurrentAnswer = resposta !== null && resposta !== undefined;
+        const hasExistingAnswer = respostaExistente && respostaExistente.resposta && respostaExistente.resposta.trim() !== '';
+        const hasValidAnswer = hasCurrentAnswer || hasExistingAnswer;
         
         console.log(`  Pergunta ${p.id}: resposta atual = "${resposta}", resposta existente = "${respostaExistente?.resposta}", válida = ${hasValidAnswer}`);
         return hasValidAnswer;
