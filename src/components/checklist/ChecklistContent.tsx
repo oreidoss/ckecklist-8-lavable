@@ -91,7 +91,8 @@ const ChecklistContent: React.FC<ChecklistContentProps> = ({
   const { completionPercentages } = useCompletionPercentage({
     secoes,
     perguntas,
-    respostas
+    respostas,
+    respostasExistentes
   });
 
   // Check if checklist is complete (all sections have answers)

@@ -85,7 +85,8 @@ export const useChecklistPageState = (
   const { completionPercentages } = useCompletionPercentage({
     secoes,
     perguntas,
-    respostas
+    respostas,
+    respostasExistentes
   });
 
   // Função wrapper garantindo retorno booleano explícito

@@ -7,12 +7,14 @@ interface UseCompletionPercentageProps {
   secoes: Secao[] | undefined;
   perguntas: Pergunta[] | undefined;
   respostas: Record<string, RespostaValor>;
+  respostasExistentes?: any[];
 }
 
 export const useCompletionPercentage = ({
   secoes,
   perguntas,
-  respostas
+  respostas,
+  respostasExistentes
 }: UseCompletionPercentageProps) => {
   const completionPercentages = useMemo(() => {
     if (!secoes || !perguntas) {
@@ -44,11 +46,14 @@ export const useCompletionPercentage = ({
       const answeredCount = requiredPerguntas.filter(p => {
         const resposta = respostas[p.id];
         
-        // Verifica se há uma resposta válida - RespostaValor pode ser 'Sim', 'Não', 'Regular', 'N/A', ou null
-        // Consideramos válida qualquer resposta que não seja null ou undefined
-        const hasValidAnswer = resposta !== null && resposta !== undefined;
+        // Verifica se há uma resposta válida nas respostas existentes também
+        const respostaExistente = respostasExistentes?.find(r => r.pergunta_id === p.id);
         
-        console.log(`  Pergunta ${p.id}: resposta = "${resposta}" (tipo: ${typeof resposta}), válida = ${hasValidAnswer}`);
+        // Considera válida se há resposta no estado atual OU se há resposta existente salva
+        const hasValidAnswer = (resposta !== null && resposta !== undefined) || 
+                              (respostaExistente && respostaExistente.resposta);
+        
+        console.log(`  Pergunta ${p.id}: resposta atual = "${resposta}", resposta existente = "${respostaExistente?.resposta}", válida = ${hasValidAnswer}`);
         return hasValidAnswer;
       }).length;
       
@@ -59,7 +64,7 @@ export const useCompletionPercentage = ({
     
     console.log("Porcentagens finais:", percentages);
     return percentages;
-  }, [secoes, perguntas, respostas]);
+  }, [secoes, perguntas, respostas, respostasExistentes]);
   
   return { completionPercentages };
 };
