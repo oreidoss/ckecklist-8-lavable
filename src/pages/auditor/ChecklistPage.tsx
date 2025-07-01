@@ -33,7 +33,7 @@ const ChecklistPage: React.FC = () => {
   // Create wrapper function for saveAndNavigateHomeBase to match expected signature
   const saveAndNavigateHome = () => {
     if (checklistState.respostasExistentes) {
-      checklistState.saveAndNavigateHomeBase(checklistState.respostasExistentes);
+      checklistState.saveAndNavigateHome(checklistState.respostasExistentes);
     }
   };
 

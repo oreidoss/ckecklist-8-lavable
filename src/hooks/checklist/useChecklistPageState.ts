@@ -1,202 +1,35 @@
 
-import { useChecklistData } from './useChecklistData';
-import { useChecklist } from './';
-import { useActiveSection } from './useActiveSection';
-import { useSectionNavigation } from './useSectionNavigation';
-import { useChecklistProcessor } from './useChecklistProcessor';
-import { useSectionState } from './useSectionState';
-import { useSaveProgress } from './useSaveProgress';
-import { useResponseHandlers } from './useResponseHandlers';
-import { useNavigationHandlers } from './useNavigationHandlers';
-import { useCompletionPercentage } from './useCompletionPercentage';
-import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useChecklistCoreState } from './useChecklistCoreState';
+import { useChecklistProgressState } from './useChecklistProgressState';
 
 export const useChecklistPageState = (
   auditoriaId: string | undefined,
   setPontuacaoPorSecao?: React.Dispatch<React.SetStateAction<Record<string, number>>>
 ) => {
-  // Get data using existing hooks
-  const checklistData = useChecklistData(auditoriaId);
-  const {
-    usuarios,
-    auditoria,
-    secoes,
-    perguntas,
-    respostasExistentes,
-    supervisor,
-    gerente,
-    isEditingSupervisor,
-    isEditingGerente,
-    currentDate,
-    isLoading,
-    setSupervisor,
-    setGerente,
-    setIsEditingSupervisor,
-    setIsEditingGerente,
-    refetchAuditoria,
-    refetchRespostas
-  } = checklistData;
+  // Use core state management (data, active section, basic functionality)
+  const coreState = useChecklistCoreState(auditoriaId, setPontuacaoPorSecao);
 
-  // Use active section management
-  const {
-    activeSecao,
-    setActiveSecao,
-    isEditingActive,
-    toggleEditMode
-  } = useActiveSection(secoes, []);
-
-  // Use checklist functionality
-  const {
-    respostas,
-    setRespostas,
-    progresso,
-    setProgresso,
-    completedSections,
-    setCompletedSections,
-    observacoes,
-    uploading,
-    fileUrls,
-    isSaving,
-    handleResposta,
-    handleFileUpload,
-    handleObservacaoChange,
-    handleSaveObservacao,
-    saveAllResponses,
-    updateCompletedSections
-  } = useChecklist(auditoriaId, perguntas, setPontuacaoPorSecao);
-
-  // Use section navigation
-  const {
-    incompleteSections,
-    getPerguntasBySecao,
-    updateIncompleteSections,
-    goToNextSection,
-    goToPreviousSection
-  } = useSectionNavigation({
-    secoes,
-    perguntas,
-    respostas,
-    activeSecao,
-    setActiveSecao
+  // Use progress and navigation state management
+  const progressState = useChecklistProgressState({
+    activeSecao: coreState.activeSecao,
+    setActiveSecao: coreState.setActiveSecao,
+    secoes: coreState.secoes,
+    perguntas: coreState.perguntas,
+    respostas: coreState.respostas,
+    respostasExistentes: coreState.respostasExistentes,
+    handleResposta: coreState.handleResposta,
+    handleFileUpload: coreState.handleFileUpload,
+    handleSaveObservacao: coreState.handleSaveObservacao,
+    saveAllResponses: coreState.saveAllResponses,
+    refetchRespostas: () => coreState.refetchRespostas()
   });
 
-  // Use completion percentage calculation
-  const { completionPercentages } = useCompletionPercentage({
-    secoes,
-    perguntas,
-    respostas,
-    respostasExistentes
-  });
-
-  // Função wrapper garantindo retorno booleano explícito
-  const saveAllAndReturnBoolean = async (respostasExistentes: any[]): Promise<boolean> => {
-    try {
-      await saveAllResponses();
-      console.log("saveAllAndReturnBoolean: respostas salvas com sucesso");
-      // Após salvar, atualize as respostas existentes
-      await refetchRespostas();
-      return true;
-    } catch (error) {
-      console.error("Error in saveAllAndReturnBoolean:", error);
-      return false;
-    }
-  };
-
-  // Use save progress functionality
-  const {
-    isSendingEmail,
-    setIsSendingEmail,
-    saveAndNavigateHome: saveAndNavigateHomeBase
-  } = useSaveProgress(
-    saveAllResponses,
-    saveAllAndReturnBoolean
-  );
-  
-  // Use response handlers
-  const {
-    handleRespostaWrapped,
-    handleFileUploadWrapped,
-    handleSaveObservacaoWrapped
-  } = useResponseHandlers(
-    handleResposta,
-    handleFileUpload,
-    handleSaveObservacao,
-    respostasExistentes,
-    perguntas,
-    updateIncompleteSections
-  );
-
-  // Use navigation handlers
-  const {
-    handleSetActiveSecao,
-    hasUnansweredQuestions,
-    isLastPerguntaInSection,
-    saveAndNavigateToNextSection
-  } = useNavigationHandlers(
-    activeSecao,
-    setActiveSecao,
-    secoes,
-    goToNextSection,
-    goToPreviousSection,
-    saveAllResponses,
-    saveAndNavigateHomeBase
-  );
-
-  // Return all the necessary values and functions
+  // Return combined state and functionality
   return {
-    // Data from useChecklistData
-    usuarios,
-    auditoria,
-    secoes,
-    perguntas,
-    respostasExistentes,
-    supervisor,
-    gerente,
-    isEditingSupervisor,
-    isEditingGerente,
-    currentDate,
-    isLoading,
+    // Core state (data, basic functionality)
+    ...coreState,
     
-    // State management
-    respostas,
-    activeSecao,
-    progresso,
-    completedSections,
-    incompleteSections,
-    observacoes,
-    uploading,
-    fileUrls,
-    isSaving,
-    isSendingEmail,
-    isEditingActive,
-    
-    // New completion percentage data
-    completionPercentages,
-    
-    // Setters
-    setSupervisor,
-    setGerente,
-    setIsEditingSupervisor,
-    setIsEditingGerente,
-    
-    // Methods
-    refetchAuditoria,
-    refetchRespostas,
-    getPerguntasBySecao,
-    handleSetActiveSecao,
-    handleRespostaWrapped,
-    handleObservacaoChange,
-    handleSaveObservacaoWrapped,
-    handleFileUploadWrapped,
-    goToPreviousSection,
-    goToNextSection,
-    hasUnansweredQuestions,
-    isLastPerguntaInSection,
-    saveAllResponses,
-    updateCompletedSections,
-    toggleEditMode,
-    saveAndNavigateHomeBase,
-    saveAndNavigateToNextSection
+    // Progress and navigation state
+    ...progressState
   };
 };
