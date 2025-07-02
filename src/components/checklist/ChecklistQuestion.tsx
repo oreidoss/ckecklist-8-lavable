@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
+import { X } from 'lucide-react';
 import AnexoField from '@/components/checklist/AnexoField';
 import ObservacaoField from '@/components/checklist/ObservacaoField';
 
@@ -122,21 +123,37 @@ const ChecklistQuestion: React.FC<ChecklistQuestionProps> = ({
       
       {showFields && (
         <div className="pl-7 space-y-2">
-          <ObservacaoField
-            observacao={observacao}
-            onChange={(value) => onObservacaoChange(pergunta.id, value)}
-            onSave={() => onSaveObservacao(pergunta.id)}
-            disabled={disabled}
-            perguntaId={pergunta.id}
-          />
-          
-          <AnexoField
-            fileUrl={fileUrl}
-            onFileUpload={(file) => onFileUpload(pergunta.id, file)}
-            isUploading={isUploading}
-            disabled={disabled}
-            perguntaId={pergunta.id}
-          />
+          <div className="flex justify-between items-center">
+            <div className="flex-1 space-y-2">
+              <ObservacaoField
+                observacao={observacao}
+                onChange={(value) => onObservacaoChange(pergunta.id, value)}
+                onSave={() => onSaveObservacao(pergunta.id)}
+                disabled={disabled}
+                perguntaId={pergunta.id}
+              />
+              
+              <AnexoField
+                fileUrl={fileUrl}
+                onFileUpload={(file) => onFileUpload(pergunta.id, file)}
+                isUploading={isUploading}
+                disabled={disabled}
+                perguntaId={pergunta.id}
+              />
+            </div>
+            
+            {!disabled && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowFields(false)}
+                className="text-gray-500 hover:text-black ml-2 self-start"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
       )}
     </div>
