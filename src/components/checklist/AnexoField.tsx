@@ -50,6 +50,11 @@ const AnexoField: React.FC<AnexoFieldProps> = ({
     setShowUploadSection(false);
   };
 
+  // Don't render anything if no file exists and not showing upload section
+  if (!fileUrl && !showUploadSection && !disabled) {
+    return null;
+  }
+
   return (
     <div className="mt-2 space-y-1">
       <input
