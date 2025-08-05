@@ -88,6 +88,48 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
       
       console.log("Calculando pontuação total:", pontuacaoTotal);
       
+      // Verificar se todas as perguntas obrigatórias foram respondidas
+      const { data: perguntas, error: perguntasError } = await supabase
+        .from('perguntas')
+        .select('*')
+        .order('secao_id, id');
+      
+      if (perguntasError) {
+        console.error("Erro ao buscar perguntas:", perguntasError);
+        throw perguntasError;
+      }
+
+      const { data: secoes, error: secoesError } = await supabase
+        .from('secoes')
+        .select('*')
+        .order('id');
+      
+      if (secoesError) {
+        console.error("Erro ao buscar seções:", secoesError);
+        throw secoesError;
+      }
+      
+      // Calcular se o checklist está realmente completo
+      let totalRequiredQuestions = 0;
+      let answeredQuestions = 0;
+      
+      secoes.forEach(secao => {
+        const secaoPerguntas = perguntas.filter(p => p.secao_id === secao.id);
+        // Consideramos apenas perguntas obrigatórias (excluindo as duas últimas que são observações e anexos)
+        const requiredPerguntas = secaoPerguntas.slice(0, -2);
+        totalRequiredQuestions += requiredPerguntas.length;
+        
+        requiredPerguntas.forEach(pergunta => {
+          const resposta = respostasExistentes?.find(r => r.pergunta_id === pergunta.id);
+          if (resposta && resposta.resposta && resposta.resposta.trim() !== '') {
+            answeredQuestions++;
+          }
+        });
+      });
+      
+      const isComplete = answeredQuestions === totalRequiredQuestions && totalRequiredQuestions > 0;
+      console.log(`Progresso calculado: ${answeredQuestions}/${totalRequiredQuestions} = ${isComplete ? 'Completo' : 'Incompleto'}`);
+      
       const { data: auditoria, error: auditoriaError } = await supabase
         .from('auditorias')
         .select('*, loja:lojas(*)')
@@ -101,12 +143,10 @@ export const useChecklistSave = (auditoriaId: string | undefined) => {
       
       console.log("Dados da auditoria obtidos:", auditoria);
       
-      const progresso = respostasExistentes.length > 0 ? 100 : 0;
-      
       // Prepare update data
       const updateData: any = { 
         pontuacao_total: pontuacaoTotal,
-        status: progresso === 100 ? 'concluido' : 'em_andamento'
+        status: isComplete ? 'concluido' : 'em_andamento'
       };
 
       // Add signatures if provided
