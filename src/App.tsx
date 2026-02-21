@@ -24,6 +24,9 @@ import AdminPerguntas from "./pages/admin/Perguntas";
 import AdminUsuarios from "./pages/admin/Usuarios";
 import AdminRelatorios from "./pages/admin/Relatorios";
 
+// Manual
+import ManualPage from "./pages/Manual";
+
 // Página de Erro
 import NotFound from "./pages/NotFound";
 
@@ -66,6 +69,9 @@ const App = () => {
                 <Route path="/admin/perguntas" element={<ProtectedRoute element={<AdminPerguntas />} requireAdmin={true} />} />
                 <Route path="/admin/usuarios" element={<ProtectedRoute element={<AdminUsuarios />} requireAdmin={true} />} />
                 <Route path="/admin/relatorios" element={<ProtectedRoute element={<AdminRelatorios />} requireAdmin={true} />} />
+                
+                {/* Manual */}
+                <Route path="/manual" element={<ProtectedRoute element={<ManualPage />} />} />
                 
                 {/* Outras rotas */}
                 <Route path="*" element={<NotFound />} />

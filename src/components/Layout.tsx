@@ -9,7 +9,8 @@ import {
   BarChart,
   LogOut,
   Menu,
-  Settings
+  Settings,
+  BookOpen
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,12 @@ export function Layout({ children }: LayoutProps) {
           </Link>
           
           <div className="flex items-center space-x-2 md:space-x-4">
+            <Link to="/manual">
+              <Button variant="ghost" size="sm" title="Manual do Sistema">
+                <BookOpen className="h-4 w-4" />
+                {!isMobile && <span className="ml-1">Manual</span>}
+              </Button>
+            </Link>
             {userIsAdmin && !isMobile && (
               <Tabs value={value} className="w-auto">
                 <TabsList>
