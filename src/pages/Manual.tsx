@@ -1,7 +1,6 @@
 
 import React from 'react';
-import { Layout } from '@/components/Layout';
-import { 
+import {
   BookOpen, Store, Layers, HelpCircle, Users, BarChart, 
   ClipboardCheck, FileText, LogIn, Shield, CheckCircle2, 
   XCircle, AlertTriangle, Minus, MessageSquare, Paperclip,
@@ -61,7 +60,7 @@ const ResponseBadge = ({ type, label, color }: { type: string; label: string; co
 
 const ManualPage: React.FC = () => {
   return (
-    <Layout>
+    <>
       <div className="max-w-4xl mx-auto space-y-6 pb-8">
         {/* Header */}
         <div className="text-center py-6">
@@ -452,7 +451,7 @@ const ManualPage: React.FC = () => {
           <p className="mt-1">Checklist 9.0 - Todos os direitos reservados</p>
         </div>
       </div>
-    </Layout>
+    </>
   );
 };
 
