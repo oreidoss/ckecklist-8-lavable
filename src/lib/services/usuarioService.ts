@@ -45,7 +45,6 @@ export class UsuarioService extends BaseService {
         .insert([{
           nome: usuario.nome,
           email: usuario.email,
-          senha: usuario.senha,
           funcao: usuario.role // Map role to the funcao field in Supabase
         }])
         .select()
@@ -85,11 +84,6 @@ export class UsuarioService extends BaseService {
         email: usuario.email,
         funcao: usuario.role // This is the key change - save role as funcao
       };
-      
-      // Only include senha if it's provided
-      if (usuario.senha) {
-        (updateData as any).senha = usuario.senha;
-      }
       
       const { error } = await supabase
         .from('usuarios')
