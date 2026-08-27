@@ -142,12 +142,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/` },
+    const result = await lovable.auth.signInWithOAuth('google', {
+      redirect_uri: window.location.origin,
     });
-    return { error: error?.message ?? null };
+    return { error: result.error ? String((result.error as any).message ?? result.error) : null };
   };
+
 
   const logout = async () => {
     const { error } = await supabase.auth.signOut();
