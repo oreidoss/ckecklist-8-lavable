@@ -29,14 +29,21 @@ export const useChecklistUploads = (auditoriaId: string | undefined) => {
         throw uploadError;
       }
       
-      const { data: { publicUrl } } = supabase.storage
+      const { data: signed, error: signedError } = await supabase.storage
         .from('auditoria-anexos')
-        .getPublicUrl(filePath);
-      
+        .createSignedUrl(filePath, 60 * 60 * 24 * 365 * 5);
+
+      if (signedError || !signed) {
+        throw signedError ?? new Error('Não foi possível gerar o link do anexo');
+      }
+
+      const publicUrl = signed.signedUrl;
+
       setFileUrls(prev => ({ 
         ...prev, 
         [perguntaId]: publicUrl 
       }));
+
       
       const respostaExistente = respostasExistentes?.find(r => r.pergunta_id === perguntaId);
       
