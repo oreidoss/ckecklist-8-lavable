@@ -14,16 +14,227 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      auditorias: {
+        Row: {
+          assinatura_gerente: string | null
+          assinatura_supervisor: string | null
+          data: string | null
+          gerente: string | null
+          id: string
+          loja_id: string | null
+          pontuacao_total: number | null
+          status: string | null
+          supervisor: string | null
+          usuario_id: string | null
+        }
+        Insert: {
+          assinatura_gerente?: string | null
+          assinatura_supervisor?: string | null
+          data?: string | null
+          gerente?: string | null
+          id?: string
+          loja_id?: string | null
+          pontuacao_total?: number | null
+          status?: string | null
+          supervisor?: string | null
+          usuario_id?: string | null
+        }
+        Update: {
+          assinatura_gerente?: string | null
+          assinatura_supervisor?: string | null
+          data?: string | null
+          gerente?: string | null
+          id?: string
+          loja_id?: string | null
+          pontuacao_total?: number | null
+          status?: string | null
+          supervisor?: string | null
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auditorias_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auditorias_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lojas: {
+        Row: {
+          id: string
+          nome: string
+          numero: string
+        }
+        Insert: {
+          id?: string
+          nome: string
+          numero: string
+        }
+        Update: {
+          id?: string
+          nome?: string
+          numero?: string
+        }
+        Relationships: []
+      }
+      perguntas: {
+        Row: {
+          id: string
+          secao_id: string | null
+          texto: string
+        }
+        Insert: {
+          id?: string
+          secao_id?: string | null
+          texto: string
+        }
+        Update: {
+          id?: string
+          secao_id?: string | null
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "perguntas_secao_id_fkey"
+            columns: ["secao_id"]
+            isOneToOne: false
+            referencedRelation: "secoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      respostas: {
+        Row: {
+          anexo_url: string | null
+          auditoria_id: string | null
+          created_at: string
+          id: string
+          observacao: string | null
+          pergunta_id: string | null
+          pontuacao_obtida: number | null
+          resposta: string | null
+        }
+        Insert: {
+          anexo_url?: string | null
+          auditoria_id?: string | null
+          created_at?: string
+          id?: string
+          observacao?: string | null
+          pergunta_id?: string | null
+          pontuacao_obtida?: number | null
+          resposta?: string | null
+        }
+        Update: {
+          anexo_url?: string | null
+          auditoria_id?: string | null
+          created_at?: string
+          id?: string
+          observacao?: string | null
+          pergunta_id?: string | null
+          pontuacao_obtida?: number | null
+          resposta?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "respostas_auditoria_id_fkey"
+            columns: ["auditoria_id"]
+            isOneToOne: false
+            referencedRelation: "auditorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "respostas_pergunta_id_fkey"
+            columns: ["pergunta_id"]
+            isOneToOne: false
+            referencedRelation: "perguntas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      secoes: {
+        Row: {
+          id: string
+          nome: string
+        }
+        Insert: {
+          id?: string
+          nome: string
+        }
+        Update: {
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      usuarios: {
+        Row: {
+          email: string
+          funcao: string | null
+          id: string
+          nome: string
+          user_id: string | null
+        }
+        Insert: {
+          email: string
+          funcao?: string | null
+          id?: string
+          nome: string
+          user_id?: string | null
+        }
+        Update: {
+          email?: string
+          funcao?: string | null
+          id?: string
+          nome?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +361,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
