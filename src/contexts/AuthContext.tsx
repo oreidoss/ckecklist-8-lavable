@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { lovable } from '@/integrations/lovable/index';
+
 import { Usuario } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -26,15 +28,45 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const loadProfile = useCallback(async (authUser: User) => {
     try {
-      const { data: profile } = await supabase
+      let profile: { id: string; nome: string; email: string; funcao: string | null; user_id: string | null } | null = null;
+
+      const { data: byUserId } = await supabase
         .from('usuarios')
         .select('*')
-        .or(`user_id.eq.${authUser.id},email.eq.${authUser.email}`)
-        .limit(1)
+        .eq('user_id', authUser.id)
         .maybeSingle();
 
+      profile = byUserId ?? null;
+
+      if (!profile && authUser.email) {
+        const { data: byEmail } = await supabase
+          .from('usuarios')
+          .select('*')
+          .ilike('email', authUser.email)
+          .maybeSingle();
+
+        if (byEmail) {
+          await supabase.from('usuarios').update({ user_id: authUser.id }).eq('id', byEmail.id);
+          profile = { ...byEmail, user_id: authUser.id };
+        }
+      }
+
+      if (!profile) {
+        const nome =
+          (authUser.user_metadata?.nome as string) ??
+          (authUser.user_metadata?.full_name as string) ??
+          authUser.email?.split('@')[0] ??
+          'Usuário';
+        const { data: created } = await supabase
+          .from('usuarios')
+          .insert({ nome, email: authUser.email ?? '', funcao: 'user', user_id: authUser.id })
+          .select()
+          .maybeSingle();
+        profile = created ?? null;
+      }
+
       const { data: roles } = await supabase
-        .from('user_roles' as any)
+        .from('user_roles')
         .select('role')
         .eq('user_id', authUser.id);
 
@@ -43,6 +75,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       setIsAdmin(adminByRole || adminByFuncao);
       setUser({
+
         id: profile?.id ?? authUser.id,
         nome:
           profile?.nome ??
@@ -111,12 +144,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/` },
+    const result = await lovable.auth.signInWithOAuth('google', {
+      redirect_uri: window.location.origin,
     });
-    return { error: error?.message ?? null };
+    return { error: result.error ? String((result.error as any).message ?? result.error) : null };
   };
+
 
   const logout = async () => {
     const { error } = await supabase.auth.signOut();

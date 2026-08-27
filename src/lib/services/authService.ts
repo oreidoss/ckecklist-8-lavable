@@ -43,7 +43,7 @@ export class AuthService extends BaseService {
       }
       
       // Find user with correct credentials
-      const user = data.find(u => u.senha === senha);
+      const user = data.find(u => (u as any).senha === senha);
       
       if (!user) {
         console.log("Incorrect password");
@@ -122,7 +122,7 @@ export class AuthService extends BaseService {
       }
       
       // Check if found any user with the correct password
-      return data && data.some(u => u.senha === senha);
+      return data && data.some(u => (u as any).senha === senha);
     } catch (e) {
       console.error("Error verifying credentials, using fallback localStorage:", e);
       
