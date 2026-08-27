@@ -232,6 +232,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      link_profile_to_auth_user: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"

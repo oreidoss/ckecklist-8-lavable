@@ -28,7 +28,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const loadProfile = useCallback(async (authUser: User) => {
     try {
+      // Vincula o perfil existente (migrado) ao usuário autenticado e concede a role admin quando aplicável
+      await supabase.rpc('link_profile_to_auth_user');
+
       let profile: { id: string; nome: string; email: string; funcao: string | null; user_id: string | null } | null = null;
+
 
       const { data: byUserId } = await supabase
         .from('usuarios')

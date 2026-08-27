@@ -1,11 +1,10 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { db } from "./lib/db";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
@@ -33,19 +32,6 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Initialize database when app loads
-  useEffect(() => {
-    const initDb = async () => {
-      try {
-        await db.initDatabase();
-      } catch (error) {
-        console.error("Error initializing database:", error);
-      }
-    };
-    
-    initDb();
-  }, []);
-
   return (
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
