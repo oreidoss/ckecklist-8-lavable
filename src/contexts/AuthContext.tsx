@@ -1,73 +1,137 @@
-
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import type { Session, User } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { Usuario } from '@/lib/types';
-import { usuarioService } from '@/lib/services/usuarioService';
 import { useToast } from '@/hooks/use-toast';
 
 type AuthContextType = {
   user: Usuario | null;
+  session: Session | null;
   isAdmin: boolean;
-  login: (nome: string, senha: string) => Promise<boolean>;
-  logout: () => void;
+  loading: boolean;
+  signInWithPassword: (email: string, senha: string) => Promise<{ error: string | null }>;
+  signUpWithPassword: (nome: string, email: string, senha: string) => Promise<{ error: string | null }>;
+  signInWithGoogle: () => Promise<{ error: string | null }>;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<Usuario | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Check for current user on app initialization
-    const currentUser = usuarioService.getCurrentUser();
-    if (currentUser) {
-      setUser(currentUser);
-      setIsAdmin(currentUser.role === 'admin');
-      console.log("Current user loaded:", currentUser.nome, "role:", currentUser.role, "isAdmin:", currentUser.role === 'admin');
-    } else {
-      // Only navigate to login if not already there
-      if (window.location.pathname !== '/login') {
-        navigate('/login');
-      }
-    }
-  }, [navigate]);
-
-  const login = async (nome: string, senha: string): Promise<boolean> => {
+  const loadProfile = useCallback(async (authUser: User) => {
     try {
-      console.log("AuthContext attempting login with:", nome);
-      const loggedInUser = await usuarioService.login(nome, senha);
-      
-      if (loggedInUser) {
-        setUser(loggedInUser);
-        setIsAdmin(loggedInUser.role === 'admin');
-        console.log("User logged in:", loggedInUser.nome, "role:", loggedInUser.role, "isAdmin:", loggedInUser.role === 'admin');
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      console.error("Error during login:", error);
-      toast({
-        title: "Erro no login",
-        description: "Ocorreu um erro ao tentar fazer login",
-        variant: "destructive"
+      const { data: profile } = await supabase
+        .from('usuarios')
+        .select('*')
+        .or(`user_id.eq.${authUser.id},email.eq.${authUser.email}`)
+        .limit(1)
+        .maybeSingle();
+
+      const { data: roles } = await supabase
+        .from('user_roles' as any)
+        .select('role')
+        .eq('user_id', authUser.id);
+
+      const adminByRole = Array.isArray(roles) && roles.some((r: any) => r.role === 'admin');
+      const adminByFuncao = profile?.funcao === 'admin';
+
+      setIsAdmin(adminByRole || adminByFuncao);
+      setUser({
+        id: profile?.id ?? authUser.id,
+        nome:
+          profile?.nome ??
+          (authUser.user_metadata?.nome as string) ??
+          (authUser.user_metadata?.full_name as string) ??
+          authUser.email?.split('@')[0] ??
+          'Usuário',
+        email: profile?.email ?? authUser.email ?? '',
+        funcao: profile?.funcao ?? undefined,
+        role: (profile?.funcao as Usuario['role']) ?? (adminByRole ? 'admin' : 'user'),
       });
-      return false;
+    } catch (error) {
+      console.error('Erro ao carregar perfil do usuário:', error);
+      setUser({
+        id: authUser.id,
+        nome: authUser.email?.split('@')[0] ?? 'Usuário',
+        email: authUser.email ?? '',
+        role: 'user',
+      });
+      setIsAdmin(false);
+    } finally {
+      setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      if (newSession?.user) {
+        // defer supabase calls out of the callback
+        setTimeout(() => loadProfile(newSession.user), 0);
+      } else {
+        setUser(null);
+        setIsAdmin(false);
+        setLoading(false);
+      }
+    });
+
+    supabase.auth.getSession().then(({ data: { session: existing } }) => {
+      setSession(existing);
+      if (existing?.user) {
+        loadProfile(existing.user);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [loadProfile]);
+
+  const signInWithPassword = async (email: string, senha: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: senha });
+    return { error: error?.message ?? null };
   };
 
-  const logout = () => {
-    usuarioService.logout();
+  const signUpWithPassword = async (nome: string, email: string, senha: string) => {
+    const { error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password: senha,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+        data: { nome },
+      },
+    });
+    return { error: error?.message ?? null };
+  };
+
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/` },
+    });
+    return { error: error?.message ?? null };
+  };
+
+  const logout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({ title: 'Erro ao sair', description: error.message, variant: 'destructive' });
+    }
     setUser(null);
     setIsAdmin(false);
-    navigate('/login');
+    setSession(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAdmin, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, session, isAdmin, loading, signInWithPassword, signUpWithPassword, signInWithGoogle, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
